@@ -23,8 +23,8 @@ const label = otherLocale === 'km' ? t(lang, 'switchToKhmer') : t(lang, 'switchT
   title={label}
   aria-label={label}
   class:list={[
-    'inline-flex min-h-11 min-w-12 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--color-line-strong)] bg-white px-2.5 font-[family-name:var(--font-display)] text-[13px] font-bold text-[color:var(--color-ink-900)] no-underline transition-colors hover:border-[color:var(--color-blue-700)] hover:bg-[color:var(--color-blue-50)] hover:text-[color:var(--color-ink-900)]',
-    full && 'w-full py-3',
+    'inline-flex min-h-11 min-w-12 items-center justify-center gap-2 rounded-[var(--radius-md)] border bg-white px-2.5 font-[family-name:var(--font-display)] text-[13px] font-bold text-[color:var(--color-ink-900)] no-underline transition-colors hover:border-[color:var(--color-blue-700)] hover:bg-[color:var(--color-blue-50)] hover:text-[color:var(--color-ink-900)]',
+    full ? 'w-full border-[color:var(--color-line-strong)] py-3' : 'border-transparent',
   ]}
 >
   <span lang="en" class="tracking-[0.08em]">{otherLocale === 'km' ? 'KH' : 'EN'}</span>
