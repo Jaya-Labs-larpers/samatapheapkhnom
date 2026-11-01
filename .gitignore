@@ -36,3 +36,17 @@ SKO-website-preview.zip
 
 # graphify knowledge graph, regenerated locally
 graphify-out/
+
+# Internal to SKO and its developers; kept out of the public repository
+PRODUCT.md
+DESIGN.md
+SEO-*.md
+docs/00-original-brief.md
+docs/HANDOVER-*.md
+docs/SECURITY.md
+docs/15-security-remediation.md
+docs/prompts/
+docs/design-preview.html
+docs/11-faq-proposals.md
+docs/FAQ-for-team.md
+docs/14-vercel-preview.md

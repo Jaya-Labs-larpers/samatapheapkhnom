@@ -156,7 +156,7 @@ const en = {
     "SKO's NGO work in Cambodia is delivered with Planète Enfants & Développement, Family Fund for Children, UNOPS (Cities Alliance) and Swiss funding from SDC.",
   seoContact: 'Contact Our NGO in Phnom Penh: Visit, Call or Email',
   metaContact:
-    'Contact SKO, an NGO in Phnom Penh: Street 138, Sangkat Veal Vong, Khan 7 Makara. Call +855 12 781 203 or email info@samatapheapkhnom.org, Mon–Fri 8:00–17:00.',
+    'Contact SKO, an NGO in Phnom Penh: Street 138, Sangkat Veal Vong, Khan 7 Makara. Call {phone} or email {email}, Mon–Fri 8:00–17:00.',
   nextFaq:
     'Not sure who to ask? Start with our [common questions about SKO, an NGO in Cambodia](/faq/).',
   seoReports: 'Annual Reports and Audited Financial Statements',
@@ -183,7 +183,7 @@ const en = {
   introPartners:
     "SKO's NGO work in Cambodia is delivered with international NGOs, foundations, UN agencies and government partners: Planète Enfants & Développement, Family Fund for Children Organization, UNOPS (Cities Alliance) and the Swiss Agency for Development and Cooperation. As a [social work NGO](/about/) we hold quarterly meetings with partners to work through shared challenges.",
   introContact:
-    'SKO is a local NGO in Phnom Penh, Cambodia: visit us at Office #8AE1, Street 138, Sangkat Veal Vong, Khan 7 Makara, call +855 12 781 203, or send a message about [our family support programs](/programs/), [partnerships](/partners/) or volunteering. We read every message.',
+    'SKO is a local NGO in Phnom Penh, Cambodia: visit us at Office #8AE1, Street 138, Sangkat Veal Vong, Khan 7 Makara, call {phone}, or send a message about [our family support programs](/programs/), [partnerships](/partners/) or volunteering. We read every message.',
   ctaHomeTitle: 'Want to learn more about SKO?',
   ctaHomeBody:
     'Get in touch with questions about our work or partnerships. Our annual and audit reports are published in full.',

@@ -4,7 +4,7 @@
  * Unfinished copy is tracked in the source with bracketed markers —
  * `[NEEDS SKO]`, `[EXAMPLE]`, `[PLACEHOLDER …]` — so `scripts/content-review.mjs`
  * can list exactly what SKO still owes, and so nobody quietly invents a fact to
- * fill a gap (PRODUCT.md, principle 3). Those markers are a note to the team,
+ * fill a gap. Those markers are a note to the team,
  * not copy: a visitor must never see one, and must never see the instruction
  * that follows it either ("Replace this with your own first post…").
  *

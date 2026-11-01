@@ -62,7 +62,15 @@ export const GET: APIRoute = async ({ site }) => {
     { title: en.pageActivities, path: '/activities/', description: clean(en.metaActivities) },
     cmsPageLine(impact, '/impact/', en.pageImpact),
     { title: en.pagePartners, path: '/partners/', description: clean(en.metaPartners) },
-    { title: en.pageContact, path: '/contact/', description: clean(en.metaContact) },
+    {
+      title: en.pageContact,
+      path: '/contact/',
+      description: clean(
+        en.metaContact
+          .replace('{phone}', settings.phone ?? '')
+          .replace('{email}', settings.email ?? ''),
+      ),
+    },
     donationEnabled
       ? { title: en.pageDonate, path: '/donate/', description: clean(en.donateHeroIntro) }
       : null,

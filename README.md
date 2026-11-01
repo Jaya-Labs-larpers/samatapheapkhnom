@@ -1,103 +1,61 @@
-# SKO website
+# Samatapheap Khnom Organization (SKO)
 
-Bilingual (Khmer / English) website for **Samatapheap Khnom Organization**, Phnom Penh.
+**Families with the strength to change their own lives.**
 
-Astro + TypeScript + Tailwind v4 · Sanity (headless CMS) · Cloudflare Workers static assets +
-one Worker for the form · Turnstile · Resend · Cloudflare Web Analytics.
+Samatapheap Khnom Organization (SKO) is a Cambodian local NGO supporting vulnerable families,
+children and communities in Phnom Penh's urban poor and migrant communities since 2007. SKO is
+recognized as Cambodia's leading expert in family care and social work.
 
-Planning, design and architecture documents live in [`docs/`](docs/README.md).
+Samatapheap Khnom (សមត្ថភាពខ្ញុំ) is Khmer for "my capacity." The name reflects the belief that
+families already hold the capability to change their own circumstances, and that our job is to
+support that capacity rather than replace it.
 
----
-
-## Quick start
-
-```bash
-npm install
-cp .env.example .env
-npm run dev
-```
-
-The site builds and runs with **no Sanity project configured** — the content layer falls back to
-local fixtures in `src/lib/content/fixtures.ts`. The build prints which source it used.
-
-### The Studio (separate npm project)
-
-```bash
-cd studio && npm install && npm run dev
-```
-
-`studio/` is deliberately **not** an npm workspace. CI runs `npm ci` at the repo root on every
-production build; a workspace would drag Sanity's React toolchain into a build of a site that ships
-no React.
+**Website:** [www.samatapheapkhnom.org](https://www.samatapheapkhnom.org) (English) ·
+[ភាសាខ្មែរ](https://www.samatapheapkhnom.org/km/)
 
 ---
 
-## Scripts
+## What we do
 
-| Command                       | What it does                                                                                  |
-| ----------------------------- | --------------------------------------------------------------------------------------------- |
-| `npm run dev`                 | Astro dev server. Pages only — the form endpoint is not served.                               |
-| `npm run build`               | Static build to `dist/`, then per-page CSP, the Khmer 404 copy and structural checks.         |
-| `npm run check`               | The one command: tests, typecheck, build. CI runs it before every deploy.                     |
-| `npm run preview`             | Builds, then serves `dist/` **with the Worker** via `wrangler dev`. The honest local preview. |
-| `npm run check:edge -- <url>` | Live checks against a deployed copy: routes, 404s, headers, caching, API.                     |
-| `npm run deploy:rehearsal`    | Deploys to workers.dev. `npm run deploy:production` deploys the real site (CI's job).         |
-| `npm run verify`              | Alias of `npm run build`.                                                                     |
-| `npm run typecheck`           | `astro check` + `tsc --noEmit`.                                                               |
-| `npm run format`              | Prettier across the repo.                                                                     |
-| `npm run studio`              | Runs the Studio dev server from the root.                                                     |
-| `npm run studio:deploy`       | Publishes the Studio to `<hostname>.sanity.studio`.                                           |
+SKO runs four family support programs in Phnom Penh's urban poor communities, all delivered through
+one approach, the Family Development Program: social work services so that a child grows up safe,
+in a family, in their own community.
 
-To exercise the contact form locally you need `npm run preview`, not `npm run dev` — the Worker
-only exists under Wrangler. Copy `.dev.vars.example` to `.dev.vars` for its runtime settings.
+- [Housing and Living Condition Improvement (HALI)](https://www.samatapheapkhnom.org/programs/housing-and-living-conditions-hali/)
+- [Resilient City and Migration Dynamics (RCMD)](https://www.samatapheapkhnom.org/programs/resilient-city-and-migration/)
+- [Children's Active Citizenship](https://www.samatapheapkhnom.org/programs/childrens-active-citizenship/)
+- [Promoting Children's Education and Health through FDP](https://www.samatapheapkhnom.org/programs/childrens-education-and-health/)
 
----
+## Our partners
 
-## Repository layout
+SKO's work is delivered with international NGOs, foundations, UN agencies and government partners:
+Planète Enfants & Développement, Family Fund for Children Organization, UNOPS (Cities Alliance) and
+the Swiss Agency for Development and Cooperation. [More about our partners](https://www.samatapheapkhnom.org/partners/).
 
-```
-wrangler.jsonc             Worker config: rehearsal on workers.dev, env.production on the domain.
-worker/index.ts            The Worker. Only /api/* reaches it; everything else is a static file.
-functions/api/contact.ts   The form handler the Worker calls. The only real runtime code.
-public/_headers            Security headers + cache policy for static responses.
-src/lib/config.ts          The single seam for environment configuration.
-src/lib/content/           The content layer. Pages import only from here — never the
-                           Sanity client, never raw GROQ.
-src/lib/i18n/              Locale config, UI strings, path helpers, field resolution.
-src/lib/sanity/            Client, all GROQ queries, image URL builder.
-src/page-templates/        Every page body. Route files are thin shells.
-src/pages/                 Route shells: English at the root, Khmer under /km/.
-studio/                    Sanity Studio — independent npm project.
-```
+## Accountability
+
+SKO publishes its annual reports, audited financial statements and its Safeguarding & Child
+Protection Policy in full. Registered with the Ministry of Interior since 2007.
+[Reports & policies](https://www.samatapheapkhnom.org/reports/) ·
+[Child safeguarding](https://www.samatapheapkhnom.org/safeguarding/)
+
+## Get in touch
+
+- Email: info@samatapheapkhnom.org
+- Phone: +855 12 781 203 (Monday–Friday, 8:00–17:00 ICT)
+- Office: #8AE1, Street 138, Sangkat Veal Vong, Khan 7 Makara, Phnom Penh, Cambodia
+- Facebook: [samatapheapkhnom](https://www.facebook.com/samatapheapkhnom)
+- [Contact page](https://www.samatapheapkhnom.org/contact/)
 
 ---
 
-## The rules that keep this maintainable
+## About this repository
 
-- **No component reads `import.meta.env`.** Everything goes through `src/lib/config.ts`, which fails
-  loudly at build time rather than rendering an empty section in production.
-- **All GROQ lives in `src/lib/sanity/queries.ts`.** No inline query strings in pages. This is what
-  makes a schema change auditable in one file.
-- **Every visible string goes through `t()` or comes from the CMS.** A hardcoded English string in a
-  component is a review-blocking bug — it is the easiest way for a bilingual site to rot, and it is
-  invisible until a Khmer reader hits it.
-- **`PUBLIC_` is load-bearing.** Astro inlines any `PUBLIC_*` variable into the browser bundle.
-  Server-only secrets are read in `worker/` and `functions/` from the Cloudflare env binding. They
-  must never be imported into `src/`.
-- **There is no Sanity token anywhere**, by design — see `docs/04-tech-decisions.md` ADR-004. Do not
-  add one without revisiting that decision.
-- **Nothing about a beneficiary or a child is modelled in the CMS.** The dataset is public. That is
-  safe only because of this rule.
+This is the source code of SKO's website. Developers: start with
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
----
+## License
 
-## Environment
-
-See `.env.example` for the build-time list and `.dev.vars.example` for the Worker's runtime list.
-Nothing in this repo contains a real secret. In production, build values are GitHub repository
-variables and runtime secrets are Wrangler secrets on `env.production`.
-
-## Deploying
-
-The runbook is [`docs/16-cloudflare-workers.md`](docs/16-cloudflare-workers.md): rehearsal on
-workers.dev, cutover, CI deploys, rollback, and who does which step.
+The code is [MIT](LICENSE). SKO's name, logo, photographs and written content are not covered by
+that license; all rights reserved. Fonts and icons keep their own licenses (`public/fonts/`,
+`public/icons/`).

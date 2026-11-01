@@ -25,8 +25,11 @@ const heading = t(lang, 'pageContact');
 const formId = 'form-contact';
 const tel = (phone: string) => `tel:${phone.replace(/[^+\d]/g, '')}`;
 const nextSteps: UIKey[] = ['nextStep1', 'nextStep2', 'nextStep3'];
+const withContact = (text: string) =>
+  text.replace('{phone}', settings.phone ?? '').replace('{email}', settings.email ?? '');
+const intro = withContact(t(lang, 'introContact'));
 const title = t(lang, 'seoContact') || heading;
-const description = t(lang, 'metaContact') || stripInlineLinks(t(lang, 'introContact'));
+const description = withContact(t(lang, 'metaContact')) || stripInlineLinks(intro);
 const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: title, description });
 ---
 
@@ -37,13 +40,7 @@ const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: titl
   jsonLd={contactPage}
   orgJsonLd={{ openingHoursSpecification: officeOpeningHours }}
 >
-  <PageHero
-    size="lg"
-    lang={lang}
-    title={heading}
-    intro={t(lang, 'introContact')}
-    trail={[{ label: heading }]}
-  />
+  <PageHero size="lg" lang={lang} title={heading} intro={intro} trail={[{ label: heading }]} />
 
   {
     /*

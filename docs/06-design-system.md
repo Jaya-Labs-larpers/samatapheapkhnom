@@ -1,7 +1,5 @@
 # Phase 2 — Design system
 
-**Visual deliverable:** open [design-preview.html](design-preview.html) in a browser. It carries the palette,
-type specimens in both scripts, the full component kit, six desktop layouts and three mobile frames.
 **Token source of truth:** [design-tokens/theme.css](design-tokens/theme.css) — moves to `src/styles/theme.css` in Phase 3.
 
 ---

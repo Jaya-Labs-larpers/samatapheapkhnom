@@ -13,9 +13,7 @@ sko-website/
 │   ├── 02-sanity-content-model.md
 │   ├── 03-components-and-wireframes.md
 │   ├── 04-tech-decisions.md
-│   ├── 05-repo-structure.md
-│   ├── SECURITY.md               # Phase 5 output
-│   └── HANDOVER-km.md / HANDOVER-en.md   # Phase 6 staff guide
+│   └── 05-repo-structure.md
 ├── functions/                    # Cloudflare Pages Functions (NOT bundled by Astro)
 │   └── api/
 │       └── contact.ts

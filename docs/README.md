@@ -3,18 +3,14 @@
 Project: production bilingual (km/en) website for **Samatapheap Khnom Organization**, Phnom Penh.
 Stack per brief: Astro + TypeScript + Tailwind · Sanity · Cloudflare Pages + Functions + Turnstile · Resend · Cloudflare Web Analytics.
 
-Delivered in six phases, each with an approval gate. The original brief this was built from:
-**[00-original-brief.md](00-original-brief.md)**.
+Delivered in six phases, each with an approval gate.
 
 **Start here if you are:**
 
-| You are…                         | Read                                                                        |
-| -------------------------------- | --------------------------------------------------------------------------- |
-| SKO staff who will edit the site | [HANDOVER-en.md](HANDOVER-en.md) · [HANDOVER-km.md](HANDOVER-km.md)         |
-| Deploying it                     | [16-cloudflare-workers.md](16-cloudflare-workers.md)                        |
-| A developer picking this up      | [../README.md](../README.md), then [07-architecture.md](07-architecture.md) |
-| Reviewing security               | [SECURITY.md](SECURITY.md)                                                  |
-| Looking at the design            | [design-preview.html](design-preview.html) — open in a browser              |
+| You are…                    | Read                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------- |
+| Deploying it                | [16-cloudflare-workers.md](16-cloudflare-workers.md)                            |
+| A developer picking this up | [DEVELOPMENT.md](DEVELOPMENT.md), then [07-architecture.md](07-architecture.md) |
 
 ---
 
@@ -36,11 +32,11 @@ Delivered in six phases, each with an approval gate. The original brief this was
 
 # Phase 2 — Design
 
-| #   | Deliverable                                                                                                                | Document                                                           |
-| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 6   | Design system — colour, type (Latin + Khmer), space, radius, shadow, motion                                                | [06-design-system.md](06-design-system.md)                         |
-| 7   | Tokens as Tailwind config                                                                                                  | [design-tokens/theme.css](design-tokens/theme.css)                 |
-| 8   | Visual proof — palette, specimens, component kit, 6 desktop layouts, 3 mobile frames, and the Sanity editor staff will use | **[design-preview.html](design-preview.html)** ← open in a browser |
+| #   | Deliverable                                                                                                                | Document                                           |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 6   | Design system — colour, type (Latin + Khmer), space, radius, shadow, motion                                                | [06-design-system.md](06-design-system.md)         |
+| 7   | Tokens as Tailwind config                                                                                                  | [design-tokens/theme.css](design-tokens/theme.css) |
+| 8   | Visual proof — palette, specimens, component kit, 6 desktop layouts, 3 mobile frames, and the Sanity editor staff will use | Kept private                                       |
 
 **Phase 2 approved.**
 
@@ -49,7 +45,7 @@ Delivered in six phases, each with an approval gate. The original brief this was
 | #   | Deliverable                                                      | Where                                    |
 | --- | ---------------------------------------------------------------- | ---------------------------------------- |
 | 9   | What was built, what was verified, what is deliberately deferred | [07-architecture.md](07-architecture.md) |
-| 10  | Developer setup and the rules that keep this maintainable        | [../README.md](../README.md)             |
+| 10  | Developer setup and the rules that keep this maintainable        | [DEVELOPMENT.md](DEVELOPMENT.md)         |
 | 11  | The code                                                         | `src/`, `functions/`, `studio/`          |
 
 **Phase 3 approved.**
@@ -70,9 +66,9 @@ enforcing** — see [08-build.md](08-build.md) §3.
 
 # Phase 5 — Security review
 
-| #   | Deliverable                                                     | Where                          |
-| --- | --------------------------------------------------------------- | ------------------------------ |
-| 15  | Findings, remediation, checklist, and the go-live prerequisites | **[SECURITY.md](SECURITY.md)** |
+| #   | Deliverable                                                     | Where        |
+| --- | --------------------------------------------------------------- | ------------ |
+| 15  | Findings, remediation, checklist, and the go-live prerequisites | Kept private |
 
 8 findings: 6 fixed in code, 1 accepted with rationale, 1 is a Phase 6 deployment prerequisite.
 `npm audit` → **0 vulnerabilities** on the site. The headline fix: the contact form's Turnstile check
@@ -85,8 +81,8 @@ was **failing open** when unconfigured — it now fails closed.
 | #   | Deliverable                                                | Where                                                                                                            |
 | --- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | 16  | Step-by-step deployment runbook                            | **[16-cloudflare-workers.md](16-cloudflare-workers.md)** (service setup in [09-deployment.md](09-deployment.md)) |
-| 17  | Staff guide, English                                       | **[HANDOVER-en.md](HANDOVER-en.md)**                                                                             |
-| 18  | Staff guide, Khmer                                         | **[HANDOVER-km.md](HANDOVER-km.md)**                                                                             |
+| 17  | Staff guide, English                                       | Kept private                                                                                                     |
+| 18  | Staff guide, Khmer                                         | Kept private                                                                                                     |
 | 19  | Pages build settings under version control                 | `../wrangler.toml`                                                                                               |
 | 20  | CI: typecheck, structural checks, audit, Lighthouse floors | `../.github/workflows/verify.yml`                                                                                |
 
