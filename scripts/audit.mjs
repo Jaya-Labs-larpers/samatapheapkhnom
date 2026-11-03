@@ -1,6 +1,11 @@
 import { execSync } from "node:child_process";
 
-const allowed = {};
+const allowed = {
+  // Only reached through the Sanity CLI's command loader (@oclif/core), which
+  // globs our own files at build time; no visitor input gets near it. No
+  // minimatch 10.x fix exists and oclif still requires ^10.
+  "GHSA-g3hv-75wg-m249": "minimatch globparts DoS, via the Sanity CLI only",
+};
 
 const blocking = new Set(["moderate", "high", "critical"]);
 
