@@ -3,7 +3,6 @@ import type { Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
 import { localizePath, t, text } from '~/lib/i18n/utils';
 import { mainNav, mobileNav } from '~/lib/nav';
-import { donationEnabled } from '~/lib/donation';
 import LanguageToggle from './LanguageToggle.astro';
 import Icon from '~/components/Icon.astro';
 import Logo from '~/components/Logo.astro';
@@ -61,17 +60,13 @@ function isCurrent(path: string): boolean {
       <a href={localizePath('/contact', lang)} class="btn btn-secondary hidden lg:inline-flex">
         {t(lang, 'contactUs')}
       </a>
-      {
-        donationEnabled && (
-          <a
-            href={localizePath('/donate', lang)}
-            class="btn btn-accent btn-sm sm:min-h-12 sm:px-[22px] sm:text-base"
-            aria-current={isCurrent('/donate') ? 'page' : undefined}
-          >
-            {t(lang, 'navDonate')}
-          </a>
-        )
-      }
+      <a
+        href={localizePath('/donate', lang)}
+        class="btn btn-accent btn-sm sm:min-h-12 sm:px-[22px] sm:text-base"
+        aria-current={isCurrent('/donate') ? 'page' : undefined}
+      >
+        {t(lang, 'navDonate')}
+      </a>
       <button
         type="button"
         id="menu-toggle"
@@ -137,13 +132,9 @@ function isCurrent(path: string): boolean {
     <a href={localizePath('/contact', lang)} class="btn btn-primary btn-lg btn-block mt-6">
       {t(lang, 'contactUs')}
     </a>
-    {
-      donationEnabled && (
-        <a href={localizePath('/donate', lang)} class="btn btn-accent btn-lg btn-block mt-2.5">
-          {t(lang, 'navDonate')}
-        </a>
-      )
-    }
+    <a href={localizePath('/donate', lang)} class="btn btn-accent btn-lg btn-block mt-2.5">
+      {t(lang, 'navDonate')}
+    </a>
     <a
       href={localizePath('/contact?topic=volunteer', lang)}
       class="btn btn-secondary btn-lg btn-block mt-2.5"

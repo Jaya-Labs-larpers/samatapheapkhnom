@@ -38,21 +38,14 @@ const placeholder: DonationConfig = {
   bank: { name: 'Bank name', swift: 'XXXXXXXX', address: 'Bank address' },
 };
 
-/**
- * Donations are offered only once SKO's real details are in src/config/donation.ts.
- * Until then a production build leaves Donate out entirely (the nav links, the
- * /donate pages and the QR images) rather than show a code that cannot be paid;
- * local and preview builds still show the marked placeholder for review.
- */
-export const donationEnabled = donation !== null || !isProductionDeployment;
-
-if (!donationEnabled)
-  console.warn(
-    "[donate] Donate is OFF in this production build: src/config/donation.ts is empty. Add SKO's decoded KHQR payloads and bank details to switch it on.",
-  );
-
 function resolve(config: DonationConfig | null): Donation {
-  if (!config) return { ...placeholder, isPlaceholder: true };
+  if (!config) {
+    if (isProductionDeployment)
+      throw new Error(
+        "[donate] src/config/donation.ts is empty. Add SKO's decoded KHQR payloads and bank details before a production build.",
+      );
+    return { ...placeholder, isPlaceholder: true };
+  }
 
   const errors = config.accounts.flatMap((account) => validateKhqr(account, config.khqrName));
   if (config.accounts.length === 0) errors.push('no accounts are configured');

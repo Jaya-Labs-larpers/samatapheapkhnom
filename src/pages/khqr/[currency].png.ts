@@ -1,10 +1,10 @@
 import type { APIRoute, GetStaticPaths } from 'astro';
-import { donationDetails, donationEnabled } from '~/lib/donation';
+import { donationDetails } from '~/lib/donation';
 import { encodeQr } from '~/lib/qr';
 import { qrPng } from '~/lib/qr-png';
 
 export const getStaticPaths = (() =>
-  (donationEnabled ? donationDetails.accounts : []).map((account) => ({
+  donationDetails.accounts.map((account) => ({
     params: { currency: account.currency.toLowerCase() },
     props: { khqr: account.khqr },
   }))) satisfies GetStaticPaths;

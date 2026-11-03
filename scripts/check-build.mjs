@@ -141,31 +141,11 @@ for await (const file of htmlFiles(DIST)) {
   check(imgsWithoutAlt === 0, page, `${imgsWithoutAlt} <img> without alt`);
 }
 
-// Donate is left out of production builds until SKO's real details are in
-// src/config/donation.ts (src/lib/donation.ts, donationEnabled). Anywhere else, or
-// once the details exist, both language pages must be there.
-const donationConfig = await readFile(
-  fileURLToPath(new URL('../src/config/donation.ts', import.meta.url)),
-  'utf8',
-);
-const donationOff =
-  production && /export const donation: DonationConfig \| null = null;/.test(donationConfig);
 check(
-  donatePages === (donationOff ? 0 : 2),
+  donatePages === 2,
   '/donate/',
-  donationOff
-    ? `Donate is switched off but ${donatePages} donate page(s) were built`
-    : `expected the English and Khmer donate pages, found ${donatePages}`,
+  `expected the English and Khmer donate pages, found ${donatePages}`,
 );
-if (donationOff)
-  for await (const file of htmlFiles(DIST)) {
-    const html = await readFile(file, 'utf8');
-    check(
-      !/href="(?:\/km)?\/donate\/?"/.test(html),
-      `/${relative(DIST, file).split(sep).join('/')}`,
-      'links to /donate while Donate is switched off',
-    );
-  }
 
 // Crawler files: llms.txt lists the site for answer engines. A sitemap lastmod
 // is the page's last CMS edit, never the build time, or Google stops trusting it;
