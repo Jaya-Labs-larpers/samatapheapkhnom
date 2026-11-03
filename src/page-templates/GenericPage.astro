@@ -17,11 +17,9 @@ interface Props {
   /** Used when the CMS page is missing entirely. */
   fallbackTitleKey: UIKey;
   trail?: Crumb[];
-  /** Set the body large on the wing-blue band (Safeguarding's reporting panel). */
-  band?: boolean;
 }
 
-const { lang, slug, fallbackTitleKey, trail, band = false } = Astro.props;
+const { lang, slug, fallbackTitleKey, trail } = Astro.props;
 
 const page = await getPage(slug);
 const title = pick(page?.title, lang);
@@ -35,6 +33,7 @@ const seo = resolveSeo(page?.seo, lang, {
 ---
 
 <BaseLayout
+  headerOverlay
   lang={lang}
   title={seo.title}
   description={seo.description}
@@ -49,27 +48,12 @@ const seo = resolveSeo(page?.seo, lang, {
     trail={trail ?? [{ label: heading }]}
   />
 
-  {
-    band ? (
-      <section class="on-wing band band--wing !py-[clamp(72px,7vw,112px)]">
-        <div class="wrap-inner">
-          <RichText
-            blocks={page?.body}
-            lang={lang}
-            class="!max-w-[62ch] text-[length:clamp(1.25rem,1.9vw,1.625rem)] leading-[1.45] font-medium [&_a]:font-bold [&_a]:!text-[color:var(--color-blue-750)] [&_h2]:mt-0 [&_h2]:mb-6 [&_h2]:font-[family-name:var(--font-display)] [&_h2]:!text-[length:clamp(2.1rem,3.92vw,3.85rem)] [&_h2]:font-extrabold [&_h2]:!text-[color:var(--color-blue-750)] [&_p:last-child]:border-t-2 [&_p:last-child]:border-[color:var(--color-blue-750)] [&_p:last-child]:pt-5 [&_p:last-child]:text-[17px] [&_p:last-child]:font-normal"
-          />
-        </div>
-      </section>
-    ) : (
-      page?.body && (
-        <section class="wrap pb-[clamp(88px,9vw,136px)]">
-          <RichText blocks={page.body} lang={lang} />
-        </section>
-      )
-    )
-  }
-
-  <div class="wrap pb-[clamp(80px,8vw,120px)] empty:hidden"><slot /></div>
+  <section class:list={['section', page?.faqs?.length && 'bg-white']}>
+    <div class="wrap">
+      <RichText blocks={page?.body} lang={lang} />
+      <slot />
+    </div>
+  </section>
 
   {page?.faqs && page.faqs.length > 0 && <FaqSection lang={lang} faqs={page.faqs} />}
 

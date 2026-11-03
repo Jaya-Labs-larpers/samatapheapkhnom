@@ -1,14 +1,13 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
-import { getDirectorMessage, getOrgChart, getPage, getSiteSettings, getTeam } from '~/lib/content';
+import { getDirectorMessage, getOrgChart, getPage, getTeam } from '~/lib/content';
 import { localizePath, pick, t } from '~/lib/i18n/utils';
 import { resolveSeo } from '~/lib/seo';
 import { aboutPageJsonLd } from '~/lib/seo/page-schema';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import PageHero from '~/components/content/PageHero.astro';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 import SectionedBody from '~/components/content/SectionedBody.astro';
-import Icon from '~/components/Icon.astro';
+import SectionHeading from '~/components/content/SectionHeading.astro';
 import DirectorMessage from '~/components/content/DirectorMessage.astro';
 import OrgChart from '~/components/content/OrgChart.astro';
 import TeamStructure from '~/components/content/TeamStructure.astro';
@@ -21,15 +20,12 @@ interface Props {
 
 const { lang } = Astro.props;
 
-const [page, director, chart, team, settings] = await Promise.all([
+const [page, director, chart, team] = await Promise.all([
   getPage('about'),
   getDirectorMessage(),
   getOrgChart(),
   getTeam(),
-  getSiteSettings(),
 ]);
-const registration = pick(settings.registration, lang);
-const photoCaption = pick(page?.heroImage?.caption, lang);
 
 /**
  * The structure section appears only once there is a structure to show — an
@@ -56,102 +52,59 @@ const aboutPage = aboutPageJsonLd({
 ---
 
 <BaseLayout
+  headerOverlay
   lang={lang}
   title={seo.title}
   description={seo.description}
   ogImage={seo.ogImage}
   noindex={seo.noindex}
   jsonLd={aboutPage}
-  lcpImage={page?.heroImage}
 >
   <PageHero
-    size="xxl"
     lang={lang}
     title={heading}
     intro={intro.value}
     introLang={intro.isFallback ? intro.lang : undefined}
     trail={[{ label: heading }]}
-  >
-    {
-      registration.value && (
-        <p
-          class="m-0 flex items-start gap-2.5 text-sm text-[color:var(--color-ink-400)]"
-          lang={registration.isFallback ? registration.lang : undefined}
-        >
-          <Icon
-            name="check"
-            size={18}
-            class="mt-0.5 flex-none text-[color:var(--color-blue-700)]"
-          />
-          <span>{registration.value}</span>
-        </p>
-      )
-    }
-    <div class="flex flex-wrap gap-3">
-      <a href={localizePath('/reports', lang)} class="btn btn-primary">{t(lang, 'seeReports')}</a>
-      <a href={localizePath('/contact', lang)} class="btn btn-secondary">{t(lang, 'contactUs')}</a>
+  />
+
+  <div class="bg-white pb-[var(--spacing-section)]">
+    <SectionedBody lang={lang} body={page?.body} />
+  </div>
+
+  <section class="section bg-[color:var(--color-surface-sunken)]">
+    <div class="wrap">
+      <SectionHeading title={t(lang, 'directorMessage')} />
+      <div class="mt-8">
+        <DirectorMessage lang={lang} director={director} />
+      </div>
     </div>
-  </PageHero>
-
-  {
-    page?.heroImage && (
-      <figure class="m-0">
-        <div class="h-[clamp(320px,38vw,560px)]">
-          <ResponsiveImage
-            image={page.heroImage}
-            lang={lang}
-            alt=""
-            aspect="21/9"
-            eager
-            sizes="100vw"
-          />
-        </div>
-        {photoCaption.value && (
-          <figcaption
-            class="wrap py-2.5 text-sm text-[color:var(--color-ink-400)]"
-            lang={photoCaption.isFallback ? photoCaption.lang : undefined}
-          >
-            {photoCaption.value}
-          </figcaption>
-        )}
-      </figure>
-    )
-  }
-
-  <SectionedBody lang={lang} body={page?.body} variant="about" />
-
-  <section
-    aria-labelledby="director-title"
-    class="mx-auto max-w-[var(--container-page)] px-[var(--gutter-left)] py-[clamp(88px,9vw,136px)]"
-  >
-    <DirectorMessage lang={lang} director={director} />
   </section>
 
   {
     hasOrgChart && (
-      <section
-        aria-labelledby="structure-title"
-        class="mx-auto flex max-w-[var(--container-page)] flex-col gap-10 px-[var(--gutter-left)] pb-[clamp(88px,9vw,136px)]"
-      >
-        <h2 id="structure-title" class="t-xs m-0">
-          {t(lang, 'orgStructure')}
-        </h2>
-        <OrgChart lang={lang} chart={chart} />
+      <section class="section bg-white">
+        <div class="wrap">
+          <SectionHeading title={t(lang, 'orgStructure')} />
+          <div class="mt-6.5">
+            <OrgChart lang={lang} chart={chart} />
+          </div>
+        </div>
       </section>
     )
   }
 
   {
     team.length > 0 && (
-      <section aria-labelledby="team-title" class="band band--tint">
-        <div class="wrap-inner flex flex-col gap-12">
-          <div class="flex flex-wrap items-end justify-between gap-4">
-            <h2 id="team-title" class="t-lg m-0">
-              {t(lang, 'ourTeam')}
-            </h2>
-            <h3 class="eyebrow !text-sm">{t(lang, 'orgStructure')}</h3>
+      <section class:list={['section bg-white', hasOrgChart && 'pt-0']}>
+        <div class="wrap">
+          <SectionHeading title={t(lang, 'ourTeam')} />
+          <h3 class="mt-6 text-[length:var(--text-h3)] text-[color:var(--color-ink-900)]">
+            {t(lang, 'orgStructure')}
+          </h3>
+          <div class="mt-8">
+            <TeamStructure lang={lang} team={team} />
           </div>
-          <TeamStructure lang={lang} team={team} />
         </div>
       </section>
     )

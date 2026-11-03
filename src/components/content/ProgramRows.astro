@@ -1,150 +1,70 @@
 ---
 /**
- * The programs, numbered. `feature` is the home page's "What we do": the first
- * two as alternating image/text rows, the rest as a pair of columns. `cards`
- * is the "Other programs" strip on a programme page.
+ * The programs as a numbered list of ruled rows rather than a row of identical
+ * cards: index, title and summary, and a small photo at the end of the row.
+ * Each row is one stretched link, so the whole row is clickable and there is
+ * only ever one interactive element per program. The photo carries
+ * .card-media so card-morph grows it into the program's hero.
  */
 import type { Locale } from '~/lib/i18n/config';
 import type { Program } from '~/lib/content/types';
 import { localizePath, pick, t } from '~/lib/i18n/utils';
 import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
-import Icon from '~/components/Icon.astro';
 
 interface Props {
   lang: Locale;
   programs: Program[];
   /** Leaves one programme out while keeping every other row's number. */
   exclude?: string;
-  variant?: 'feature' | 'cards';
 }
 
-const { lang, programs, exclude, variant = 'feature' } = Astro.props;
-
-const items = programs
-  .map((program, index) => ({
-    program,
-    number: String(index + 1).padStart(2, '0'),
-    title: pick(program.title, lang),
-    summary: pick(program.summary, lang),
-    href: localizePath(`/programs/${program.slug}`, lang),
-  }))
-  .filter(({ program }) => program.slug !== exclude);
-
-const rows = variant === 'feature' ? items.slice(0, 2) : [];
-const columns = variant === 'feature' ? items.slice(2) : items;
+const { lang, programs, exclude } = Astro.props;
 ---
 
-{
-  rows.length > 0 && (
-    <ol class="m-0 flex list-none flex-col gap-[clamp(64px,7vw,112px)] p-0">
-      {rows.map((item, index) => (
-        <li class="grid items-center gap-[clamp(32px,4.5vw,72px)] lg:grid-cols-2">
-          <div
-            class:list={[
-              'aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)]',
-              index % 2 === 1 && 'lg:order-2',
-            ]}
-          >
+<ol class="program-rows reveal list-none p-0">
+  {
+    programs.map((program, index) => {
+      if (program.slug === exclude) return null;
+      const title = pick(program.title, lang);
+      const summary = pick(program.summary, lang);
+      return (
+        <li class="program-row group" data-cursor-label={t(lang, 'learnMore')}>
+          <span class="program-row__index" aria-hidden="true">
+            {String(index + 1).padStart(2, '0')}
+          </span>
+          <div class="program-row__text">
+            <h3 class="program-row__title" lang={title.isFallback ? title.lang : undefined}>
+              <a
+                href={localizePath(`/programs/${program.slug}`, lang)}
+                class="text-inherit no-underline before:absolute before:inset-0 before:content-['']"
+              >
+                {title.value}
+              </a>
+            </h3>
+            {summary.value && (
+              <p class="program-row__summary" lang={summary.isFallback ? summary.lang : undefined}>
+                {summary.value}
+              </p>
+            )}
+          </div>
+          <div class="program-row__media card-media">
             <ResponsiveImage
-              image={item.program.cardImage ?? item.program.image}
+              image={program.cardImage ?? program.image}
               lang={lang}
               alt=""
               aspect="4/3"
-              sizes="(min-width: 64rem) 46vw, 100vw"
+              sizes="(min-width: 64rem) 256px, 0px"
             />
           </div>
-          <div class="flex min-w-0 flex-col items-start gap-5">
-            <span class="t-index" aria-hidden="true" style="font-size:clamp(3.72rem,6.2vw,6.2rem)">
-              {item.number}
-            </span>
-            <h3
-              class="t-h3-lg m-0 max-w-[22ch]"
-              lang={item.title.isFallback ? item.title.lang : undefined}
-            >
-              <a href={item.href} class="!text-inherit no-underline hover:underline">
-                {item.title.value}
-              </a>
-            </h3>
-            {item.summary.value && (
-              <p
-                class="m-0 max-w-[52ch] text-[color:var(--color-ink-400)]"
-                lang={item.summary.isFallback ? item.summary.lang : undefined}
-              >
-                {item.summary.value}
-              </p>
-            )}
-            <a href={item.href} class="link-arrow">
-              {t(lang, 'learnMore')}
-              <span class="sr-only">: {item.title.value}</span>
-              <Icon name="arrow-right" size={18} />
-            </a>
-          </div>
-        </li>
-      ))}
-    </ol>
-  )
-}
-
-{
-  columns.length > 0 && (
-    <ol
-      class:list={[
-        'm-0 grid list-none gap-x-[clamp(32px,4.5vw,72px)] gap-y-12 p-0 sm:grid-cols-2',
-        variant === 'cards' && 'lg:grid-cols-3',
-        rows.length > 0 && 'mt-[clamp(64px,7vw,112px)]',
-      ]}
-    >
-      {columns.map((item) => (
-        <li class="flex min-w-0 flex-col gap-4">
-          <div class="aspect-[3/2] overflow-hidden rounded-[var(--radius-lg)]">
-            <ResponsiveImage
-              image={item.program.cardImage ?? item.program.image}
-              lang={lang}
-              alt=""
-              aspect="3/2"
-              sizes="(min-width: 64rem) 32vw, (min-width: 40rem) 46vw, 100vw"
-            />
-          </div>
-          <span
-            class:list={['t-index', variant === 'cards' && '!text-[14px] !leading-none']}
-            aria-hidden="true"
-            style={variant === 'feature' ? 'font-size:clamp(2.79rem,4.34vw,4.34rem)' : undefined}
-          >
-            {item.number}
+          <span class="program-row__arrow" aria-hidden="true">
+            →
           </span>
-          <h3
-            class:list={[
-              't-h3-lg m-0',
-              variant === 'feature' &&
-                '!text-[length:calc(clamp(1.43rem,2.11vw,1.98rem)*var(--display-scale))]',
-              variant === 'cards' && '!text-[length:calc(1.54rem*var(--display-scale))]',
-            ]}
-            lang={item.title.isFallback ? item.title.lang : undefined}
-          >
-            <a href={item.href} class="!text-inherit no-underline hover:underline">
-              {item.title.value}
-            </a>
-          </h3>
-          {item.summary.value && (
-            <p
-              class:list={[
-                'm-0 max-w-[52ch] text-[color:var(--color-ink-400)]',
-                variant === 'cards' && 'line-clamp-4 text-base',
-              ]}
-              lang={item.summary.isFallback ? item.summary.lang : undefined}
-            >
-              {item.summary.value}
-            </p>
-          )}
-          {variant === 'feature' && (
-            <a href={item.href} class="link-arrow self-start">
-              {t(lang, 'learnMore')}
-              <span class="sr-only">: {item.title.value}</span>
-              <Icon name="arrow-right" size={18} />
-            </a>
-          )}
         </li>
-      ))}
-    </ol>
-  )
-}
+      );
+    })
+  }
+</ol>
+
+<script>
+  import '~/lib/card-morph';
+</script>

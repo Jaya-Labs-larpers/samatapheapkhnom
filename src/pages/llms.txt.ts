@@ -70,7 +70,6 @@ export const GET: APIRoute = async ({ site }) => {
           .replace('{email}', settings.email ?? ''),
       ),
     },
-    { title: en.pageDonate, path: '/donate/', description: clean(en.donateHeroIntro) },
     cmsPageLine(faq, '/faq/', en.pageFaq),
     { title: en.pageReports, path: '/reports/', description: clean(en.metaReports) },
     cmsPageLine(safeguarding, '/safeguarding/', en.pageSafeguarding),

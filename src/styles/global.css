@@ -3,79 +3,198 @@
 
 /* ============================================================================
    Component layer.
-   Primitives that repeat across many pages (type roles, bands, buttons, ruled
-   lists). One-off layout lives as utilities in the .astro file.
+   Deliberately small — only primitives that repeat across many components and
+   would be noise as long utility strings. Everything else uses utilities
+   directly in the .astro file where it can be read in context.
    ========================================================================= */
 
 /*
  * Tailwind's preflight hides [hidden] with a :where() rule of zero specificity,
- * so any display utility on the same element wins the cascade. Make the
+ * so any display utility on the same element (e.g. `flex` on the mobile nav
+ * panel) wins the cascade and the "hidden" element stays visible. Make the
  * attribute authoritative.
  */
 [hidden] {
   display: none !important;
 }
 
+/* ============================================================================
+   TEXT MEASURE
+   ----------------------------------------------------------------------------
+   Every text element inside <main> is capped at one shared width and anchored
+   to the left edge of its .wrap, so running text starts and ends on the same
+   two vertical lines on every page — the same box, page after page. The header
+   and footer sit outside <main> and are deliberately untouched: their job is to
+   span the full width.
+
+   Written with :where() so the rule carries ZERO specificity. It is a default,
+   not a decree — any max-w-* utility in the markup still wins the cascade, so a
+   wide table, a card grid or a full-bleed figure opts out with `max-w-none`
+   without an !important anywhere.
+
+   Responsive behaviour comes for free: a max-width is a cap, not a width, so
+   below ~44rem every one of these elements is simply as wide as its column, and
+   .wrap's fluid --spacing-gutter keeps the side margins identical at every
+   breakpoint. The Khmer value arrives through --measure (theme.css), which the
+   language cascade sets.
+   ========================================================================= */
 @layer base {
+  main :where(p, h1, h2, h3, h4, h5, h6, blockquote, dl, figcaption) {
+    max-width: var(--measure);
+  }
+
+  /* Every page but the home page sits on the home hero's cool tint. Long pages
+     band their sections white and --color-surface-sunken in the templates. */
+  main:not(:has(> [data-home-hero])) {
+    background: var(--color-surface-subtle);
+  }
+
+  /* A page with no hero band (404, an activity) still fills the first screen
+     with its own tint before the footer can show. */
   main {
+    min-height: calc(100vh - var(--header-h));
     min-height: calc(100svh - var(--header-h));
-  }
-  a {
-    color: var(--color-blue-700);
-  }
-  a:hover {
-    color: var(--color-blue-800);
-  }
-  img {
-    height: auto;
   }
 }
 
 /* ============================================================================
-   CHROME MOTION — header, page crossfade, mobile menu, dialogs, accordion.
-   The page itself is still: no reveals, no parallax.
+   MOTION
+   ----------------------------------------------------------------------------
+   Every animation here is a *continuity transition* or *feedback* — it orients
+   the visitor or confirms their action. Nothing decorates.
+
+   Deliberately still absent: parallax. Content boxes rise into place from below
+   as they come into view (.reveal), and chosen impact figures count up
+   (~/lib/count-up); both replay whenever the visitor scrolls back down to
+   them, and neither ever hides something already on screen.
+
+   Script cost: one pageswap listener (card-morph.ts) that names the clicked
+   card's photo, the inline pagereveal listener in BaseLayout that marks a
+   page arriving by a view transition, and the hero butterfly loop. Page
+   transitions are the native cross-document API, so unsupported browsers
+   navigate exactly as before.
    ========================================================================= */
+
+/* Lets the accordion transition between 0 and `auto` height. */
 :root {
   interpolate-size: allow-keywords;
-  --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- Page transitions ----------------------------------------------------- */
+@view-transition {
+  navigation: auto;
+}
+
+/*
+ * The chrome holds still and only the content changes — a *continuity
+ * transition*. Crossfading the header too would make the logo and nav flicker
+ * on every click, which reads as a page reload rather than a smooth move.
+ */
+header.site-header {
+  view-transition-name: site-header;
+  height: var(--header-h);
+  background: var(--color-canvas);
+  border-bottom: 1px solid var(--color-line-subtle);
+  transition:
+    background-color var(--duration-base) var(--ease-out-soft),
+    border-color var(--duration-base) var(--ease-out-soft),
+    box-shadow var(--duration-base) var(--ease-out-soft),
+    translate 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: translate;
+}
+
+/* Down the page, a returning header needs a lift to separate it from the text
+   it now sits over. */
+header.site-header[data-scrolled] {
+  box-shadow: var(--shadow-md);
+}
+
+/* Scrolled away while reading down; any upward scroll brings it straight back
+   (the script in Header.astro). Leaving is a touch slower and eases in, so it
+   slides off rather than snapping; returning is quick, because the visitor
+   asked for it. */
+header.site-header[data-hidden] {
+  translate: 0 -100%;
+  box-shadow: none;
+  transition-timing-function:
+    var(--ease-out-soft), var(--ease-out-soft), var(--ease-out-soft), cubic-bezier(0.4, 0, 1, 1);
+  transition-duration: var(--duration-base), var(--duration-base), var(--duration-base), 360ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  header.site-header,
+  header.site-header[data-hidden] {
+    transition-duration: 0s;
+  }
+}
+
+/* How much of the top of the window the header covers right now: sticky
+   columns sit this far down, and close the gap when the header scrolls away. */
+:root {
   --header-offset: var(--header-h);
 }
 :root:has(header.site-header[data-hidden]) {
   --header-offset: 0px;
 }
 
-@view-transition {
-  navigation: auto;
+/*
+ * Overlay mode, for pages that open on a full-bleed hero: the header keeps its
+ * place but gives up its surface, so the art runs to the top of the window
+ * instead of starting under a white band. It takes the paper back as soon as
+ * the page scrolls — past that point the nav would sit on running text, and no
+ * amount of contrast juggling makes that legible.
+ *
+ * `data-at-top` is rendered server-side and only corrected by the observer in
+ * Header.astro, so a page loaded at the top paints transparent immediately
+ * instead of flashing white.
+ */
+header.site-header[data-overlay][data-at-top] {
+  background: transparent;
+  border-bottom-color: transparent;
+  box-shadow: none;
 }
 
-header.site-header {
-  view-transition-name: site-header;
-  background: var(--color-canvas);
-  border-bottom: 1px solid var(--color-line);
-  transition:
-    box-shadow var(--duration-base) var(--ease-out-soft),
-    translate 300ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: translate;
+/*
+ * Marks the scroll depth at which the header takes its background back. A bare
+ * marker observed once, rather than a scroll listener that runs every frame.
+ */
+.header-sentinel {
+  position: absolute;
+  top: 120px;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
 }
-header.site-header[data-scrolled] {
-  box-shadow: var(--shadow-md);
+
+/*
+ * The other half of overlay mode: the hero starts at the very top of the
+ * window rather than below the header, so its art is what fills that band.
+ * Content inside the hero still has to clear the header, which is why the
+ * section pays the height back as padding where the art is a background
+ * layer rather than a block in the flow.
+ *
+ * The band alone fills the first screen on every device. svh is the window
+ * with a phone's browser bars showing, so nothing else appears above the fold.
+ */
+.hero-overlap {
+  margin-top: calc(-1 * var(--header-h));
+  min-height: 100vh;
+  min-height: 100svh;
 }
-header.site-header[data-hidden] {
-  translate: 0 -100%;
-  box-shadow: none;
-  transition-timing-function: var(--ease-out-soft), cubic-bezier(0.4, 0, 1, 1);
-  transition-duration: var(--duration-base), 360ms;
-}
+
 footer.site-footer {
   view-transition-name: site-footer;
 }
 main {
   view-transition-name: page-content;
 }
+
 ::view-transition-group(site-header),
 ::view-transition-group(site-footer) {
   animation: none;
 }
+
 @keyframes page-enter {
   from {
     opacity: 0;
@@ -86,11 +205,126 @@ main {
     opacity: 0;
   }
 }
+
+/*
+ * Asymmetric: the outgoing page leaves quickly, the incoming one eases in.
+ * Only a crossfade: nothing on either page can be clicked while a transition
+ * runs, so it stays short, and the incoming page's slow rise plays on the
+ * live page instead (Page arrival, below).
+ */
 ::view-transition-old(page-content) {
   animation: page-exit 110ms ease-out both;
 }
 ::view-transition-new(page-content) {
   animation: page-enter 260ms var(--ease-out-soft) both;
+}
+
+/*
+ * A clicked card's photo grows into the detail page's hero (see card-morph.ts).
+ * The two crops differ, so both snapshots cover the group rather than stretch.
+ */
+::view-transition-group(card-media) {
+  animation-duration: 320ms;
+  animation-timing-function: var(--ease-out-soft);
+}
+::view-transition-old(card-media),
+::view-transition-new(card-media) {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- Box reveal ----------------------------------------------------------
+ * Content boxes (cards, lists, stat and quote panels, the call-to-action
+ * band) rise into place from below as they come into view, and again each time
+ * the visitor scrolls back down to them. The script (~/lib/reveal) only sets a
+ * box aside while it is fully below the window, so nothing visible is hidden,
+ * and it does nothing at all under reduced motion. `translate` rather than `transform`, so a card's hover
+ * lift is untouched; the transition is removed again once it has played. */
+:root {
+  --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-pop: cubic-bezier(0.34, 1.3, 0.64, 1);
+  --reveal-rise: 48px;
+  --reveal-fade: 700ms;
+  --reveal-move: 900ms;
+}
+.reveal[data-reveal='pending'] {
+  opacity: 0;
+  translate: 0 var(--reveal-rise);
+}
+.reveal[data-reveal='shown'] {
+  transition:
+    opacity var(--reveal-fade) var(--ease-reveal) var(--reveal-delay, 0ms),
+    translate var(--reveal-move) var(--ease-pop) var(--reveal-delay, 0ms);
+}
+
+/* A revealed grid whose cells then arrive one after another (the partner
+   wall). Each cell carries its place as --i, capped so the whole cascade ends
+   inside the box's own 900ms, before reveal.ts hands the box back. */
+.reveal-cascade[data-reveal='pending'] > li > * {
+  opacity: 0;
+  translate: 0 10px;
+}
+.reveal-cascade[data-reveal='shown'] > li > * {
+  transition:
+    opacity 420ms var(--ease-reveal),
+    translate 420ms var(--ease-pop);
+  transition-delay: calc(var(--reveal-delay, 0ms) + 120ms + min(var(--i, 0), 10) * 35ms);
+}
+
+/* The unhurried cascade: rows rise one by one from below, each row's text
+   a beat after its name. The box carries data-reveal-ms long enough for the
+   last row to finish before reveal.ts hands it back. */
+.reveal-cascade--slow[data-reveal='pending'] > li > * {
+  translate: 0 24px;
+}
+.reveal-cascade--slow[data-reveal='shown'] > li > * {
+  transition:
+    opacity 800ms var(--ease-reveal),
+    translate 800ms var(--ease-pop);
+  transition-delay: calc(var(--reveal-delay, 0ms) + 200ms + min(var(--i, 0), 10) * 160ms);
+}
+.reveal-cascade--slow[data-reveal='shown'] > li > :last-child {
+  transition-delay: calc(var(--reveal-delay, 0ms) + 320ms + min(var(--i, 0), 10) * 160ms);
+}
+
+/* --- Page arrival -----------------------------------------------------------
+ * A page reached by a view transition lazy-loads in the way a box does on
+ * scroll: each section of <main> rises into place with the box reveal's
+ * motion, 90ms after the one before, and the hero's butterflies follow on
+ * beats of their own — as they also do on the first page of a visit, where
+ * ButterflyField marks the flock itself. html[data-arriving] comes from the
+ * inline script in BaseLayout. `backwards`, so nothing is held once it ends:
+ * a box set aside by the reveal keeps its own state underneath. */
+@keyframes arrive-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes arrive-rise {
+  from {
+    translate: 0 var(--reveal-rise);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-arriving] main > *,
+  html[data-arriving] .flock-bird,
+  .butterfly-flock[data-arriving] > .flock-bird {
+    animation:
+      arrive-fade var(--reveal-fade) var(--ease-reveal) var(--arrive-delay, 0ms) backwards,
+      arrive-rise var(--reveal-move) var(--ease-pop) var(--arrive-delay, 0ms) backwards;
+  }
+}
+main > :nth-child(2),
+.flock-bird:nth-child(1) {
+  --arrive-delay: 90ms;
+}
+main > :nth-child(3),
+.flock-bird:nth-child(2) {
+  --arrive-delay: 180ms;
+}
+main > :nth-child(n + 4),
+.flock-bird:nth-child(3) {
+  --arrive-delay: 270ms;
 }
 
 /* --- Mobile navigation panel ---------------------------------------------- */
@@ -246,178 +480,22 @@ details[open] > summary > .disclosure-icon {
     padding-left: var(--gutter-left);
     padding-right: var(--gutter-right);
   }
-  /* Banded sections (navy, tint) keep the band full-bleed and the content at
-     1312px, so the copy lines up with the 1440px pages above and below. */
-  .wrap-inner {
-    width: 100%;
-    max-width: var(--container-inner);
-    margin-inline: auto;
-  }
-  .band {
-    padding: clamp(88px, 9vw, 136px) var(--gutter-left) clamp(88px, 9vw, 136px) var(--gutter-right);
-  }
-  .band--tight {
-    padding-block: clamp(64px, 6vw, 96px);
-  }
-  .band--navy {
-    background: var(--color-blue-900);
-    color: #fff;
-  }
-  .band--tint {
-    background: var(--color-blue-50);
-  }
-  .band--wing {
-    background: var(--color-blue-200);
-    color: var(--color-ink-900);
-  }
-  .band--blue {
-    background: var(--color-blue-700);
-    color: #fff;
-  }
+
   .section {
-    padding-block: clamp(88px, 9vw, 136px);
-  }
-  .section--sm {
-    padding-block: clamp(80px, 8vw, 120px);
+    padding-block: var(--spacing-section);
   }
 
-  /* --- Type roles --------------------------------------------------------- *
-   * Display sizes are fluid and multiplied by --display-scale (1, or 0.74 in
-   * Khmer, whose glyphs run taller). Figures are Latin numerals in both. */
-  .t-xxl,
-  .t-xl,
-  .t-lg,
-  .t-md,
-  .t-sm,
-  .t-xs,
-  .t-h3,
-  .t-h3-lg {
-    font-family: var(--font-display);
-    font-weight: 800;
-    line-height: 1.08;
-    letter-spacing: -0.02em;
-    color: var(--color-blue-700);
-  }
-  .t-xxl {
-    font-size: calc(clamp(3.85rem, 9.1vw, 8.75rem) * var(--display-scale));
-  }
-  .t-xl {
-    font-size: calc(clamp(2.8rem, 6.02vw, 6.125rem) * var(--display-scale));
-  }
-  .t-lg {
-    font-size: calc(clamp(2.45rem, 4.9vw, 4.9rem) * var(--display-scale));
-  }
-  .t-md {
-    font-size: calc(clamp(2.1rem, 3.92vw, 3.85rem) * var(--display-scale));
-  }
-  .t-sm {
-    font-size: calc(clamp(1.925rem, 3.5vw, 3.325rem) * var(--display-scale));
-  }
-  .t-xs {
-    font-size: calc(clamp(1.575rem, 2.52vw, 2.45rem) * var(--display-scale));
-  }
-  .t-h3-lg {
-    font-weight: 700;
-    line-height: 1.05;
-    font-size: calc(clamp(1.54rem, 2.46vw, 2.2rem) * var(--display-scale));
-  }
-  .t-h3 {
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: normal;
-    font-size: calc(1.65rem * var(--display-scale));
-  }
-  :lang(km) .t-xxl,
-  :lang(km) .t-xl,
-  :lang(km) .t-lg,
-  :lang(km) .t-md,
-  :lang(km) .t-sm,
-  :lang(km) .t-xs,
-  :lang(km) .t-h3,
-  :lang(km) .t-h3-lg {
-    font-weight: 700;
-    line-height: 1.4;
-    letter-spacing: normal;
-  }
-  .on-navy .t-xxl,
-  .on-navy .t-xl,
-  .on-navy .t-lg,
-  .on-navy .t-md,
-  .on-navy .t-sm,
-  .on-navy .t-h3-lg,
-  .on-navy .t-h3 {
-    color: #fff;
-  }
-  /* The one oversized figure. */
-  .t-figure {
-    font-family: var(--font-display);
-    font-weight: 800;
-    line-height: 0.95;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
-    color: var(--color-sky-400);
-    font-size: clamp(5.425rem, 10.54vw, 10.075rem);
-  }
-  .t-numeral {
-    font-family: var(--font-display);
-    font-weight: 800;
-    line-height: 1.08;
-    font-variant-numeric: tabular-nums;
-    font-size: clamp(2.45rem, 4.2vw, 3.85rem);
-  }
-  /* Big index number on a programme (01, 02 …). */
-  .t-index {
-    font-family: var(--font-display);
-    font-weight: 800;
-    line-height: 0.95;
-    color: var(--color-blue-700);
-    font-size: clamp(2.79rem, 4.34vw, 4.34rem);
-  }
-  .t-statement {
-    font-size: clamp(1.5rem, 2.4vw, 2.25rem);
-    line-height: 1.35;
-    font-weight: 500;
-  }
-  .t-lead {
-    font-size: clamp(1.25rem, 1.8vw, 1.5625rem);
-    line-height: 1.45;
-    font-weight: 500;
-  }
-  .t-lead-sm {
-    font-size: clamp(1.125rem, 1.5vw, 1.3125rem);
-    line-height: 1.55;
-  }
-  :lang(km) .t-statement,
-  :lang(km) .t-lead,
-  :lang(km) .t-lead-sm {
-    line-height: 1.8;
-  }
-  .eyebrow {
-    font-family: var(--font-display);
-    font-size: 0.8125rem;
-    font-weight: 700;
-    line-height: 1.4;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-ink-400);
-  }
-  .on-navy .eyebrow {
-    color: var(--color-sky-400);
-  }
-  .on-wing .eyebrow {
-    color: var(--color-ink-900);
-  }
-  :lang(km) .eyebrow {
-    letter-spacing: normal;
-    text-transform: none;
-    font-family: var(--font-khmer);
-    font-size: 0.9375rem;
-  }
-  .muted {
-    color: var(--color-ink-400);
-  }
-  .on-navy .muted {
-    color: var(--color-on-navy);
+  /*
+   * The same cap, as a class, for the containers the element rule cannot name:
+   * a <ul> or a <div> that holds text but is also a layout box (a report list,
+   * an article column). Left-anchored explicitly so it never drifts to centre
+   * inside a parent that centres its children.
+   */
+  .measure {
+    max-width: var(--measure);
+    margin-inline-start: 0;
+    margin-inline-end: auto;
+    min-width: 0;
   }
 
   /* --- Buttons ----------------------------------------------------------- */
@@ -425,85 +503,73 @@ details[open] > summary > .disclosure-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.625rem;
-    min-height: 3.25rem;
-    padding: 0 1.5rem;
-    border: 2px solid transparent;
+    gap: 0.5rem;
+    padding: 0.8125rem 1.375rem;
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
-    font-family: var(--font-sans);
-    font-size: 1.0625rem;
-    font-weight: 700;
-    line-height: 1.2;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1;
     text-decoration: none;
+    white-space: nowrap;
     cursor: pointer;
-    box-sizing: border-box;
     transition:
       background-color var(--duration-fast) var(--ease-out-soft),
       border-color var(--duration-fast) var(--ease-out-soft),
-      color var(--duration-fast) var(--ease-out-soft);
-  }
-  .btn-lg {
-    min-height: 3.5rem;
-    padding: 0 1.75rem;
-    font-size: 1.125rem;
+      color var(--duration-fast) var(--ease-out-soft),
+      box-shadow var(--duration-fast) var(--ease-out-soft);
   }
   .btn-sm {
-    min-height: 2.75rem;
-    padding: 0 1rem;
-    font-size: 0.9375rem;
+    padding: 0.5625rem 0.9375rem;
+    font-size: 0.875rem;
   }
   .btn-block {
     width: 100%;
   }
+
   .btn-primary {
     background: var(--color-blue-700);
     color: #fff;
   }
   .btn-primary:hover {
     background: var(--color-blue-800);
-    color: #fff;
+    box-shadow: var(--shadow-md);
   }
-  /* The cyan action on navy (and the header's Donate). */
-  .btn-accent {
-    background: var(--color-sky-400);
-    color: #0a0a0a;
-  }
-  .btn-accent:hover {
-    background: var(--color-sky-200);
-    color: #0a0a0a;
-  }
+
   .btn-secondary {
-    background: transparent;
-    border-color: var(--color-blue-700);
-    color: var(--color-blue-700);
+    background: #fff;
+    color: var(--color-blue-800);
+    border-color: var(--color-line-strong);
   }
   .btn-secondary:hover {
+    border-color: var(--color-blue-700);
     background: var(--color-blue-50);
-    color: var(--color-blue-800);
-    border-color: var(--color-blue-800);
   }
+
   .btn-inverse {
     background: #fff;
     color: var(--color-blue-900);
   }
   .btn-inverse:hover {
     background: var(--color-sky-50);
-    color: var(--color-blue-900);
   }
+
   .btn-inverse-outline {
     background: transparent;
-    border-color: #fff;
     color: #fff;
+    border-color: rgb(255 255 255 / 0.45);
   }
   .btn-inverse-outline:hover {
-    background: rgb(255 255 255 / 0.12);
-    color: #fff;
+    background: rgb(255 255 255 / 0.1);
+    border-color: #fff;
   }
+
   .btn[aria-disabled='true'],
   .btn:disabled {
     background: var(--color-surface-sunken);
-    color: var(--color-ink-400);
+    color: var(--color-ink-300);
     border-color: var(--color-line);
+    box-shadow: none;
     cursor: not-allowed;
   }
 
@@ -511,145 +577,1433 @@ details[open] > summary > .disclosure-icon {
   .link-arrow {
     display: inline-flex;
     align-items: center;
-    gap: 0.625rem;
-    min-height: 2.75rem;
-    font-size: 1.125rem;
+    gap: 0.4375rem;
+    color: var(--color-blue-800);
     font-weight: 600;
-    color: var(--color-blue-700);
-    text-decoration: underline;
-    text-underline-offset: 7px;
-    text-decoration-thickness: 2px;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-blue-200);
+    padding-bottom: 2px;
+    transition: border-color var(--duration-fast) var(--ease-out-soft);
   }
   .link-arrow:hover {
-    color: var(--color-blue-800);
+    border-color: var(--color-blue-700);
   }
-  .link-arrow > svg,
   .link-arrow > .arrow {
-    flex: none;
     transition: transform var(--duration-fast) var(--ease-out-soft);
   }
-  .link-arrow:hover > svg,
-  .link-arrow:hover > .arrow {
+  .link-arrow:hover > .arrow,
+  .btn:hover > .arrow {
     transform: translateX(3px);
   }
-  .on-navy .link-arrow {
+
+  /* --- Program rows (home) ---------------------------------------------- *
+   * Ruled rows on the paper: index, title and summary, a small photo, an
+   * arrow. The photo and arrow only join on wide screens; on a phone a row is
+   * index plus text. */
+  .program-rows {
+    border-top: 1px solid var(--color-line);
+  }
+  /* On a phone the index sits above the title and the summary is cut to three
+     lines: the row is a signpost to the programme page, not the page itself. */
+  .program-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem 1.5rem;
+    align-items: start;
+    padding-block: 1.375rem;
+    border-bottom: 1px solid var(--color-line);
+    transition: background-color var(--duration-base) var(--ease-out-soft);
+  }
+  .program-row__index {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--color-blue-700);
+  }
+  .program-row__title {
+    font-size: clamp(1.125rem, 0.85rem + 1.4vw, 2rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    transition: color var(--duration-fast) var(--ease-out-soft);
+  }
+  .program-row__summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    margin-top: 0.5rem;
+    max-width: 58ch;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--color-ink-400);
+  }
+  .program-row__media,
+  .program-row__arrow {
+    display: none;
+  }
+  @media (min-width: 48rem) {
+    .program-row {
+      grid-template-columns: 3.25rem minmax(0, 1fr);
+      gap: 0.75rem 1.5rem;
+      padding-block: 1.75rem;
+    }
+    .program-row__index {
+      padding-top: 0.35rem;
+    }
+    .program-row__summary {
+      -webkit-line-clamp: unset;
+      margin-top: 0.625rem;
+      line-height: 1.6;
+    }
+  }
+  @media (min-width: 64rem) {
+    /* A compact thumbnail sets every row's height; the summary is clamped so
+     * no program can stretch its row past it. */
+    .program-row {
+      grid-template-columns: 4.5rem minmax(0, 1fr) 16rem 2rem;
+      grid-template-rows: 12rem;
+      align-items: center;
+      gap: 0 2.5rem;
+      padding-block: 1.5rem;
+    }
+    .program-row__index {
+      align-self: start;
+      padding-top: 0.5rem;
+    }
+    .program-row__summary {
+      -webkit-line-clamp: 4;
+    }
+    .program-row__media.card-media {
+      display: block;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: auto;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+    }
+    .program-row__arrow {
+      display: block;
+      font-size: 1.5rem;
+      color: var(--color-blue-700);
+      transition: translate 480ms var(--ease-reveal);
+    }
+  }
+  .program-row:has(a:focus-visible) {
+    background: var(--color-blue-50);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .program-row:hover {
+      background: var(--color-blue-50);
+    }
+    .program-row:hover .program-row__title {
+      color: var(--color-blue-800);
+    }
+    .program-row:hover .program-row__arrow {
+      translate: 6px 0;
+    }
+    .program-row:hover .card-media img {
+      transform: scale(1.05);
+    }
+  }
+
+  /* --- Activities, editorial (home) -------------------------------------- *
+   * Two columns with the right one dropped, so the latest reports read as a
+   * sequence rather than a product grid. One column on phones. */
+  .activity-editorial {
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 48rem) {
+    .activity-editorial {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: clamp(1.5rem, 4vw, 4rem);
+      row-gap: 3rem;
+    }
+    .activity-editorial > :nth-child(even) {
+      margin-top: clamp(3rem, 8vw, 7.5rem);
+    }
+  }
+
+  /* --- About page body (SectionedBody) ---------------------------------- *
+   * Each "## " section of the CMS body gets a label column and a content
+   * column, divided by a hairline. The label sticks beside long prose so the
+   * visitor always knows which part they are reading. */
+  .about-lead {
+    font-size: var(--text-lead);
+    line-height: 1.7;
+    color: var(--color-ink-900);
+  }
+  .about-section {
+    padding-top: clamp(2.5rem, 2rem + 3vw, 5rem);
+  }
+  .about-section__grid {
+    display: grid;
+    gap: 1rem;
+    padding-top: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
+    border-top: 1px solid var(--color-line);
+  }
+  @media (min-width: 64rem) {
+    .about-section__grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2.6fr);
+      gap: 3rem;
+    }
+    .about-section--prose .about-section__label {
+      position: sticky;
+      top: calc(var(--header-offset) + 1.5rem);
+      align-self: start;
+      transition: top 320ms var(--ease-out-soft);
+    }
+  }
+  .about-section__label {
+    padding-top: 0.4rem;
+  }
+
+  .prose.about-statement p {
+    max-width: 30ch;
+    font-size: var(--text-statement);
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    color: var(--color-ink-900);
+    text-align: start;
+    hyphens: manual;
+  }
+  .prose.about-statement:lang(km) p {
+    max-width: 36ch;
+    font-size: var(--text-lead);
+    line-height: 1.9;
+    letter-spacing: normal;
+  }
+
+  .about-terms {
+    border-top: 1px solid var(--color-line);
+  }
+  .about-term {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    gap: 0.25rem 1rem;
+    padding: 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+    transition: background-color var(--duration-base) var(--ease-out-soft);
+  }
+  .about-term__index {
+    grid-row: span 2;
+    padding-top: 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--color-blue-700);
+  }
+  .about-term__name {
+    font-size: clamp(1.125rem, 0.95rem + 1vw, 1.625rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    color: var(--color-ink-900);
+  }
+  .about-term__text {
+    max-width: 60ch;
+    font-size: 0.9688rem;
+    line-height: 1.6;
+    color: var(--color-ink-600);
+  }
+  @media (min-width: 48rem) {
+    .about-term {
+      grid-template-columns: 3.5rem minmax(12rem, 1fr) minmax(0, 1.8fr);
+      align-items: baseline;
+      gap: 1.5rem;
+    }
+    .about-term__index {
+      grid-row: auto;
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .about-term:hover {
+      background: var(--color-blue-50);
+    }
+  }
+
+  .about-facts ul {
+    padding-left: 0;
+    list-style: none;
+    border-top: 1px solid var(--color-line);
+  }
+  .about-facts li {
+    margin: 0;
+    padding-block: 1.125rem;
+    border-bottom: 1px solid var(--color-line);
+    font-size: clamp(1rem, 0.85rem + 0.9vw, 1.5rem);
+    line-height: 1.4;
+    color: var(--color-ink-900);
+    text-align: start;
+  }
+  .prose.about-facts li + li {
+    margin-top: 0;
+  }
+
+  .about-prose--lead > p:first-child {
+    font-size: var(--text-lead);
+    line-height: 1.65;
+    color: var(--color-ink-900);
+  }
+
+  .statement-logos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  .statement-logo {
+    display: grid;
+    place-items: center;
+    width: 10rem;
+    aspect-ratio: 5 / 3;
+    padding: 0.875rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background: #fff;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+    color: var(--color-ink-600);
+  }
+  .statement-logo img {
+    max-height: 100%;
+  }
+
+  /* --- Programme detail ---------------------------------------------------- *
+   * Hero: text and photo side by side on wide screens, photo first under the
+   * text on phones. The photo is the morph target for the card that opened it. */
+  /* The photo runs to the top of the window, under the transparent header, and
+     fades into the page tint wherever text or the nav sits on it. On a phone it
+     sits above the text; from 64rem it fills the whole band behind it. */
+  .program-hero {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--color-surface-subtle);
+  }
+  .program-hero__media {
+    position: relative;
+    flex: none;
+    height: calc(var(--header-h) + 56vw);
+    max-height: 32rem;
+  }
+  .program-hero__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        180deg,
+        rgb(245 247 253 / 0.95) 0,
+        rgb(245 247 253 / 0.85) calc(var(--header-h) * 0.9),
+        rgb(245 247 253 / 0) calc(var(--header-h) * 1.6)
+      ),
+      linear-gradient(0deg, var(--color-surface-subtle) 0, rgb(245 247 253 / 0) 30%);
+  }
+  .program-hero__inner {
+    flex: 1;
+    padding-block: 1rem 3rem;
+  }
+  @media (min-width: 64rem) {
+    .program-hero__media {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      height: auto;
+      max-height: none;
+    }
+    .program-hero__media::after {
+      background:
+        linear-gradient(
+          180deg,
+          rgb(245 247 253 / 0.85) 0,
+          rgb(245 247 253 / 0) calc(var(--header-h) * 1.4)
+        ),
+        linear-gradient(
+          90deg,
+          var(--color-surface-subtle) 0,
+          rgb(245 247 253 / 0.94) 38%,
+          rgb(245 247 253 / 0.4) 62%,
+          rgb(245 247 253 / 0) 80%
+        );
+    }
+    .program-hero__inner {
+      display: flex;
+      align-items: center;
+      min-height: 36rem;
+      padding-block: calc(var(--header-h) + 3rem) 4rem;
+    }
+    .program-hero__text {
+      max-width: 34rem;
+    }
+  }
+
+  .program-stats {
+    display: grid;
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background: var(--color-line);
+  }
+  .program-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.75rem 1.5rem;
+    background: #fff;
+    container-type: inline-size;
+  }
+  /* A long figure such as "33,910 kg" shrinks to its tile rather than clipping
+     at the tile's edge. --value-em is the figure's width in em, estimated by
+     ProgramStats from the glyph widths of the stat font. */
+  .program-stat__value {
+    font-size: min(var(--text-stat), calc(100cqi / var(--value-em, 1)));
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: var(--text-stat--letter-spacing);
+    color: var(--color-blue-700);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .program-stat__label {
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-ink-900);
+  }
+  .program-stat__context {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-ink-400);
+  }
+  @media (min-width: 40rem) {
+    .program-stats {
+      grid-template-columns: repeat(var(--sm-cols), minmax(0, 1fr));
+    }
+    .program-stats--featured > :first-child {
+      grid-column: span 2;
+    }
+  }
+  @media (min-width: 64rem) {
+    .program-stats {
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    }
+    .program-stats--featured > :first-child {
+      grid-column: auto;
+      grid-row: span 2;
+      justify-content: flex-end;
+      padding: 2.25rem 2rem;
+      background: var(--color-blue-900);
+    }
+    .program-stats--featured > :first-child .program-stat__value {
+      font-size: min(calc(var(--text-stat) * 1.6), calc(100cqi / var(--value-em, 1)));
+      color: #fff;
+    }
+    .program-stats--featured > :first-child .program-stat__label {
+      font-size: 1.125rem;
+      color: #fff;
+    }
+    .program-stats--featured > :first-child .program-stat__context {
+      color: var(--color-sky-200);
+    }
+  }
+
+  /* --- Footer closing line --------------------------------------------- */
+  .footer-closing {
+    display: grid;
+    gap: 1.25rem;
+    padding-bottom: clamp(2.5rem, 5vw, 4.5rem);
+    margin-bottom: clamp(2.5rem, 5vw, 4rem);
+    border-bottom: 1px solid rgb(255 255 255 / 0.12);
+  }
+  .footer-closing__title {
+    font-family: var(--font-display);
+    font-size: clamp(1.625rem, 0.6rem + 4.9vw, 4.75rem);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: #fff;
+  }
+  .footer-closing__title:lang(km) {
+    font-family: var(--font-khmer);
+    font-size: clamp(1.5rem, 0.9rem + 3.3vw, 3.5rem);
+    line-height: 1.45;
+    letter-spacing: normal;
+  }
+  .footer-closing__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2.5rem;
+  }
+  .footer-closing__link {
+    font-size: clamp(1rem, 0.8rem + 1.05vw, 1.625rem);
+    font-weight: 500;
+    color: var(--color-sky-200);
+    text-decoration: none;
+  }
+  .footer-closing__link:hover {
     color: #fff;
   }
 
-  /* --- Ruled lists --------------------------------------------------------
-   * A heavy ink rule on top, hairlines between rows: the site's one list
-   * form (values, activities, documents, FAQs). */
-  .rule-top {
-    border-top: 3px solid var(--color-ink-900);
+  /* --- Story band (home) -------------------------------------------------- *
+   * The page's one change of pace: navy, rounded at the top where it meets
+   * the paper, and static. */
+  .story-band {
+    background: var(--color-blue-900);
+    color: #fff;
+    border-radius: clamp(1.5rem, 4vw, 3.5rem) clamp(1.5rem, 4vw, 3.5rem) 0 0;
+    padding-block: clamp(3.25rem, 2rem + 6vw, 9rem);
   }
-  .rule-row {
-    border-bottom: 1px solid var(--color-line);
+  /* .prose paints ink on paper; on the navy band the story has to read in
+     white, ragged-right, since justified text on a phone column leaves rivers. */
+  .story-band .prose {
+    color: rgb(255 255 255 / 0.86);
   }
-  .on-navy .rule-top,
-  .on-navy .rule-row {
-    border-color: var(--color-line-navy);
+  .story-band .prose strong {
+    color: #fff;
   }
-
-  /* An image corner. */
-  .img-round {
-    border-radius: var(--radius-lg);
-    object-fit: cover;
+  .story-band .prose p {
+    text-align: start;
+    hyphens: manual;
   }
-
-  /* Kind tag (Announcement, Report …): no pill, led by the logo's triangle in
-     the accent, set in the heading face so it reads as part of the ledger. */
-  .chip {
-    --chip-mark: var(--color-sky-400);
-    display: inline-flex;
-    align-items: center;
-    align-self: flex-start;
-    gap: 0.5rem;
-    padding: 0.125rem 0;
-    font-family: var(--font-display);
-    font-size: 0.8125rem;
-    font-weight: 800;
-    line-height: 1.3;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-blue-750);
-  }
-  .chip::before {
-    content: '';
-    flex: none;
-    width: 0.75rem;
-    height: 0.6rem;
-    background: var(--chip-mark);
-    clip-path: polygon(50% 0, 100% 100%, 0 100%);
-  }
-  .chip-neutral {
-    --chip-mark: var(--color-ink-300);
-    color: var(--color-ink-400);
-  }
-  .chip-alert {
-    --chip-mark: var(--color-danger-700);
-    color: var(--color-danger-700);
-  }
-  :lang(km) .chip {
-    letter-spacing: normal;
-    text-transform: none;
+  .story-band .prose > * + * {
+    margin-top: 1.25em;
   }
 
-  /* Contact details on navy (Call / Email / Visit). */
-  .contact-dl > div {
-    display: grid;
-    grid-template-columns: 6rem minmax(0, 1fr);
-    gap: 1rem;
-    padding: 1.25rem 0;
-    border-top: 1px solid var(--color-line-navy);
-  }
-  .contact-dl > div:last-child {
-    border-bottom: 1px solid var(--color-line-navy);
-  }
-  .contact-dl dt {
-    padding-top: 0.25rem;
-    font-family: var(--font-display);
-    font-size: 0.8125rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-sky-400);
-  }
-  :lang(km) .contact-dl dt {
-    letter-spacing: normal;
-    text-transform: none;
+  /* Press feedback — a small scale-down so a tap feels physical. */
+  .btn:active:not([aria-disabled='true']):not(:disabled) {
+    transform: scale(0.98);
   }
 
-  /* Header navigation. */
+  /*
+   * Navigation underline. A *reveal*: the rule grows from the left rather than
+   * the background swapping in, which is quieter and reads as a place marker
+   * rather than a button.
+   */
   .nav-link {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.75rem;
-    padding: 0 0.75rem;
+    position: relative;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.9375rem;
     font-size: 1rem;
     font-weight: 600;
-    color: var(--color-blue-700);
+    line-height: 1;
     text-decoration: none;
-    border-bottom: 3px solid transparent;
+    color: var(--color-ink-700);
+    transition: color var(--duration-fast) var(--ease-out-soft);
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0.9375rem;
+    bottom: 0.25rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--color-blue-700);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--duration-base) var(--ease-out-soft);
   }
   .nav-link:hover {
     color: var(--color-blue-800);
-    border-bottom-color: var(--color-blue-200);
+  }
+  .nav-link:hover::after,
+  .nav-link[aria-current]::after {
+    transform: scaleX(1);
   }
   .nav-link[aria-current] {
-    border-bottom-color: var(--color-sky-400);
+    color: var(--color-blue-800);
   }
 
-  /* Footer links. */
-  .footer-link {
+  /* A label that rolls up to an identical copy on hover. The copy sits one
+     line plus a gap below, clipped; the extra block padding leaves room for
+     Khmer vowel marks above and below the line. `/ ""` keeps the copy out of
+     the accessibility tree so the label is announced once. */
+  .roll {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    padding-block: 0.3em;
+    margin-block: -0.3em;
+  }
+  .roll__text {
+    position: relative;
+    display: inline-block;
+    transition: translate 480ms var(--ease-reveal);
+  }
+  .roll__text::after {
+    content: attr(data-text) / '';
+    position: absolute;
+    left: 0;
+    top: calc(100% + 0.6em);
+    white-space: nowrap;
+  }
+  :is(a, button):is(:hover, :focus-visible) .roll__text {
+    translate: 0 calc(-100% - 0.6em);
+  }
+
+  /* Contact: a rounded fill rises from below and flattens as it covers the
+     button. The blob sits under the content, which is lifted above it. */
+  .btn-fill {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .btn-fill > :not(.btn-fill__blob) {
+    position: relative;
+  }
+  .btn-fill__blob {
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    background: var(--color-blue-900);
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    translate: 0 101%;
+    transition:
+      translate 380ms cubic-bezier(0.4, 0, 0, 1),
+      border-radius 380ms cubic-bezier(0.4, 0, 0, 1);
+  }
+  .btn-fill:is(:hover, :focus-visible) .btn-fill__blob {
+    translate: 0 0;
+    border-radius: 0;
+  }
+
+  /* --- Surfaces ----------------------------------------------------------- */
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition:
+      border-color var(--duration-fast) var(--ease-out-soft),
+      box-shadow var(--duration-fast) var(--ease-out-soft),
+      transform var(--duration-fast) var(--ease-out-soft);
+    /*
+     * Off-screen cards skip layout and paint until they approach the viewport.
+     * `auto` remembers the real height once rendered, so the scrollbar settles
+     * after the first pass instead of jumping on every scroll.
+     */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 28rem;
+  }
+  /*
+   * The frame, not the photo, sets the shape: a portrait upload would
+   * otherwise stretch its card and break the row.
+   */
+  .card-media {
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+  }
+  .card-media img {
+    transition: transform 700ms var(--ease-reveal);
+  }
+  /* Keyboard focus earns the same lift as hover; touch never sticks in it. */
+  .card:has(a:focus-visible) {
+    border-color: var(--color-blue-200);
+    box-shadow: var(--shadow-md);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .card:hover {
+      border-color: var(--color-blue-200);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .card:hover .card-media img {
+      transform: scale(1.05);
+    }
+  }
+
+  .eyebrow {
+    font-size: var(--text-eyebrow);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-blue-700);
+  }
+
+  .rule-accent {
+    width: 44px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--color-blue-700);
+  }
+
+  .chip {
     display: inline-flex;
     align-items: center;
-    min-height: 2.5rem;
-    color: #fff;
-    text-decoration: none;
-    font-size: 1rem;
+    gap: 0.375rem;
+    align-self: flex-start;
+    padding: 0.375rem 0.5625rem;
+    border-radius: var(--radius-xs);
+    font-size: 0.65625rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--color-aqua-200);
+    color: var(--color-blue-800);
   }
-  .footer-link:hover {
-    color: var(--color-sky-400);
+  .chip-neutral {
+    background: var(--color-surface-sunken);
+    color: var(--color-ink-400);
+  }
+  .chip-alert {
+    background: var(--color-danger-50);
+    color: var(--color-danger-700);
+  }
+
+  /* --- Form controls ------------------------------------------------------ */
+  .field {
+    width: 100%;
+    padding: 0.75rem 0.875rem;
+    background: #fff;
+    color: var(--color-ink-900);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    transition:
+      border-color var(--duration-fast) var(--ease-out-soft),
+      box-shadow var(--duration-fast) var(--ease-out-soft);
+  }
+  .field::placeholder {
+    color: var(--color-ink-300);
+  }
+  .field:hover {
+    border-color: var(--color-ink-300);
+  }
+  .field:focus {
+    outline: 0;
+    border-color: var(--color-blue-700);
+    box-shadow: 0 0 0 3px var(--color-sky-200);
+  }
+  .field[aria-invalid='true'] {
+    border-color: var(--color-danger-700);
+    background: var(--color-danger-50);
+  }
+  .field[aria-invalid='true']:focus {
+    box-shadow: 0 0 0 3px rgb(180 35 24 / 0.15);
+  }
+  .field--select {
+    appearance: none;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235c6689' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.875rem center;
+    background-size: 1rem;
+    cursor: pointer;
+  }
+
+  /* Honeypot. Off-screen rather than display:none so naive bots still fill it. */
+  .honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  /* --- Form panel ---------------------------------------------------------
+     Every form on the site lives in one of these. One bordered box, sitting
+     beside the page's own information rather than inside it, so a visitor
+     reads what SKO does before being asked to type anything.
+
+     The colour is the whole point of the box. On a site that is otherwise
+     white, the tinted head band and the blue hairline are what make this read
+     as "the thing you fill in" from across the page — no shadow needed to say
+     it. Every value below is a theme token, so the panel stays in step with
+     the rest of the palette automatically.
+     ---------------------------------------------------------------------- */
+  .form-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-blue-200);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    /* Fields inside respond to the PANEL's width, not the viewport's, so the
+       same panel lays out correctly in a narrow column and a full-width one. */
+    container-type: inline-size;
+  }
+
+  /* The brand stripe across the top. 3px of --color-blue-700 into the logo
+     cyan: the two colours the identity is actually built from. */
+  .form-panel::before {
+    content: '';
+    display: block;
+    height: 3px;
+    flex: none;
+    border-start-start-radius: inherit;
+    border-start-end-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      var(--color-blue-700) 0%,
+      var(--color-blue-600) 55%,
+      var(--color-sky-400) 100%
+    );
+  }
+
+  .form-panel-head {
+    padding: 1.5rem var(--form-panel-pad, 1.5rem) 1.375rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .form-panel-title {
+    margin: 0;
+    font-size: var(--text-h3);
+    line-height: var(--text-h3--line-height);
+    letter-spacing: var(--text-h3--letter-spacing);
+    color: var(--color-ink-900);
+    font-weight: 700;
+  }
+  .form-panel-note {
+    margin: 0.4375rem 0 0;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    color: var(--color-ink-400);
+  }
+
+  .form-panel-body {
+    padding: 0;
+  }
+
+  /* One group of questions per section, each parted from the next by a
+     hairline that runs the full width of the panel, as rows in a settings
+     list are. The eyebrow names the group; the label above each field then
+     only has to name the field. */
+  .form-section {
+    display: grid;
+    gap: 1.125rem;
+    padding: 1.5rem var(--form-panel-pad, 1.5rem);
+    border-top: 1px solid var(--color-line);
+  }
+  .form-section:first-child {
+    border-top: 0;
+  }
+  .form-section__label {
+    margin: 0 0 -0.25rem;
+    font-size: var(--text-eyebrow);
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-400);
+  }
+  .form-section__label:lang(km) {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
+  /* The submit row sits on its own tinted band so the action never floats
+     ambiguously under the last field. */
+  .form-panel-foot {
+    padding: 1.125rem var(--form-panel-pad, 1.5rem) 1.25rem;
+    background: var(--color-surface-subtle);
+    border-top: 1px solid var(--color-line);
+    border-end-start-radius: inherit;
+    border-end-end-radius: inherit;
+  }
+
+  /* Submission failures. Sits under the button so the eye lands on it after
+     the click; the danger tokens match the invalid-field treatment above. */
+  .form-status {
+    margin: 0.875rem 0 0;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--color-danger-700);
+    border-radius: var(--radius-md);
+    background: var(--color-danger-50);
+    color: var(--color-ink-900);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+  .form-status[hidden] {
+    display: none;
+  }
+
+  /* The submit confirmation. A small pill that floats clear of the page,
+     centred on a phone and bottom-right on a wide screen. */
+  .form-toast {
+    position: fixed;
+    z-index: 60;
+    bottom: calc(1.5rem + var(--safe-bottom));
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.125rem;
+    border: 1px solid var(--color-blue-200);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-lg);
+    color: var(--color-ink-900);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    /* Sits just below its resting place and fades up into it. */
+    transform: translate(-50%, 0.5rem);
+    opacity: 0;
+    transition:
+      opacity var(--duration-base) var(--ease-out-soft),
+      transform var(--duration-base) var(--ease-out-soft);
+  }
+  .form-toast .icon {
+    flex: none;
+    color: var(--color-success-700);
+  }
+  .form-toast.is-shown {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  @media (width >= 40rem) {
+    .form-toast {
+      left: auto;
+      right: calc(1.5rem + var(--safe-right));
+      transform: translate(0, 0.5rem);
+    }
+    .form-toast.is-shown {
+      transform: translate(0, 0);
+    }
+  }
+
+  /* --- Fields inside a panel --------------------------------------------- */
+  .form-grid {
+    display: grid;
+    gap: 1.125rem;
+  }
+  .form-field {
+    display: grid;
+    gap: 0.375rem;
+    min-width: 0;
+    /* Paired fields are equal-height grid items, and one of them carries a hint
+       line. Without this the shorter field's rows stretch to match and its
+       input grows taller than its neighbour's. */
+    align-content: start;
+  }
+  .form-label {
+    font-size: 0.90625rem;
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--color-ink-900);
+  }
+
+  /* Leading icon inside a field. --field-icon keeps the icon colour and the
+     input's left padding tied to one another. */
+  .form-control {
+    position: relative;
+  }
+
+  /* Paired fields stack by default and share a row once the PANEL (not the
+     window) is wide enough. The base rule has to carry the gap too, or the two
+     stacked fields collide on a phone. */
+  .form-pair {
+    display: grid;
+    gap: 1.125rem;
+  }
+  @container (min-width: 26rem) {
+    .form-pair {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  /* Khmer labels run long; give the panel its padding back on small screens. */
+  @media (width < 40rem) {
+    .form-panel {
+      --form-panel-pad: 1.125rem;
+      border-radius: var(--radius-lg);
+    }
+  }
+
+  /* Radio rows inside the form ("Best way to reach you", volunteer or intern). */
+  .form-choice {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .form-choice__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    font-size: 0.9375rem;
+    color: var(--color-ink-700);
+  }
+  .form-choice__options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+  .form-choice__options input {
+    accent-color: var(--color-blue-700);
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+  .form-note {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-ink-400);
+  }
+
+  /* Two or three radios drawn as one sliding switch. The real inputs sit
+     invisibly over their labels, so the keyboard, the form and assistive
+     technology all see plain radio buttons. */
+  .segmented {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 2px;
+    width: max-content;
+    max-width: 100%;
+    padding: 3px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-sunken);
+  }
+  .segmented__item {
+    position: relative;
+  }
+  .segmented__item input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .segmented__item span {
+    display: block;
+    padding: 0.4375rem 1.125rem;
+    border-radius: calc(var(--radius-md) - 2px);
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    color: var(--color-ink-600);
+    transition:
+      background var(--duration-base) var(--ease-out-soft),
+      color var(--duration-base) var(--ease-out-soft),
+      box-shadow var(--duration-base) var(--ease-out-soft);
+  }
+  .segmented__item:hover input:not(:checked) + span {
+    color: var(--color-ink-900);
+  }
+  .segmented__item input:checked + span {
+    background: var(--color-surface);
+    color: var(--color-ink-900);
+    box-shadow: var(--shadow-sm);
+  }
+  .segmented__item input:focus-visible + span {
+    outline: 3px solid var(--color-blue-700);
+    outline-offset: 2px;
+  }
+
+  /* --- Topic picker -------------------------------------------------------
+     A native <select> holds the value; once the script runs, this listbox
+     stands in for it. Each row is an icon, a title and a hint, and the row
+     the visitor chose is what the closed control shows. */
+  .topic-picker {
+    position: relative;
+  }
+  .topic-picker[data-enhanced] > .topic-picker__native,
+  .topic-picker:not([data-enhanced]) > .topic-picker__menu {
+    display: none;
+  }
+  .topic-picker__trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    width: 100%;
+    padding: 0.6875rem 0.875rem 0.6875rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-md);
+    color: var(--color-ink-900);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color var(--duration-fast) var(--ease-out-soft),
+      box-shadow var(--duration-fast) var(--ease-out-soft);
+  }
+  .topic-picker__trigger:hover {
+    border-color: var(--color-ink-300);
+  }
+  .topic-picker__trigger:focus-visible,
+  .topic-picker__trigger[aria-expanded='true'] {
+    outline: 0;
+    border-color: var(--color-blue-700);
+    box-shadow: 0 0 0 3px var(--color-sky-200);
+  }
+  .topic-picker__faces {
+    flex: 1;
+    min-width: 0;
+  }
+  .topic-picker__face {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+  }
+  .topic-picker__text {
+    display: grid;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+  .topic-picker__label {
+    font-size: 1rem;
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--color-ink-900);
+  }
+  .topic-picker__hint {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--color-ink-400);
+  }
+  [data-tone='danger'] > .topic-picker__text > .topic-picker__label {
+    color: var(--color-danger-700);
+  }
+  .topic-picker__affordance {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex: none;
+    color: var(--color-ink-400);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+  .topic-picker__change {
+    display: none;
+  }
+  @container (min-width: 26rem) {
+    .topic-picker__change {
+      display: inline;
+    }
+  }
+  .topic-picker__chevron {
+    transition: rotate var(--duration-base) var(--ease-out-soft);
+  }
+  .topic-picker__trigger[aria-expanded='true'] .topic-picker__chevron {
+    rotate: 180deg;
+  }
+  .topic-picker__menu {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0.375rem;
+    list-style: none;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    transform-origin: top center;
+    opacity: 0;
+    translate: 0 -6px;
+    scale: 0.985;
+    transition:
+      opacity var(--duration-base) var(--ease-out-soft),
+      translate var(--duration-base) var(--ease-out-soft),
+      scale var(--duration-base) var(--ease-out-soft);
+  }
+  .topic-picker__menu.is-open {
+    opacity: 1;
+    translate: 0;
+    scale: 1;
+  }
+  .topic-picker__menu:focus {
+    outline: 0;
+  }
+  .topic-picker__option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.6875rem 0.875rem;
+    border-radius: var(--radius-md);
+    color: var(--color-ink-900);
+    cursor: pointer;
+  }
+  /* A hairline between rows, as in a grouped list on iOS; the safeguarding
+     row sits in its own group below a full one. */
+  .topic-picker__option + .topic-picker__option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0.875rem;
+    right: 0.875rem;
+    height: 1px;
+    background: var(--color-line-subtle);
+  }
+  .topic-picker__option[data-tone='danger'] {
+    margin-top: 0.4375rem;
+  }
+  .topic-picker__option[data-tone='danger']::before {
+    top: -0.25rem;
+    background: var(--color-line);
+  }
+  .topic-picker__option:hover,
+  .topic-picker__option:focus-visible {
+    outline: 0;
+    background: var(--color-blue-50);
+  }
+  .topic-picker__option[data-tone='danger']:hover,
+  .topic-picker__option[data-tone='danger']:focus-visible {
+    background: var(--color-danger-50);
+  }
+  .topic-picker__option:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 2px var(--color-blue-700);
+    pointer-events: none;
+  }
+  .topic-picker__check {
+    flex: none;
+    margin-left: auto;
+    color: var(--color-blue-700);
+    opacity: 0;
+    scale: 0.6;
+    transition:
+      opacity var(--duration-fast) var(--ease-out-soft),
+      scale var(--duration-base) var(--ease-pop);
+  }
+  .topic-picker__option[aria-selected='true'] .topic-picker__check {
+    opacity: 1;
+    scale: 1;
+  }
+  .topic-picker__option[data-tone='danger'] .topic-picker__check {
+    color: var(--color-danger-700);
+  }
+
+  /* --- Contact page --------------------------------------------------------- */
+  /* Each box on the page arrives once it is on screen: a slow rise that
+     sharpens out of a blur, its rows following one after another inside the
+     same window (ContactPage.astro sets the timing). Only under scripting,
+     so a page with no script never hides anything. */
+  @media (scripting: enabled) {
+    .contact-enter[data-enter='pending'] {
+      opacity: 0;
+      translate: 0 36px;
+      filter: blur(14px);
+    }
+    .contact-enter[data-enter='shown'] {
+      transition:
+        opacity 2000ms var(--ease-reveal) var(--enter-delay, 0ms),
+        translate 2000ms var(--ease-pop) var(--enter-delay, 0ms),
+        filter 1600ms var(--ease-reveal) var(--enter-delay, 0ms);
+    }
+    .contact-enter[data-enter='pending'] .form-enter-row {
+      opacity: 0;
+      translate: 0 14px;
+    }
+    .contact-enter[data-enter='shown'] .form-enter-row {
+      transition:
+        opacity 900ms var(--ease-reveal),
+        translate 900ms var(--ease-pop);
+      transition-delay: calc(var(--enter-delay, 0ms) + 250ms + var(--i, 0) * 170ms);
+    }
+  }
+
+  /* A panel spanning exactly the width of the form and aside below it, so all
+     three share the same left and right edges; each detail is centred in its
+     third, with a hairline between them. */
+  .contact-details {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+  }
+  .contact-details__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.75rem 1.5rem;
+  }
+  .contact-details__item + .contact-details__item {
+    border-top: 1px solid var(--color-line);
+  }
+  @media (width >= 48rem) {
+    .contact-details {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .contact-details__item {
+      padding: 2rem 2rem 2.125rem;
+    }
+    .contact-details__item + .contact-details__item {
+      border-top: 0;
+      border-left: 1px solid var(--color-line);
+    }
+  }
+  .contact-details dt {
+    font-size: var(--text-eyebrow);
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-400);
+  }
+  .contact-details dt:lang(km) {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  .contact-details dd {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: center;
+    margin: 0.5rem 0 0;
+    font-size: 1.0625rem;
+    line-height: 1.45;
+    color: var(--color-ink-900);
+  }
+  .contact-details dd > a:first-child {
+    color: var(--color-ink-900);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .contact-details dd > a:first-child:hover {
+    color: var(--color-blue-700);
+  }
+  .contact-details__meta {
+    font-size: 0.875rem;
+    color: var(--color-ink-400);
+  }
+  a.contact-details__meta {
+    color: var(--color-blue-700);
+  }
+
+  /* Only the chosen topic's questions show; safeguarding swaps the form for
+     the direct-contact panel. */
+  .contact-desk .form-topic,
+  .contact-desk .safeguarding-panel {
+    display: none;
+  }
+  .form-topic {
+    gap: 1.125rem;
+  }
+  .contact-desk:has([name='formType'] > option[value='partner']:checked)
+    [data-topic-fields='partner'],
+  .contact-desk:has([name='formType'] > option[value='volunteer']:checked)
+    [data-topic-fields='volunteer'],
+  .contact-desk:has([name='formType'] > option[value='media']:checked) [data-topic-fields='media'] {
+    display: grid;
+  }
+  /* The reason field stays, so the visitor can still change their mind. */
+  .contact-desk:has([name='formType'] > option[value='safeguarding']:checked)
+    .form-panel-body
+    > :not(.form-section--reason),
+  .contact-desk:has([name='formType'] > option[value='safeguarding']:checked) .form-panel-foot {
+    display: none;
+  }
+  .contact-desk:has([name='formType'] > option[value='safeguarding']:checked)
+    .form-section--reason {
+    padding-bottom: 1.75rem;
+  }
+  .contact-desk:has([name='formType'] > option[value='safeguarding']:checked) .safeguarding-panel {
+    display: block;
+    margin-top: 1.5rem;
+  }
+  .safeguarding-panel {
+    padding: 1.75rem;
+    border: 1px solid var(--color-danger-700);
+    border-radius: var(--radius-xl);
+    background: var(--color-danger-50);
+  }
+  .safeguarding-panel__title {
+    margin-top: 0;
+    font-size: var(--text-h3);
+    line-height: var(--text-h3--line-height);
+    color: var(--color-ink-900);
+  }
+  .safeguarding-panel__body {
+    margin-top: 0.625rem;
+    color: var(--color-ink-700);
+  }
+
+  .contact-next {
+    padding: 1.5rem;
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    box-shadow: var(--shadow-sm);
+  }
+  .contact-next__title {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-line);
+    font-size: var(--text-h4);
+    line-height: var(--text-h4--line-height);
+    color: var(--color-ink-900);
+  }
+  .contact-next__steps {
+    counter-reset: step;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--color-ink-700);
+  }
+  .contact-next__steps li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 1.625rem 1fr;
+    gap: 0.75rem;
+    padding: 0.875rem 0;
+  }
+  .contact-next__steps li + li {
+    border-top: 1px solid var(--color-line-subtle);
+  }
+  .contact-next__steps li::before {
+    content: counter(step, decimal-leading-zero);
+    display: grid;
+    place-items: center;
+    width: 1.625rem;
+    height: 1.625rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-blue-200);
+    background: var(--color-blue-50);
+    color: var(--color-blue-700);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .contact-next__block {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-line);
+    font-size: 0.875rem;
+    color: var(--color-ink-600);
+  }
+  .contact-next__block + .contact-next__block {
+    margin-top: 1rem;
+  }
+  .contact-next__block b {
+    color: var(--color-ink-900);
+  }
+  .contact-next__privacy {
+    color: var(--color-ink-400);
   }
 
   /* --- Long-form content -------------------------------------------------- */
@@ -659,6 +2013,16 @@ details[open] > summary > .disclosure-icon {
   }
   .prose > * + * {
     margin-top: 1.0625rem;
+  }
+  /* SKO's documents set body copy justified, edge to edge. A phone column is
+     too narrow for it — word gaps open into rivers — so it starts at 40rem. */
+  @media (width >= 40rem) {
+    .prose p,
+    .prose li,
+    .justify {
+      text-align: justify;
+      hyphens: auto;
+    }
   }
   .prose h2 {
     font-size: var(--text-h2);
@@ -817,15 +2181,179 @@ details[open] > summary > .disclosure-icon {
   }
 }
 
-@layer components {
-  /* First paragraph of a long section is set as its lead. */
-  .lead-first > p:first-child {
-    font-size: clamp(1.25rem, 1.4vw, 1.3125rem);
-    line-height: 1.5;
-    font-weight: 500;
-    color: var(--color-ink-900);
+/* --- The logo butterfly ---------------------------------------------------
+   One drawing (ButterflyGlyph) in two places: the flock flying inside every
+   hero band and the one at the pointer. The wings group hinges on the body
+   line, which sits at x=45 of the drawing's 100-unit width. */
+.butterfly-glyph {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.butterfly-wings {
+  transform-box: view-box;
+  transform-origin: 45px 20.5px;
+}
+
+/* The flock's layer: fills the hero band and scrolls away with it, above the
+   band's background but below its text, and never in the way of a click. */
+.butterfly-flock {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+[data-butterfly-shelter] {
+  position: relative;
+  z-index: 2;
+}
+.butterfly-flock[data-pending] {
+  visibility: hidden;
+}
+.flock-bird {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 40px;
+  will-change: transform;
+}
+/* The butterfly that circles the pointer (ButterflyCursor). The outer box sits
+   on its flight point and rotates about it; the glyph is centred on its body
+   line so it banks around its own middle. */
+.butterfly-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2147483647;
+  width: 34px;
+  pointer-events: none;
+  transform-origin: 0 0;
+  will-change: transform;
+  view-transition-name: butterfly-cursor;
+}
+.butterfly-cursor__glyph {
+  translate: -45% -50%;
+  transform-origin: 45% 50%;
+  filter: drop-shadow(0 1px 1.5px rgb(10 10 10 / 0.25));
+  transition:
+    opacity var(--duration-fast) var(--ease-out-soft),
+    scale 220ms var(--ease-out-soft);
+}
+.butterfly-cursor[data-state='link'] .butterfly-cursor__glyph {
+  scale: 1.3;
+}
+.butterfly-cursor[data-state='label'] .butterfly-cursor__glyph {
+  scale: 1.45;
+}
+/* The word beneath the butterfly over a card ("Read more"). The butterfly
+   perches above the pointer there, so the word hangs between the two and
+   never covers the pointer. */
+.butterfly-cursor__label {
+  position: absolute;
+  left: 0;
+  top: 18px;
+  translate: -50% 0;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 999px;
+  background: var(--color-blue-900);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  scale: 0.6;
+  transform-origin: 50% 0;
+  transition:
+    opacity var(--duration-fast) var(--ease-out-soft),
+    scale 260ms var(--ease-reveal);
+}
+.butterfly-cursor[data-state='label'] .butterfly-cursor__label {
+  opacity: 1;
+  scale: 1;
+}
+.butterfly-cursor[data-pressed] .butterfly-cursor__glyph {
+  scale: 0.85;
+}
+.butterfly-cursor:is([data-state='hidden'], [data-state='text']) .butterfly-cursor__glyph {
+  opacity: 0;
+}
+html:not([data-butterfly-cursor]) .butterfly-cursor,
+html:has(:modal, :popover-open) .butterfly-cursor {
+  display: none;
+}
+
+/* --- Page loader ------------------------------------------------------------
+   PageLoader, the loading screen at the start of a visit, driven by its own
+   inline script. The butterfly holds still and only its wings beat; the bar
+   follows the page's real loading progress (--intro-progress, 0 to 1). It sits
+   below the skip link and the pointer butterfly, and the page underneath does
+   not scroll while it shows. */
+.page-loader {
+  --loader-size: clamp(9.5rem, 6rem + 14vw, 14rem);
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.75rem, 1.25rem + 2vw, 2.75rem);
+  padding: 1rem;
+  background: var(--color-canvas);
+  transition: opacity 480ms var(--ease-out-soft);
+}
+html[data-intro] .page-loader {
+  display: flex;
+}
+html[data-intro=''] {
+  overflow: hidden;
+}
+html[data-intro='done'] .page-loader {
+  opacity: 0;
+  pointer-events: none;
+}
+.page-loader__butterfly {
+  width: var(--loader-size);
+}
+.page-loader__butterfly .butterfly-wings {
+  animation: loader-flap 500ms cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+.page-loader__track {
+  width: calc(var(--loader-size) * 0.65);
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-surface-sunken);
+}
+.page-loader__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-sky-400);
+  transform-origin: left center;
+  scale: var(--intro-progress, 0) 1;
+  transition: scale 450ms var(--ease-out-soft);
+}
+.page-loader__label {
+  color: var(--color-ink-600);
+  font-family: var(--font-sans);
+  font-size: clamp(0.9375rem, 0.875rem + 0.2vw, 1.0625rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+@keyframes loader-flap {
+  to {
+    scale: 0.55 1;
   }
-  .lead-first > p:not(:first-child) {
-    color: var(--color-ink-900);
+}
+
+@media print {
+  .butterfly-flock,
+  .butterfly-cursor,
+  .page-loader {
+    display: none;
   }
 }

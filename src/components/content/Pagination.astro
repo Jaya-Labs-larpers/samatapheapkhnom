@@ -12,17 +12,17 @@ interface Props {
 
 const { lang, current, total, hrefFor } = Astro.props;
 const pages = Array.from({ length: total }, (_, index) => index + 1);
-const base =
-  'grid h-12 min-w-12 place-items-center rounded-[var(--radius-md)] border px-3 text-base font-semibold no-underline';
-const idle =
-  'border-[color:var(--color-line-strong)] bg-white text-[color:var(--color-ink-900)] hover:border-[color:var(--color-blue-700)] hover:text-[color:var(--color-ink-900)]';
 ---
 
 {
   total > 1 && (
-    <nav class="mt-12 flex flex-wrap gap-2" aria-label="Pagination">
+    <nav class="mt-11 flex justify-center gap-1.5" aria-label="Pagination">
       {current > 1 && (
-        <a href={hrefFor(current - 1)} rel="prev" class:list={[base, idle]}>
+        <a
+          href={hrefFor(current - 1)}
+          rel="prev"
+          class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-sm)] border border-[color:var(--color-line)] bg-white px-3 text-[15px] font-semibold text-[color:var(--color-ink-700)] no-underline hover:border-[color:var(--color-blue-700)] hover:text-[color:var(--color-blue-800)]"
+        >
           ← {t(lang, 'previous')}
         </a>
       )}
@@ -30,21 +30,25 @@ const idle =
         page === current ? (
           <span
             aria-current="page"
-            class:list={[
-              base,
-              'border-[color:var(--color-ink-900)] bg-[color:var(--color-ink-900)] text-white',
-            ]}
+            class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-sm)] border border-[color:var(--color-blue-700)] bg-[color:var(--color-blue-700)] text-[15px] font-semibold text-white"
           >
             {page}
           </span>
         ) : (
-          <a href={hrefFor(page)} class:list={[base, idle]}>
+          <a
+            href={hrefFor(page)}
+            class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-sm)] border border-[color:var(--color-line)] bg-white text-[15px] font-semibold text-[color:var(--color-ink-700)] no-underline hover:border-[color:var(--color-blue-700)] hover:text-[color:var(--color-blue-800)]"
+          >
             {page}
           </a>
         ),
       )}
       {current < total && (
-        <a href={hrefFor(current + 1)} rel="next" class:list={[base, idle]}>
+        <a
+          href={hrefFor(current + 1)}
+          rel="next"
+          class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-sm)] border border-[color:var(--color-line)] bg-white px-3 text-[15px] font-semibold text-[color:var(--color-ink-700)] no-underline hover:border-[color:var(--color-blue-700)] hover:text-[color:var(--color-blue-800)]"
+        >
           {t(lang, 'next')} →
         </a>
       )}

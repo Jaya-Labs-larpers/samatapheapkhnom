@@ -8,11 +8,9 @@ import { serializeJsonLd } from '~/lib/seo/json-ld';
 interface Props {
   lang: Locale;
   trail: Crumb[];
-  /** Light text for navy bands. */
-  inverse?: boolean;
 }
 
-const { lang, trail, inverse = false } = Astro.props;
+const { lang, trail } = Astro.props;
 
 const items = [{ label: t(lang, 'navHome'), path: '/' }, ...trail];
 
@@ -28,28 +26,20 @@ const jsonLd = {
 };
 ---
 
-<nav aria-label={t(lang, 'breadcrumbLabel')} class="eyebrow leading-[1.8]">
-  <ol class="m-0 flex list-none flex-wrap items-center gap-x-2 p-0">
+<nav aria-label={t(lang, 'breadcrumbLabel')} class="text-[13px] text-[color:var(--color-ink-400)]">
+  <ol class="flex list-none flex-wrap items-center gap-2 p-0">
     {
       items.map((crumb, index) => (
         <li class="flex items-center gap-2">
           {crumb.path && index < items.length - 1 ? (
             <a
               href={localizePath(crumb.path, lang)}
-              class:list={[
-                'no-underline hover:underline',
-                inverse ? 'text-[color:var(--color-on-navy)]' : 'text-[color:var(--color-ink-400)]',
-              ]}
+              class="text-inherit no-underline hover:text-[color:var(--color-blue-800)]"
             >
               {crumb.label}
             </a>
           ) : (
-            <span
-              aria-current="page"
-              class={inverse ? 'text-white' : 'text-[color:var(--color-ink-900)]'}
-            >
-              {crumb.label}
-            </span>
+            <span aria-current="page">{crumb.label}</span>
           )}
           {index < items.length - 1 && <span aria-hidden="true">/</span>}
         </li>

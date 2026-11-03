@@ -64,7 +64,7 @@ const programTitle = pick(activity.program?.title, lang);
   publishedAt={activity.publishedAt}
   jsonLd={articleJsonLd}
 >
-  <article class="py-10 pb-[clamp(80px,8vw,120px)]">
+  <article class="section">
     <div class="wrap">
       <!--
         One measured column for the whole article — breadcrumbs, headline, cover
@@ -77,14 +77,24 @@ const programTitle = pick(activity.program?.title, lang);
           trail={[{ label: t(lang, 'pageActivities'), path: '/activities' }, { label: heading }]}
         />
 
-        {category && <span class="chip mt-6">{category}</span>}
+        {
+          category && (
+            <span class="chip mt-4">
+              <Icon name="tag" size={16} />
+              {category}
+            </span>
+          )
+        }
 
-        <h1 class="t-lg mt-4 max-w-none" lang={title.isFallback ? title.lang : undefined}>
+        <h1
+          class="mt-3.5 text-[length:var(--text-h1)] leading-[var(--text-h1--line-height)] tracking-[var(--text-h1--letter-spacing)]"
+          lang={title.isFallback ? title.lang : undefined}
+        >
           {heading}
         </h1>
 
         <p
-          class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px] text-[color:var(--color-ink-400)]"
+          class="mt-3.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] text-[color:var(--color-ink-400)]"
         >
           <span class="flex items-center gap-1.5">
             <Icon name="calendar-days" size={16} />
@@ -114,7 +124,10 @@ const programTitle = pick(activity.program?.title, lang);
           }
         </p>
 
-        <div class="mt-8 overflow-hidden rounded-[var(--radius-lg)]">
+        <div
+          class="mt-6.5 overflow-hidden rounded-[var(--radius-lg)] [view-transition-name:card-media]"
+          data-morph-hero
+        >
           <ResponsiveImage
             image={activity.coverImage}
             lang={lang}
@@ -127,7 +140,10 @@ const programTitle = pick(activity.program?.title, lang);
 
         {
           excerpt.value && (
-            <p class="t-lead-sm mt-8" lang={excerpt.isFallback ? excerpt.lang : undefined}>
+            <p
+              class="mt-6.5 text-[17px] leading-[1.6] text-[color:var(--color-ink-700)] sm:text-[19px]"
+              lang={excerpt.isFallback ? excerpt.lang : undefined}
+            >
               {excerpt.value}
             </p>
           )
@@ -170,3 +186,7 @@ const programTitle = pick(activity.program?.title, lang);
     </div>
   </article>
 </BaseLayout>
+
+<script>
+  import '~/lib/card-morph';
+</script>

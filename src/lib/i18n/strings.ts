@@ -24,7 +24,6 @@ const en = {
   navVolunteer: 'Volunteer',
   navContact: 'Contact',
   navPrivacy: 'Privacy',
-  navDonate: 'Donate',
 
   // --- Chrome ---------------------------------------------------------------
   skipToContent: 'Skip to content',
@@ -80,7 +79,6 @@ const en = {
   pageAbout: 'About us',
   pagePrivacy: 'Privacy',
   pageFaq: 'Common questions',
-  pageDonate: 'Donate',
   navFaq: 'FAQ',
 
   // --- Footer ---------------------------------------------------------------
@@ -168,9 +166,6 @@ const en = {
   // a Khmer page. In Phase 4 they move into Sanity `page` documents so staff
   // can edit them; the keys stay as the fallback.
   homeEyebrow: 'Phnom Penh, Cambodia · Since 2007',
-  homeMeaningTitle: 'What does Samatapheap Khnom mean?',
-  homeMeaningBody:
-    'Samatapheap Khnom (សមត្ថភាពខ្ញុំ) is Khmer for “my capacity.” The name reflects the belief that families already hold the capability to change their own circumstances, and that our job is to support that capacity rather than replace it.',
   homeHeroIntro:
     "Samatapheap Khnom Organization (SKO) is a Cambodian local NGO supporting vulnerable families, children and communities in Phnom Penh's urban poor and migrant communities since 2007. SKO is recognized as Cambodia's leading expert in family care and social work.",
   introPrograms:
@@ -197,7 +192,6 @@ const en = {
   viewOnGoogleMaps: 'Open in Google Maps',
   contactCall: 'Call',
   contactCallAction: 'Tap to call',
-  contactReach: 'Reach us directly',
   contactEmail: 'Email',
   contactEmailAction: 'Write an email',
   contactVisit: 'Visit',
@@ -250,33 +244,6 @@ const en = {
   formSectionMedia: 'Request details',
   topicPickerChange: 'Change',
 
-  // --- Donate ---------------------------------------------------------------
-  donateHeroTitle: 'Give directly. No middleman.',
-  donateHeroIntro:
-    'Scan a QR code from your banking app, or transfer internationally using the details below.',
-  noCardNotice: 'We do not collect card details on this website.',
-  scanToGive: 'Scan to give',
-  scanToGiveIntro:
-    'Scan with any Cambodian banking app that supports KHQR, then enter the amount you would like to give.',
-  donateQrLabel: 'KHQR code to donate in {currency}',
-  donateCheckName: 'Before you confirm, check the recipient name in your banking app is',
-  donateOpenAba: 'Open in ABA Mobile',
-  donateSaveQr: 'Save QR image',
-  donateSaveHint:
-    'On a phone? Save the image, then open it from your gallery in your banking app’s scanner.',
-  donatePlaceholder:
-    'Preview only: these are placeholder details. The QR codes cannot receive payments.',
-  bankTransfer: 'International bank transfer',
-  bankTransferIntro: 'From outside Cambodia, send a transfer to:',
-  accountName: 'Account name',
-  accountNumber: 'Account number',
-  bankName: 'Bank',
-  swift: 'SWIFT / BIC',
-  bankAddress: 'Bank address',
-  copy: 'Copy',
-  copied: 'Copied',
-  close: 'Close',
-
   // --- Meta -----------------------------------------------------------------
   fileSizeLabel: 'file size',
   languageEnglish: 'English',
@@ -302,7 +269,6 @@ const km: Record<UIKey, string> = {
   navVolunteer: 'ស្ម័គ្រចិត្ត',
   navContact: 'ទំនាក់ទំនង',
   navPrivacy: 'ឯកជនភាព',
-  navDonate: 'បរិច្ចាគ',
 
   skipToContent: 'រំលងទៅមាតិកា',
   menu: 'ម៉ឺនុយ',
@@ -354,7 +320,6 @@ const km: Record<UIKey, string> = {
   pageAbout: 'អំពីយើង',
   pagePrivacy: 'ឯកជនភាព',
   pageFaq: 'សំណួរដែលសួរញឹកញាប់',
-  pageDonate: 'បរិច្ចាគ',
   navFaq: 'សំណួរ​ចម្លើយ',
 
   footerOrganisation: 'អង្គការ',
@@ -424,9 +389,6 @@ const km: Record<UIKey, string> = {
   metaReports: '',
 
   homeEyebrow: 'ភ្នំពេញ កម្ពុជា · តាំងពីឆ្នាំ ២០០៧',
-  homeMeaningTitle: 'តើ «សមត្ថភាពខ្ញុំ» មានន័យដូចម្តេច?',
-  homeMeaningBody:
-    '«សមត្ថភាពខ្ញុំ» មានន័យថាសមត្ថភាពរបស់ខ្ញុំ។ វាឆ្លុះបញ្ចាំងពីជំនឿថាគ្រួសារមានលទ្ធភាពផ្លាស់ប្តូរស្ថានភាពរបស់ខ្លួនរួចទៅហើយ ហើយតួនាទីរបស់យើងគឺគាំទ្រសមត្ថភាពនោះ មិនមែនជំនួសវាទេ។',
   homeHeroIntro:
     'អង្គការសមត្ថភាពខ្ញុំ (SKO) ជាអង្គការក្រៅរដ្ឋាភិបាលក្នុងស្រុករបស់កម្ពុជា ដែលធ្វើការគាំទ្រកុមារ គ្រួសារ និងសហគមន៍ងាយរងគ្រោះ ជាពិសេសនៅសហគមន៍ក្រីក្រទីក្រុង និងសហគមន៍ចំណាកស្រុក។ SKO ត្រូវបានទទួលស្គាល់ថាជាអ្នកជំនាញឈានមុខគេនៅកម្ពុជា ក្នុងវិស័យថែទាំគ្រួសារ និងសង្គមកិច្ច។',
   introPrograms:
@@ -450,7 +412,6 @@ const km: Record<UIKey, string> = {
   viewOnGoogleMaps: 'បើកក្នុង Google Maps',
   contactCall: 'ទូរស័ព្ទ',
   contactCallAction: 'ចុចដើម្បីហៅ',
-  contactReach: 'ទាក់ទងមកយើងដោយផ្ទាល់',
   contactEmail: 'អ៊ីមែល',
   contactEmailAction: 'សរសេរអ៊ីមែល',
   contactVisit: 'មកជួបយើង',
@@ -503,32 +464,6 @@ const km: Record<UIKey, string> = {
   formSectionVolunteer: 'ព័ត៌មានការស្ម័គ្រចិត្ត',
   formSectionMedia: 'ព័ត៌មានសំណើ',
   topicPickerChange: 'ផ្លាស់ប្តូរ',
-
-  donateHeroTitle: 'បរិច្ចាគដោយផ្ទាល់ ដោយគ្មានអន្តរការី។',
-  donateHeroIntro:
-    'ស្កេន QR កូដពីកម្មវិធីធនាគាររបស់អ្នក ឬផ្ទេរប្រាក់ពីបរទេសដោយប្រើព័ត៌មានខាងក្រោម។',
-  noCardNotice: 'យើងមិនប្រមូលព័ត៌មានកាតឥណទាននៅលើគេហទំព័រនេះទេ។',
-  scanToGive: 'ស្កេនដើម្បីបរិច្ចាគ',
-  scanToGiveIntro:
-    'ស្កេនដោយប្រើកម្មវិធីធនាគារកម្ពុជាណាមួយដែលគាំទ្រ KHQR បន្ទាប់មកបញ្ចូលចំនួនទឹកប្រាក់ដែលអ្នកចង់បរិច្ចាគ។',
-  donateQrLabel: 'កូដ KHQR សម្រាប់បរិច្ចាគជា {currency}',
-  donateCheckName: 'មុនពេលបញ្ជាក់ សូមពិនិត្យថាឈ្មោះអ្នកទទួលក្នុងកម្មវិធីធនាគាររបស់អ្នកគឺ',
-  donateOpenAba: 'បើកក្នុង ABA Mobile',
-  donateSaveQr: 'រក្សាទុករូបភាព QR',
-  donateSaveHint:
-    'ប្រើទូរស័ព្ទមែនទេ? រក្សាទុករូបភាព រួចបើកវាពីវិចិត្រសាលរូបភាព ក្នុងកម្មវិធីស្កេនរបស់ធនាគារអ្នក។',
-  donatePlaceholder:
-    'សម្រាប់មើលជាមុនតែប៉ុណ្ណោះ៖ ទាំងនេះជាព័ត៌មានគំរូ។ កូដ QR ទាំងនេះមិនអាចទទួលការទូទាត់បានទេ។',
-  bankTransfer: 'ការផ្ទេរប្រាក់តាមធនាគារអន្តរជាតិ',
-  bankTransferIntro: 'ពីក្រៅប្រទេសកម្ពុជា សូមផ្ទេរប្រាក់ទៅ៖',
-  accountName: 'ឈ្មោះគណនី',
-  accountNumber: 'លេខគណនី',
-  bankName: 'ធនាគារ',
-  swift: 'SWIFT / BIC',
-  bankAddress: 'អាសយដ្ឋានធនាគារ',
-  copy: 'ចម្លង',
-  copied: 'បានចម្លង',
-  close: 'បិទ',
 
   fileSizeLabel: 'ទំហំឯកសារ',
   languageEnglish: 'ភាសាអង់គ្លេស',

@@ -1,0 +1,62 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Program } from '~/lib/content/types';
+import { localizePath, pick, t } from '~/lib/i18n/utils';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+
+interface Props {
+  lang: Locale;
+  program: Program;
+  /** Must match the grid the card sits in; see cardImageSizes. */
+  sizes?: string;
+}
+
+const { lang, program, sizes } = Astro.props;
+const title = pick(program.title, lang);
+const summary = pick(program.summary, lang);
+const href = localizePath(`/programs/${program.slug}`, lang);
+---
+
+<article class="card reveal group relative" data-cursor-label={t(lang, 'learnMore')}>
+  <div class="card-media">
+    <ResponsiveImage
+      image={program.cardImage ?? program.image}
+      lang={lang}
+      alt=""
+      aspect="3/2"
+      sizes={sizes}
+    />
+  </div>
+  <div class="flex flex-1 flex-col gap-2.5 p-5.5 pb-6">
+    <h3
+      class="text-[17px] leading-[1.3] tracking-[-0.01em] sm:text-[19px]"
+      lang={title.isFallback ? title.lang : undefined}
+    >
+      <!-- Stretched link: one anchor, whole card clickable, no nested interactives -->
+      <a
+        href={href}
+        class="text-inherit no-underline before:absolute before:inset-0 before:content-['']"
+      >
+        {title.value}
+      </a>
+    </h3>
+    {
+      summary.value && (
+        <p
+          class="line-clamp-4 text-[15px] leading-[1.6] text-[color:var(--color-ink-400)]"
+          lang={summary.isFallback ? summary.lang : undefined}
+        >
+          {summary.value}
+        </p>
+      )
+    }
+    <span class="link-arrow mt-auto border-0 pt-2.5 text-[14.5px]">
+      {t(lang, 'learnMore')}
+      <span class="arrow" aria-hidden="true">→</span>
+    </span>
+  </div>
+</article>
+
+<script>
+  import '~/lib/card-morph';
+</script>

@@ -2,7 +2,7 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { FaqItem } from '~/lib/content/types';
 import { pick, t } from '~/lib/i18n/utils';
-import Icon from '~/components/Icon.astro';
+import SectionHeading from './SectionHeading.astro';
 import { serializeJsonLd } from '~/lib/seo/json-ld';
 import { stripInlineLinks } from '~/lib/inline-links';
 import InlineLinks from './InlineLinks.astro';
@@ -37,8 +37,9 @@ const anchorFor = (faq: FaqItem) => {
  * Each answer is written to stand alone, because that is how answer engines and
  * AI assistants use them — lifted whole, without the page around them.
  *
- * Each answer is a <details> whose text is in the HTML either way, and the
- * FAQPage structured data carries every answer in full.
+ * The markup is <dl> rather than a set of <details>: an answer hidden behind a
+ * click is an answer some crawlers never see, and there are few enough of these
+ * that collapsing them saves nothing worth the cost.
  */
 const resolved = faqs
   .map((faq) => ({
@@ -64,60 +65,38 @@ const jsonLd =
 
 {
   resolved.length > 0 && (
-    <section
-      aria-labelledby="faq-title"
-      class="section mx-auto max-w-[var(--container-page)] px-[var(--gutter-left)]"
-    >
-      <div class="grid [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-x-[clamp(48px,6vw,96px)] gap-y-12">
-        <h2 id="faq-title" class="t-xs m-0 self-start">
-          {heading ?? t(lang, 'faqHeading')}
-        </h2>
-        <div class="flex min-w-0 flex-col md:col-span-2" data-faq>
-          {resolved.map((faq, index) => (
-            <details
-              id={faq.id}
-              open={index === 0 || undefined}
-              class:list={[
-                'scroll-mt-[calc(var(--header-offset)+1rem)] py-6',
-                index === 0
-                  ? 'border-t-[3px] border-t-[color:var(--color-ink-900)]'
-                  : 'border-t border-t-[color:var(--color-line)]',
-                index === resolved.length - 1 && 'border-b border-b-[color:var(--color-line)]',
-              ]}
-            >
-              <summary
-                class="min-h-11 cursor-pointer text-[22px] leading-[1.35] font-bold text-[color:var(--color-ink-900)]"
+    <section class="section bg-[color:var(--color-surface-subtle)]">
+      <div class="wrap">
+        <SectionHeading title={heading ?? t(lang, 'faqHeading')} />
+        <dl class="measure mt-8 border-t border-[color:var(--color-line)]">
+          {resolved.map((faq) => (
+            <div class="border-b border-[color:var(--color-line)] py-6">
+              <dt
+                id={faq.id}
+                class="scroll-mt-[calc(var(--header-offset)+1rem)] text-[length:var(--text-h4)] font-semibold text-[color:var(--color-ink-900)]"
                 lang={faq.question.isFallback ? faq.question.lang : undefined}
               >
                 {faq.question.value}
-              </summary>
-              <p
-                class="inline-links mt-3 mb-0 max-w-[64ch] text-[color:var(--color-ink-400)]"
+              </dt>
+              <dd
+                class="justify inline-links mt-2.5 text-[color:var(--color-ink-600)]"
                 lang={faq.answer.isFallback ? faq.answer.lang : undefined}
               >
                 <InlineLinks text={faq.answer.value ?? ''} />
-              </p>
-            </details>
+              </dd>
+            </div>
           ))}
-          {moreHref && moreLabel && (
-            <a href={moreHref} class="link-arrow mt-6 self-start">
-              {moreLabel}
-              <Icon name="arrow-right" size={18} />
-            </a>
-          )}
-        </div>
+        </dl>
+        {moreHref && moreLabel && (
+          <a href={moreHref} class="link-arrow mt-6">
+            {moreLabel}
+            <span class="arrow" aria-hidden="true">
+              →
+            </span>
+          </a>
+        )}
       </div>
       <script is:inline type="application/ld+json" set:html={serializeJsonLd(jsonLd)} />
     </section>
   )
 }
-
-<script>
-  // A link to /faq/#question opens that answer.
-  const openFromHash = () => {
-    const target = location.hash ? document.getElementById(location.hash.slice(1)) : null;
-    if (target instanceof HTMLDetailsElement) target.open = true;
-  };
-  openFromHash();
-  addEventListener('hashchange', openFromHash);
-</script>

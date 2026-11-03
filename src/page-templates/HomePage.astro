@@ -2,7 +2,6 @@
 import type { Locale } from '~/lib/i18n/config';
 import { localizePath, pick, t, text } from '~/lib/i18n/utils';
 import {
-  getDirectorMessage,
   getFeaturedActivities,
   getImpactStats,
   getPartners,
@@ -12,15 +11,13 @@ import {
 } from '~/lib/content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import ImpactStats from '~/components/content/ImpactStats.astro';
+import SectionHeading from '~/components/content/SectionHeading.astro';
 import ProgramRows from '~/components/content/ProgramRows.astro';
-import ActivityRow from '~/components/content/ActivityRow.astro';
+import ActivityCard from '~/components/content/ActivityCard.astro';
 import PartnerMarquee from '~/components/content/PartnerMarquee.astro';
 import StoryQuote from '~/components/content/StoryQuote.astro';
-import DirectorMessage from '~/components/content/DirectorMessage.astro';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
-import SectionHeading from '~/components/content/SectionHeading.astro';
 import CtaBand from '~/components/content/CtaBand.astro';
-import Icon from '~/components/Icon.astro';
+import ButterflyField from '~/components/media/ButterflyField.astro';
 
 interface Props {
   lang: Locale;
@@ -28,14 +25,13 @@ interface Props {
 
 const { lang } = Astro.props;
 
-const [settings, stats, programs, activities, partners, stories, director] = await Promise.all([
+const [settings, stats, programs, activities, partners, stories] = await Promise.all([
   getSiteSettings(),
   getImpactStats(),
   getPrograms(),
   getFeaturedActivities(3),
   getPartners(),
   getStories(),
-  getDirectorMessage(),
 ]);
 
 const orgName = text(settings.orgName, lang);
@@ -44,8 +40,6 @@ const registration = pick(settings.registration, lang);
 const story = stories[0];
 const brand = settings.orgShortName ?? 'SKO';
 const seoTitle = t(lang, 'seoHome');
-const heroImage = settings.homeHero?.[0] ?? null;
-const hasDirector = Boolean(pick(director.pullQuote, lang).value);
 ---
 
 <BaseLayout
@@ -54,155 +48,167 @@ const hasDirector = Boolean(pick(director.pullQuote, lang).value);
   plainTitle
   description={t(lang, 'metaHome') || tagline.value || undefined}
   ogImage={settings.ogImage}
-  lcpImage={heroImage}
-  lcpSizes="(min-width: 64rem) 50vw, 100vw"
+  headerOverlay
+  intro
 >
+  {
+    /*
+    Hero: text-led, no photograph. It starts at the top of the window, under a
+    header that has gone transparent, so the section pays the header's height
+    back as padding. The butterflies (ButterflyField) fly inside this section
+    only, behind the text block, as they do inside every PageHero.
+
+    The tint fills the first screen and nothing else shows above the fold. The
+    free height splits 2:3 above and below the headline, which puts it on the
+    optical centre; the action bar is pinned to the bottom, in the thumb zone
+    on a phone. Contact lives in the header, so the hero asks for one thing.
+  */
+  }
   <section
-    aria-labelledby="hero-title"
-    class="on-navy grid bg-[color:var(--color-blue-900)] text-white lg:grid-cols-2"
+    data-home-hero
+    class="hero-overlap relative flex flex-col border-b border-[color:var(--color-line-subtle)] bg-[color:var(--color-surface-subtle)] pt-[var(--header-h)]"
   >
-    <div
-      class="order-last flex flex-col justify-end gap-8 px-[var(--gutter-left)] pt-12 pb-12 lg:order-none lg:min-h-[640px] lg:pt-[120px] lg:pb-[72px]"
-    >
-      <p class="eyebrow">{t(lang, 'homeEyebrow')}</p>
-      <h1
-        id="hero-title"
-        class="m-0 max-w-[12ch] !text-white"
-        style="font-size:calc(clamp(2.275rem,4.62vw,4.55rem)*var(--display-scale));line-height:1.08"
-        lang={tagline.isFallback ? tagline.lang : undefined}
+    <ButterflyField />
+    <div class="wrap relative flex flex-1 flex-col">
+      <div class="min-h-6 flex-[2_1_0px]"></div>
+      <div data-butterfly-shelter>
+        <p class="eyebrow">{t(lang, 'homeEyebrow')}</p>
+        <h1
+          class:list={[
+            'mt-4 max-w-[22ch] text-balance sm:mt-5',
+            lang === 'km'
+              ? 'text-[length:min(var(--text-hero-km),8.6svh)] leading-[1.45]'
+              : 'text-[length:min(var(--text-hero),12svh)] leading-[var(--text-hero--line-height)] tracking-[var(--text-hero--letter-spacing)]',
+          ]}
+          lang={tagline.isFallback ? tagline.lang : undefined}
+        >
+          {tagline.value}
+        </h1>
+      </div>
+      <div class="min-h-8 flex-[3_1_0px]"></div>
+      <div
+        data-butterfly-shelter
+        class="flex flex-col gap-4 border-t border-[color:var(--color-line)] pt-5 pb-[max(1.25rem,calc(var(--safe-bottom)+0.75rem))] sm:pt-6 sm:pb-7 lg:flex-row-reverse lg:items-center lg:justify-between lg:gap-10 lg:py-7"
       >
-        {tagline.value}
-      </h1>
-      <div>
+        {
+          registration.value && (
+            <p
+              class="flex items-start gap-2.5 text-[13.5px] leading-[1.5] text-[color:var(--color-ink-400)] lg:max-w-none"
+              lang={registration.isFallback ? registration.lang : undefined}
+            >
+              <span
+                class="mt-px grid h-[18px] w-[18px] flex-none place-items-center rounded-full bg-[color:var(--color-sky-200)] text-[11px] text-[color:var(--color-blue-900)]"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
+              {registration.value}
+            </p>
+          )
+        }
         <a
           href={localizePath('/contact?topic=partner', lang)}
-          class="btn btn-accent btn-lg max-sm:w-full"
+          class="btn btn-primary btn-fill h-[58px] w-full flex-none rounded-[10px] text-[17px] sm:h-16 sm:w-auto sm:self-start sm:px-10 sm:text-[19px] lg:self-auto max-sm:[@media(max-height:42.5rem)]:h-[54px]"
         >
-          {t(lang, 'partnerWithUs')}<Icon name="arrow-right" size={20} />
+          <span class="btn-fill__blob" aria-hidden="true"></span>
+          <span class="roll">
+            <span class="roll__text" data-text={t(lang, 'partnerWithUs')}
+              >{t(lang, 'partnerWithUs')}</span
+            >
+          </span>
+          <span class="arrow" aria-hidden="true">→</span>
         </a>
       </div>
-      {
-        registration.value && (
-          <p
-            class="m-0 flex items-start gap-2.5 border-t border-[color:var(--color-line-navy)] pt-5 text-sm leading-normal text-[color:var(--color-on-navy)]"
-            lang={registration.isFallback ? registration.lang : undefined}
-          >
-            <Icon
-              name="check"
-              size={18}
-              class="mt-px flex-none text-[color:var(--color-sky-400)]"
-            />
-            <span>{registration.value}</span>
-          </p>
-        )
-      }
-    </div>
-    <div
-      class="relative h-[260px] sm:h-[360px] lg:h-auto lg:min-h-[560px] [&_img]:absolute [&_img]:inset-0 [&_img]:h-full [&_img]:w-full"
-    >
-      <ResponsiveImage
-        image={heroImage}
-        lang={lang}
-        alt=""
-        aspect="4/3"
-        eager
-        sizes="(min-width: 64rem) 50vw, 100vw"
-      />
-    </div>
-  </section>
-
-  <section
-    class="mx-auto grid max-w-[var(--container-page)] [grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr))] items-start gap-[clamp(48px,6vw,96px)] px-[var(--gutter-left)] py-[clamp(80px,9vw,136px)]"
-  >
-    <div class="flex flex-col gap-6">
-      <h2 class="eyebrow">{t(lang, 'navAbout')}</h2>
-      <p
-        lang="km"
-        aria-hidden="true"
-        class="m-0 leading-[1.35] font-bold text-[color:var(--color-blue-700)]"
-        style="font-family:var(--font-khmer);font-size:clamp(3rem,5.4vw,4.75rem)"
-      >
-        សមត្ថភាពខ្ញុំ
-      </p>
-      <div
-        class="flex max-w-[46ch] flex-col gap-2.5 border-t-[3px] border-t-[color:var(--color-sky-400)] pt-6"
-      >
-        <h3 class="m-0 font-[family-name:var(--font-sans)] text-[19px] leading-[1.4] font-bold">
-          {t(lang, 'homeMeaningTitle')}
-        </h3>
-        <p class="m-0 text-[color:var(--color-ink-400)]">{t(lang, 'homeMeaningBody')}</p>
-      </div>
-    </div>
-    <div class="flex flex-col gap-9">
-      <p class="t-statement m-0">{t(lang, 'homeHeroIntro')}</p>
-      <a href={localizePath('/about', lang)} class="link-arrow self-start">
-        {t(lang, 'homeAboutLink') || t(lang, 'learnMore')}<Icon name="arrow-right" size={18} />
-      </a>
     </div>
   </section>
 
   {
-    stats.length > 0 && (
-      <section
-        aria-label="SKO"
-        class="on-navy bg-[color:var(--color-blue-900)] px-[var(--gutter-left)] py-[clamp(80px,8vw,120px)] text-white"
-      >
-        <ImpactStats lang={lang} stats={stats} />
-      </section>
-    )
+    /*
+    Who we are: a small label on the left, one sentence set large on the
+    right. Static — the words are the point.
+  */
   }
+  <section class="section">
+    <div class="wrap grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.4fr)] lg:gap-12">
+      <h2 class="eyebrow pt-2">{t(lang, 'navAbout')}</h2>
+      <div>
+        <p
+          class:list={[
+            'max-w-[34ch] text-pretty text-[color:var(--color-ink-900)]',
+            lang === 'km'
+              ? 'text-[length:var(--text-lead)] leading-[1.9]'
+              : 'text-[length:var(--text-statement)] leading-[1.3] tracking-[-0.02em]',
+          ]}
+        >
+          {t(lang, 'homeHeroIntro')}
+        </p>
+        <a href={localizePath('/about', lang)} class="link-arrow mt-5 sm:mt-7">
+          {t(lang, 'homeAboutLink') || t(lang, 'learnMore')}
+          <span class="arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt-0">
+    <div class="wrap">
+      <ImpactStats lang={lang} stats={stats} />
+    </div>
+  </section>
 
   {
     programs.length > 0 && (
-      <section
-        aria-labelledby="work-title"
-        class="mx-auto flex max-w-[var(--container-page)] flex-col gap-[clamp(56px,6vw,96px)] px-[var(--gutter-left)] py-[clamp(88px,9vw,136px)]"
-      >
-        <div class="flex flex-wrap items-end justify-between gap-6">
-          <SectionHeading id="work-title" title={t(lang, 'whatWeDo')} size="xl" />
-          <a href={localizePath('/programs', lang)} class="link-arrow">
-            {t(lang, 'viewAllPrograms') || t(lang, 'viewAll')}
-            <Icon name="arrow-right" size={18} />
-          </a>
+      <section class="section pt-0">
+        <div class="wrap">
+          <div class="flex flex-wrap items-end justify-between gap-5">
+            <SectionHeading title={t(lang, 'whatWeDo')} />
+            <a href={localizePath('/programs', lang)} class="link-arrow">
+              {t(lang, 'viewAllPrograms') || t(lang, 'viewAll')}
+              <span class="arrow" aria-hidden="true">
+                →
+              </span>
+            </a>
+          </div>
+          <div class="mt-8.5">
+            <ProgramRows lang={lang} programs={programs} />
+          </div>
         </div>
-        <ProgramRows lang={lang} programs={programs} />
-      </section>
-    )
-  }
-
-  {
-    hasDirector && (
-      <section aria-labelledby="director-title" class="band band--wing">
-        <DirectorMessage lang={lang} director={director} variant="band" />
-      </section>
-    )
-  }
-
-  {
-    story && (
-      <section aria-label="Story" class="band band--tint">
-        <StoryQuote lang={lang} story={story} quoteOnly linkProgram />
       </section>
     )
   }
 
   {
     activities.length > 0 && (
-      <section
-        aria-labelledby="news-title"
-        class="mx-auto flex max-w-[var(--container-page)] flex-col gap-10 px-[var(--gutter-left)] pt-[clamp(88px,9vw,128px)]"
-      >
-        <div class="flex flex-wrap items-end justify-between gap-6">
-          <SectionHeading id="news-title" title={t(lang, 'latestActivities')} size="xs" />
-          <a href={localizePath('/activities', lang)} class="link-arrow">
-            {t(lang, 'allActivities')}
-            <Icon name="arrow-right" size={18} />
-          </a>
+      <section class="section bg-[color:var(--color-surface-subtle)]">
+        <div class="wrap">
+          <div class="flex flex-wrap items-end justify-between gap-5">
+            <SectionHeading title={t(lang, 'latestActivities')} />
+            <a href={localizePath('/activities', lang)} class="link-arrow">
+              {t(lang, 'allActivities')}
+              <span class="arrow" aria-hidden="true">
+                →
+              </span>
+            </a>
+          </div>
+          <div class="activity-editorial mt-9">
+            {activities.map((activity) => (
+              <ActivityCard
+                lang={lang}
+                activity={activity}
+                sizes="(min-width: 48rem) 45vw, 100vw"
+              />
+            ))}
+          </div>
         </div>
-        <div class="[&>article:not(:first-child)]:!border-t [&>article:not(:first-child)]:!border-t-[color:var(--color-line)]">
-          {activities.map((activity) => (
-            <ActivityRow lang={lang} activity={activity} variant="compact" />
-          ))}
+      </section>
+    )
+  }
+
+  {
+    story && (
+      <section class="story-band on-inverse">
+        <div class="wrap">
+          <StoryQuote lang={lang} story={story} inverse quoteOnly linkProgram />
         </div>
       </section>
     )
@@ -210,22 +216,23 @@ const hasDirector = Boolean(pick(director.pullQuote, lang).value);
 
   {
     partners.length > 0 && (
-      <section
-        aria-labelledby="partners-title"
-        class="flex flex-col gap-10 py-[clamp(88px,9vw,128px)]"
-      >
-        <div class="mx-auto flex w-full max-w-[var(--container-page)] flex-wrap items-end justify-between gap-6 px-[var(--gutter-left)]">
-          <SectionHeading id="partners-title" title={t(lang, 'trustedBy')} size="xs" />
-          {t(lang, 'allPartners') && (
-            <a href={localizePath('/partners', lang)} class="link-arrow">
-              {t(lang, 'allPartners')}
-              <Icon name="arrow-right" size={18} />
-            </a>
-          )}
+      <section class="section">
+        <div class="wrap">
+          <SectionHeading title={t(lang, 'trustedBy')} />
         </div>
-        <div class="border-y border-[color:var(--color-line)] py-4">
+        <div class="mt-8 border-y border-[color:var(--color-line)] py-4">
           <PartnerMarquee lang={lang} partners={partners} />
         </div>
+        {t(lang, 'allPartners') && (
+          <div class="wrap mt-6">
+            <a href={localizePath('/partners', lang)} class="link-arrow">
+              {t(lang, 'allPartners')}
+              <span class="arrow" aria-hidden="true">
+                →
+              </span>
+            </a>
+          </div>
+        )}
       </section>
     )
   }

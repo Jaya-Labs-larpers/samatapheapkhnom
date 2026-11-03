@@ -1,0 +1,212 @@
+---
+/**
+ * The hero's flock: three logo butterflies of one size, flying inside the
+ * first-screen hero band of the home page and of every page hero. Place it as
+ * a direct child of the hero section; it fills that box, is clipped to it, and
+ * scrolls away with it. The motion lives in ~/lib/butterflies/flight.
+ *
+ * Each flies on its own; while the mouse moves over the hero they trail it,
+ * and after it has been still for IDLE_MS, or has left the hero, they drift
+ * back to the edges. They fly behind the hero text ([data-butterfly-shelter]),
+ * which is also a no-follow zone. Between two pages that both have a hero they
+ * carry straight on: the flock is saved on the way out and redrawn by the
+ * inline script below before first paint, so each comes back where it was and
+ * lazy-loads in with the arriving page, a beat behind the hero (Page arrival
+ * in global.css). Leaving for a page with no hero they fade out with the page.
+ *
+ * On phones they are small and keep to the edges. Under
+ * prefers-reduced-motion or data saver they rest in place and never move.
+ * The loop stops while the hero is off screen or the tab is hidden.
+ */
+import ButterflyGlyph from './ButterflyGlyph.astro';
+---
+
+<div class="butterfly-flock" data-pending aria-hidden="true">
+  <ButterflyGlyph class="flock-bird" />
+  <ButterflyGlyph class="flock-bird" />
+  <ButterflyGlyph class="flock-bird" />
+</div>
+<script is:inline>
+  // Restores the flock where the previous page left it, before first paint.
+  // Reads the SavedFlock shape from ~/lib/butterflies/flight; keep in step.
+  (function () {
+    var layer = document.currentScript.previousElementSibling;
+    try {
+      var saved = JSON.parse(sessionStorage.getItem('sko-flock'));
+      if (!saved || !saved.f || saved.f.length !== layer.children.length) return;
+      var sx = layer.clientWidth / saved.w;
+      var sy = layer.clientHeight / saved.h;
+      saved.f.forEach(function (f, i) {
+        var bird = layer.children[i];
+        if (!bird) return;
+        bird.style.width = f.s + 'px';
+        bird.style.transform =
+          'translate(' +
+          f.x * sx +
+          'px,' +
+          f.y * sy +
+          'px) translate(-50%,-50%) rotate(' +
+          f.r +
+          'rad)';
+        var wings = bird.querySelector('.butterfly-wings');
+        if (wings) wings.style.transform = 'scaleX(' + f.k + ')';
+      });
+      layer.removeAttribute('data-pending');
+    } catch (error) {}
+  })();
+</script>
+
+<script>
+  import {
+    STORAGE_KEY,
+    createFlock,
+    parseSavedFlock,
+    resizeFlock,
+    restoreFlock,
+    saveFlock,
+    stepFlock,
+    wingSpan,
+    type Flock,
+    type Pointer,
+  } from '~/lib/butterflies/flight';
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  /** A metered connection is treated like reduced motion: the flock rests. */
+  const saveData =
+    (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData ===
+    true;
+
+  /** After this long without the mouse moving, they stop following and fly free. */
+  const IDLE_MS = 4000;
+
+  function viewport(layer: HTMLElement) {
+    return { width: layer.clientWidth, height: layer.clientHeight };
+  }
+
+  function readSaved() {
+    try {
+      return parseSavedFlock(sessionStorage.getItem(STORAGE_KEY));
+    } catch {
+      return null;
+    }
+  }
+
+  function mount(layer: HTMLElement) {
+    const birds = Array.from(layer.querySelectorAll<SVGSVGElement>('.flock-bird'));
+    const wings = birds.map((bird) => bird.querySelector<SVGGElement>('.butterfly-wings'));
+
+    const saved = readSaved();
+    const flock: Flock = saved
+      ? restoreFlock(saved, viewport(layer))
+      : createFlock(viewport(layer));
+
+    let pointer: Pointer | null = null;
+    let pointerMovedAt = 0;
+    let raf = 0;
+    let last = 0;
+    let visible = true;
+
+    function render() {
+      flock.flyers.forEach((flyer, i) => {
+        const bird = birds[i];
+        if (!bird) return;
+        bird.style.width = `${flyer.size}px`;
+        bird.style.transform = `translate(${flyer.x}px, ${flyer.y}px) translate(-50%, -50%) rotate(${flyer.tilt}rad)`;
+        const wing = wings[i];
+        if (wing) wing.style.transform = `scaleX(${wingSpan(flyer)})`;
+      });
+    }
+
+    function running() {
+      return visible && !document.hidden && !reducedMotion.matches && !saveData;
+    }
+
+    function frame(now: number) {
+      raf = 0;
+      // Clamp so a tab coming back from the background does not lurch.
+      const dt = Math.min(0.05, last ? (now - last) / 1000 : 1 / 60);
+      last = now;
+      const company = pointer && now - pointerMovedAt < IDLE_MS ? pointer : null;
+      stepFlock(flock, dt, { pointer: company });
+      render();
+      if (running()) raf = requestAnimationFrame(frame);
+    }
+
+    function start() {
+      if (raf || !running()) return;
+      last = 0;
+      raf = requestAnimationFrame(frame);
+    }
+
+    function stop() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+    }
+
+    function save() {
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(saveFlock(flock)));
+      } catch {
+        // Private mode or a full quota: the next page simply starts fresh.
+      }
+    }
+
+    const passive = { passive: true } as const;
+    window.addEventListener(
+      'pointermove',
+      (event) => {
+        if (event.pointerType === 'touch') return;
+        const target = event.target;
+        const sheltered =
+          target instanceof Element && target.closest('[data-butterfly-shelter]') !== null;
+        const box = layer.getBoundingClientRect();
+        const x = event.clientX - box.left;
+        const y = event.clientY - box.top;
+        const inside = x >= 0 && y >= 0 && x <= box.width && y <= box.height;
+        pointer = inside && !sheltered ? { x, y } : null;
+        pointerMovedAt = event.timeStamp;
+      },
+      passive,
+    );
+    document.documentElement.addEventListener('mouseleave', () => (pointer = null), passive);
+    window.addEventListener('blur', () => (pointer = null));
+
+    new ResizeObserver(() => {
+      resizeFlock(flock, viewport(layer));
+      if (!running()) render();
+    }).observe(layer);
+    new IntersectionObserver(([entry]) => {
+      visible = entry?.isIntersecting ?? true;
+      if (visible) start();
+      else stop();
+    }).observe(layer);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+      else start();
+    });
+    reducedMotion.addEventListener('change', () => {
+      if (reducedMotion.matches) stop();
+      else start();
+    });
+
+    // pageswap fires before the view transition captures this page; pagehide
+    // covers browsers without it.
+    window.addEventListener('pageswap', save);
+    window.addEventListener('pagehide', save);
+    // Otherwise a first page brought back from the back/forward cache still
+    // counts as arrived, and the flock skips its beat behind the page.
+    window.addEventListener('pageswap', () => layer.removeAttribute('data-arriving'));
+
+    render();
+    if (layer.hasAttribute('data-pending')) {
+      // First page of the visit: nothing to restore, so the flock lazy-loads in
+      // on its own, with no arriving page around it.
+      layer.setAttribute('data-arriving', '');
+      layer.removeAttribute('data-pending');
+    }
+    start();
+  }
+
+  const layer = document.querySelector<HTMLElement>('.butterfly-flock');
+  if (layer) mount(layer);
+</script>

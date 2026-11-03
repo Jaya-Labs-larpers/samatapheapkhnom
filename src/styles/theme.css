@@ -7,9 +7,8 @@
    Every token below generates utilities: --color-blue-700 -> bg-blue-700,
    text-blue-700, border-blue-700, etc.
 
-   PALETTE: taken from the SKO logo — the #0962B7 wordmark blue, the #26CBEE
-   cyan of the triangle, and the pale blues of the butterfly wings. Set in
-   Manrope (display) and Source Sans 3 (text), per the "SKO website redesign".
+   PALETTE: taken from the SKO logo — the #2B4CC7 wordmark blue, the #2FC4E8
+   cyan of the triangle, and the pale blues of the butterfly wings.
    Contrast ratios in comments are computed against #FFFFFF and are WCAG 2.1
    relative-luminance figures, not eyeballed.
    ========================================================================= */
@@ -20,18 +19,18 @@
      --------------------------------------------------------------------- */
   --color-canvas: #ffffff;
   --color-surface: #ffffff;
-  --color-surface-subtle: #f2f7fd; /* section banding — cool white */
-  --color-surface-sunken: #dce6f5; /* image placeholder wells, bar tracks */
-  --color-surface-inverse: #0b1b30; /* navy bands, footer */
+  --color-surface-subtle: #f5f7fd; /* section banding — cool white */
+  --color-surface-sunken: #e7ebf7; /* image placeholder wells, bar tracks */
+  --color-surface-inverse: #14235c; /* footer, one CTA band. Used twice, max */
 
   /* ---------------------------------------------------------------------
      INK — blue-black, so text sits in the same family as the brand
      --------------------------------------------------------------------- */
-  --color-ink-900: #10141a; /* 17.9:1  headings, body */
-  --color-ink-700: #10141a; /* emphasis body */
-  --color-ink-600: #10141a; /* body copy */
-  --color-ink-400: #4c5a6e; /*  7.0:1  secondary copy, meta, captions */
-  --color-ink-300: #8796ad; /*  NOT for text. Dividers, disabled, icons only */
+  --color-ink-900: #0e1533; /* 17.9:1  headings */
+  --color-ink-700: #26304f; /* 13.0:1  emphasis body */
+  --color-ink-600: #3e4869; /*  9.0:1  body copy */
+  --color-ink-400: #5c6689; /*  5.6:1  meta, captions — AA floor for small text */
+  --color-ink-300: #929ab5; /*  2.9:1  NOT for text. Dividers, disabled, icons only */
 
   /* ---------------------------------------------------------------------
      BRAND BLUE — taken from the logo wordmark.
@@ -43,8 +42,7 @@
      any compensating adjustment.
      --------------------------------------------------------------------- */
   --color-blue-900: #0b1b30; /* Deep Navy — footer, CTA band */
-  --color-blue-800: #064a8c; /*  links hover */
-  --color-blue-750: #0a55a0; /*  text on the wing tint (#c6dbf7) */
+  --color-blue-800: #05407a; /* 10.39:1  links, hover, text on light tints */
   --color-blue-700: #0962b7; /*  6.10:1  BRAND — Deep Blue, the logo wordmark blue */
   --color-blue-600: #4a6bdb; /*  4.8:1  secondary text, icons, active borders */
   --color-blue-200: #c6dbf7; /* Wing Tint — borders, underlines at rest */
@@ -57,7 +55,7 @@
      blues of the butterfly wings. Every one of them is light: they carry
      surfaces, never text. Text on them is ink-900 or blue-800, both AA.
      --------------------------------------------------------------------- */
-  --color-sky-400: #26cbee; /* logo triangle — buttons on navy, rules, numerals on navy */
+  --color-sky-400: #26cbee; /* logo triangle — accents and rules only, never text */
   --color-aqua-200: #c3e9e8; /* chips, decorative quote mark, selection, notices */
   --color-aqua-50: #effafa;
   --color-sky-200: #7fe3f7; /* accent bars, hero wash, focus glow, allocation */
@@ -75,26 +73,24 @@
   /* ---------------------------------------------------------------------
      BORDERS — structure comes from these, not from shadows
      --------------------------------------------------------------------- */
-  --color-line-subtle: #dce6f5;
-  --color-line: #dce6f5;
-  --color-line-strong: #a9c7ee;
-  --color-line-navy: #1e3554; /* rules on navy */
-  --color-on-navy: #a9bad6; /* secondary copy on navy */
-  --color-field: #3196f5; /* form control borders */
+  --color-line-subtle: #edf0f9;
+  --color-line: #dfe4f2;
+  --color-line-strong: #c4cbe2;
 
   /* ---------------------------------------------------------------------
      TYPE FAMILIES
      Khmer is not a fallback. It leads its own stack.
      --------------------------------------------------------------------- */
-  --font-sans: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  /* Source Sans 3 sits second on purpose. The Kantumruy Pro @font-face declares
-     a Khmer-only unicode-range, so the browser skips it for Latin glyphs and
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Inter sits second on purpose. The Kantumruy Pro @font-face declares a
+     Khmer-only unicode-range, so the browser skips it for Latin glyphs and
      walks on — and Khmer pages carry plenty of Latin (the organisation's Latin
-     name, "EN" in the toggle, Western numerals). The local Khmer faces stay
-     after it, as the fallback if Kantumruy fails to load. */
+     name, "EN" in the toggle, Western numerals). Without Inter here all of that
+     rendered in whatever sans the device happened to have. The local Khmer
+     faces stay after it, as the fallback if Kantumruy fails to load. */
   --font-khmer:
-    'Kantumruy Pro', 'Source Sans 3', 'Noto Sans Khmer', 'Khmer UI', 'Leelawadee UI', sans-serif;
-  --font-display: 'Manrope', 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
+    'Kantumruy Pro', 'Inter', 'Noto Sans Khmer', 'Khmer UI', 'Leelawadee UI', sans-serif;
+  --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
 
   /* ---------------------------------------------------------------------
@@ -156,12 +152,11 @@
   /* ---------------------------------------------------------------------
      SPACING — Tailwind's 4px base, plus a section rhythm token
      --------------------------------------------------------------------- */
-  --spacing-section: clamp(2.5rem, 1.25rem + 3.5vw, 4.5rem);
-  --spacing-gutter: clamp(1.25rem, 4.5vw, 4rem);
+  --spacing-section: clamp(3rem, 1.5rem + 6vw, 7rem);
+  --spacing-gutter: clamp(1.25rem, 0.75rem + 2vw, 2.5rem);
 
   /* Content widths */
-  --container-page: 90rem; /* 1440px */
-  --container-inner: 82rem; /* 1312px — banded sections */
+  --container-page: 75rem; /* 1200px */
   --container-prose: 44rem; /* ~68ch Latin */
   --container-prose-km: 40rem; /* ~62ch Khmer — wider glyphs, same read length */
   --container-narrow: 56rem;
@@ -171,8 +166,8 @@
      --------------------------------------------------------------------- */
   --radius-xs: 0.25rem;
   --radius-sm: 0.375rem;
-  --radius-md: 0.625rem; /* 10px — buttons, fields */
-  --radius-lg: 0.875rem; /* 14px — images, panels */
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
 
@@ -225,7 +220,7 @@
     --gutter-left: max(var(--spacing-gutter), var(--safe-left));
     --gutter-right: max(var(--spacing-gutter), var(--safe-right));
 
-    --header-h: calc(76px + var(--safe-top));
+    --header-h: calc(80px + var(--safe-top));
 
     /*
      * THE MEASURE — one column width for every piece of running text on the
@@ -240,11 +235,9 @@
      * page, which a `.prose:lang(km)` rule could not reach.
      */
     --measure: var(--container-prose);
-    --display-scale: 1;
   }
   :lang(km) {
     --measure: var(--container-prose-km);
-    --display-scale: 0.74;
   }
   @media (width < 40rem) {
     :root {
@@ -255,12 +248,12 @@
   }
   @media (width >= 40rem) {
     :root {
-      --header-h: calc(96px + var(--safe-top));
+      --header-h: calc(100px + var(--safe-top));
     }
   }
   @media (width >= 64rem) {
     :root {
-      --header-h: calc(132px + var(--safe-top));
+      --header-h: calc(124px + var(--safe-top));
     }
   }
 
@@ -293,24 +286,20 @@
     text-rendering: optimizeLegibility;
   }
 
-  h1,
-  h2,
-  h3,
-  h4 {
-    font-family: var(--font-display);
-    text-wrap: balance;
-  }
   h2,
   h3,
   h4 {
     color: var(--color-ink-900);
     font-weight: 700;
   }
+  /* The page's one h1 gets the display serif — the only heading role that
+     carries voice. Source Serif 4 self-hosts a single static weight (600), so
+     the rule pins that exact weight rather than requesting 700 and forcing
+     the browser to synthesise a faux bold. */
   h1 {
     color: var(--color-ink-900);
-    font-weight: 800;
-    line-height: 1.08;
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    font-family: var(--font-display);
   }
 
   /* --------------------------------------------------------------------
@@ -333,13 +322,10 @@
     line-height: 1.5;
     letter-spacing: normal;
   }
-  /* Khmer display type runs smaller (taller glyphs) and one weight lighter,
-     and always on the Khmer sans stack. */
-  :lang(km) h1,
-  :lang(km) h2,
-  :lang(km) h3,
-  :lang(km) h4 {
-    font-family: var(--font-khmer);
+  /* Kantumruy Pro has no serif companion, so Khmer h1 stays on the Khmer sans
+     stack at its full variable weight rather than inheriting the serif rule
+     above (which fires before the language cascade widens the family here). */
+  :lang(km) h1 {
     font-weight: 700;
   }
   /* em-scoped so it never compounds through nesting */
@@ -392,40 +378,19 @@
    Khmer file beyond the language-toggle label, which loads lazily.
    ========================================================================= */
 @font-face {
-  font-family: 'Manrope';
-  src: url('/fonts/manrope-latin-ext.woff2') format('woff2');
-  font-weight: 400 800;
-  font-style: normal;
-  font-display: swap;
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F,
-    U+A720-A7FF;
-}
-@font-face {
-  font-family: 'Manrope';
-  src: url('/fonts/manrope-latin.woff2') format('woff2');
-  font-weight: 400 800;
-  font-style: normal;
-  font-display: swap;
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Source Sans 3';
-  src: url('/fonts/source-sans-3-latin-ext.woff2') format('woff2');
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin-ext.woff2') format('woff2');
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
   unicode-range:
     U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
     U+A720-A7FF;
 }
 @font-face {
-  font-family: 'Source Sans 3';
-  src: url('/fonts/source-sans-3-latin.woff2') format('woff2');
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin.woff2') format('woff2');
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
@@ -440,4 +405,14 @@
   font-style: normal;
   font-display: swap;
   unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  src: url('/fonts/source-serif-4-latin.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }

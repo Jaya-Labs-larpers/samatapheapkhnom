@@ -4,18 +4,24 @@ interface Props {
   intro?: string | null;
   introLang?: string | undefined;
   as?: 'h2' | 'h3';
-  size?: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
-  id?: string;
 }
 
-const { title, intro, introLang, as: Tag = 'h2', size = 'sm', id }: Props = Astro.props;
+const { title, intro, introLang, as: Tag = 'h2' }: Props = Astro.props;
 ---
 
-<div class="flex flex-col gap-4">
-  <Tag id={id} class={`t-${size} m-0`}>{title}</Tag>
+<div>
+  <div class="rule-accent"></div>
+  <Tag
+    class="mt-3 text-[length:var(--text-h2)] leading-[var(--text-h2--line-height)] tracking-[var(--text-h2--letter-spacing)]"
+  >
+    {title}
+  </Tag>
   {
     intro && (
-      <p class="t-lead-sm m-0 max-w-[58ch] text-[color:var(--color-ink-400)]" lang={introLang}>
+      <p
+        class="mt-3.5 text-[length:var(--text-lead)] leading-[1.6] text-[color:var(--color-ink-400)]"
+        lang={introLang}
+      >
         {intro}
       </p>
     )

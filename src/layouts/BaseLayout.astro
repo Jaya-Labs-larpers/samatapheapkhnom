@@ -4,11 +4,12 @@ import '~/styles/global.css';
 import { htmlLang, type Locale } from '~/lib/i18n/config';
 import { t } from '~/lib/i18n/utils';
 import { getSiteSettings } from '~/lib/content';
-import { gtmId, hasSanity } from '~/lib/config';
+import { gtmId } from '~/lib/config';
 import type { CmsImage } from '~/lib/content/types';
-import { hasImage, imageSrcSet, imageUrl } from '~/lib/sanity/image';
 import Header from '~/components/layout/Header.astro';
 import Footer from '~/components/layout/Footer.astro';
+import ButterflyCursor from '~/components/media/ButterflyCursor.astro';
+import PageLoader from '~/components/layout/PageLoader.astro';
 import SeoHead from '~/components/seo/SeoHead.astro';
 
 interface Props {
@@ -24,14 +25,13 @@ interface Props {
   /** Extra properties for the Organization node. */
   orgJsonLd?: Record<string, unknown> | null;
   /**
-   * Load GTM and Cloudflare Insights. Off on the donate pages, where no
-   * third-party script may run alongside the QR codes.
+   * Float the header over the page's own opening art instead of giving it a
+   * white band. Only for pages whose first element is a full-bleed hero that
+   * reaches the top of the window.
    */
-  analytics?: boolean;
-  /** The photo that will be the page's largest paint, preloaded from the head. */
-  lcpImage?: CmsImage | null;
-  /** The `sizes` the page gives that photo, so the preload picks the same file. */
-  lcpSizes?: string;
+  headerOverlay?: boolean;
+  /** Play the intro (PageLoader) when a visit starts on this page. */
+  intro?: boolean;
 }
 
 const {
@@ -44,27 +44,15 @@ const {
   publishedAt,
   jsonLd,
   orgJsonLd,
-  analytics = true,
-  lcpImage,
-  lcpSizes = '100vw',
+  headerOverlay,
+  intro,
 } = Astro.props;
 
 const settings = await getSiteSettings();
-const lcpSrc = lcpImage && hasImage(lcpImage) ? imageUrl(lcpImage, { width: 828 }) : null;
-const lcpSrcset = lcpSrc && lcpImage ? imageSrcSet(lcpImage) : null;
 const pathname = Astro.url.pathname;
-/*
-  GTM waits for the page's own load and then for an idle moment, so its download
-  and parse never compete with the first paint. Page views are still counted:
-  GTM fires its own page-view from the dataLayer once it starts.
-*/
-const gtmLoader = gtmId
-  ? `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`
-  : '';
 const gtmSnippet =
-  analytics &&
-  gtmLoader &&
-  `(function(){var go=function(){${gtmLoader}};var idle=function(){(window.requestIdleCallback||function(f){setTimeout(f,1)})(go,{timeout:4000})};if(document.readyState==='complete')idle();else addEventListener('load',idle);})();`;
+  gtmId &&
+  `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`;
 ---
 
 <!doctype html>
@@ -88,57 +76,22 @@ const gtmSnippet =
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#F5F7FD" />
 
     {
       /*
-      Preload what the first paint needs, and no more: the locale's body font,
-      the display face the headline is set in, and the header logo (only the
-      lockup this screen width will show). The other script still loads — the
-      language toggle renders "ខ្មែរ" on English pages — but lazily, under
-      font-display: swap, so it never blocks LCP for one word of chrome.
+      Preload only the font this locale sets its body copy in. The other script
+      still loads — the language toggle renders "ខ្មែរ" on English pages — but it
+      loads lazily with font-display: swap, so it never blocks LCP for one word
+      of chrome.
     */
     }
-    {
-      (lang === 'km'
-        ? ['kantumruy-pro-khmer', 'source-sans-3-latin']
-        : ['source-sans-3-latin', 'manrope-latin']
-      ).map((font) => (
-        <link
-          rel="preload"
-          as="font"
-          type="font/woff2"
-          crossorigin="anonymous"
-          href={`/fonts/${font}.woff2`}
-        />
-      ))
-    }
-    {hasSanity && <link rel="preconnect" href="https://cdn.sanity.io" />}
-    {
-      lcpSrc && (
-        <link
-          rel="preload"
-          as="image"
-          href={lcpSrc}
-          imagesrcset={lcpSrcset ?? undefined}
-          imagesizes={lcpSizes}
-          fetchpriority="high"
-        />
-      )
-    }
     <link
       rel="preload"
-      as="image"
-      type="image/svg+xml"
-      href="/logo/sko-emblem.svg"
-      media="(max-width: 63.999rem)"
-    />
-    <link
-      rel="preload"
-      as="image"
-      type="image/svg+xml"
-      href="/logo/sko-logo-full-colour.svg"
-      media="(min-width: 64rem)"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+      href={lang === 'km' ? '/fonts/kantumruy-pro-khmer.woff2' : '/fonts/inter-latin.woff2'}
     />
     <SeoHead
       lang={lang}
@@ -152,12 +105,40 @@ const gtmSnippet =
       publishedAt={publishedAt}
       jsonLd={jsonLd}
       orgJsonLd={orgJsonLd}
-      analytics={analytics}
     />
+
+    {
+      /*
+      Marks a page reached by a view transition so it lazy-loads in (Page
+      arrival in global.css). pagereveal fires just before the first frame,
+      so this has to be inline in the head. The mark is dropped once the
+      slowest arrival (270ms late, 900ms long) has played, and on pageswap
+      before this page is captured on the way out, so a page brought back from
+      the back/forward cache arrives afresh.
+    */
+    }
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        var settled = 0;
+        addEventListener('pagereveal', function (event) {
+          if (!event.viewTransition) return;
+          root.setAttribute('data-arriving', '');
+          clearTimeout(settled);
+          settled = setTimeout(function () {
+            root.removeAttribute('data-arriving');
+          }, 1500);
+        });
+        addEventListener('pageswap', function () {
+          clearTimeout(settled);
+          root.removeAttribute('data-arriving');
+        });
+      })();
+    </script>
   </head>
   <body class="bg-white">
     {
-      analytics && gtmId && (
+      gtmId && (
         <noscript>
           <iframe
             src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
@@ -168,6 +149,8 @@ const gtmSnippet =
         </noscript>
       )
     }
+    {intro && <PageLoader />}
+
     <a
       href="#main"
       class="sr-only-focusable absolute top-3 left-3 z-[100] rounded-[var(--radius-md)] bg-[color:var(--color-blue-700)] px-4 py-3 text-[15px] font-semibold text-white no-underline"
@@ -175,12 +158,20 @@ const gtmSnippet =
       {t(lang, 'skipToContent')}
     </a>
 
-    <Header lang={lang} pathname={pathname} settings={settings} />
+    <Header lang={lang} pathname={pathname} settings={settings} overlay={headerOverlay} />
 
     <main id="main" tabindex="-1">
       <slot />
     </main>
 
-    <Footer lang={lang} settings={settings} />
+    <Footer lang={lang} settings={settings} pathname={pathname} />
+
+    <ButterflyCursor />
+
+    <script>
+      import { revealOnEntry } from '~/lib/reveal';
+
+      revealOnEntry();
+    </script>
   </body>
 </html>

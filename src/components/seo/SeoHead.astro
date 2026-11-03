@@ -23,7 +23,6 @@ interface Props {
   jsonLd?: Record<string, unknown> | null;
   /** Extra properties for the Organization node, e.g. opening hours on the contact page. */
   orgJsonLd?: Record<string, unknown> | null;
-  analytics?: boolean;
 }
 
 const {
@@ -38,7 +37,6 @@ const {
   publishedAt,
   jsonLd: extraJsonLd,
   orgJsonLd,
-  analytics = true,
 } = Astro.props;
 
 const orgName = text(settings.orgName, lang);
@@ -196,7 +194,7 @@ const webSiteJsonLd = {
 }
 
 {
-  analytics && cfAnalyticsToken && (
+  cfAnalyticsToken && (
     <script
       is:inline
       defer

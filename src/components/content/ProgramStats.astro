@@ -1,10 +1,12 @@
 ---
 /**
- * A programme's results on its navy band: the first figure set huge, the rest
- * beside it. Percentages become bars; anything else a ruled figure.
+ * A programme's results as a bento of hairline-divided tiles. With an odd
+ * count the first figure is featured in a double-height tile, so five results
+ * make one tall tile and a 2×2 block instead of a row with a gap in it.
  */
 import type { Locale } from '~/lib/i18n/config';
 import type { ImpactStat } from '~/lib/content/types';
+import { countsUp } from '~/lib/content/stats';
 import { formatNumber, pick } from '~/lib/i18n/utils';
 
 interface Props {
@@ -13,96 +15,81 @@ interface Props {
 }
 
 const { lang, stats } = Astro.props;
+const featured = stats.length >= 3 && stats.length % 2 === 1;
+const columns = featured ? (stats.length + 1) / 2 : Math.min(stats.length, 4);
 
-const entries = stats.map((stat) => {
-  const prefix = pick(stat.prefix, lang);
-  const suffix = pick(stat.suffix, lang);
-  const display =
-    stat.displayValue ?? (typeof stat.value === 'number' ? formatNumber(stat.value, lang) : '');
-  const value = `${prefix.value ?? ''}${display}${suffix.value ?? ''}`;
-  return {
-    stat,
-    value,
-    label: pick(stat.label, lang),
-    context: pick(stat.context, lang),
-    percent: /^\d{1,3}\s*%$/.test(value.trim()) ? Math.min(100, parseInt(value, 10)) : null,
-  };
-});
-const [lead, ...rest] = entries;
-const bars = rest.length > 0 && rest.every((entry) => entry.percent !== null);
+/* Glyph widths of the stat font (Inter Bold, tabular figures, -0.03em
+   tracking), measured in the browser, so a figure can be sized to its tile. */
+const em = (text: string) =>
+  Array.from(text).reduce(
+    (width, char) =>
+      width +
+      (/\d/.test(char)
+        ? 0.62
+        : /[\s,.]/.test(char)
+          ? 0.24
+          : /[a-z]/i.test(char)
+            ? 0.6
+            : char === '%'
+              ? 1
+              : 0.75),
+    0,
+  );
 ---
 
 {
-  lead && (
-    <div class="mx-auto grid max-w-[var(--container-inner)] [grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))] items-start gap-12 gap-x-[clamp(48px,6vw,96px)]">
-      <div class="flex flex-col gap-3">
-        <p class="t-figure m-0" style="font-size:clamp(5.425rem,9.92vw,9.3rem)">
-          {lead.value}
-        </p>
-        <p
-          class="m-0 flex flex-col gap-1.5 text-2xl leading-[1.3] font-semibold"
-          lang={lead.label.isFallback ? lead.label.lang : undefined}
-        >
-          {lead.label.value}
-          {lead.context.value && (
-            <span
-              class="text-[17px] font-normal text-[color:var(--color-on-navy)]"
-              lang={lead.context.isFallback ? lead.context.lang : undefined}
-            >
-              {lead.context.value}
+  stats.length > 0 && (
+    <div
+      class:list={['program-stats reveal reveal-cascade', featured && 'program-stats--featured']}
+      style={`--cols:${columns};--sm-cols:${Math.min(columns, 2)}`}
+    >
+      {stats.map((stat, index) => {
+        const label = pick(stat.label, lang);
+        const context = pick(stat.context, lang);
+        const prefix = pick(stat.prefix, lang);
+        const suffix = pick(stat.suffix, lang);
+        const display =
+          stat.displayValue ??
+          (typeof stat.value === 'number' ? formatNumber(stat.value, lang) : '');
+        const valueEm = Math.max(
+          1,
+          em(display) +
+            (prefix.value ? 0.45 * em(prefix.value) + 0.1 : 0) +
+            (suffix.value ? 0.6 * em(suffix.value) : 0),
+        );
+        return (
+          <div class="program-stat" style={`--i:${index};--value-em:${valueEm.toFixed(2)}`}>
+            <b class="program-stat__value">
+              {prefix.value && (
+                <span
+                  class="mr-1.5 text-[0.45em] tracking-normal"
+                  lang={prefix.isFallback ? prefix.lang : undefined}
+                >
+                  {prefix.value}
+                </span>
+              )}
+              {countsUp(stat) ? <span data-count-to={stat.value}>{display}</span> : display}
+              {suffix.value && <span class="text-[0.6em]">{suffix.value}</span>}
+            </b>
+            <span class="program-stat__label" lang={label.isFallback ? label.lang : undefined}>
+              {label.value}
             </span>
-          )}
-        </p>
-      </div>
-      {bars ? (
-        <dl class="m-0 flex flex-col gap-7">
-          {rest.map((entry) => (
-            <div class="flex flex-col gap-2.5">
-              <div class="flex items-baseline gap-5">
-                <dd class="t-numeral -order-1 m-0 w-28 flex-none !text-[2.45rem]">{entry.value}</dd>
-                <dt
-                  class="text-lg leading-[1.35] font-medium"
-                  lang={entry.label.isFallback ? entry.label.lang : undefined}
-                >
-                  {entry.label.value}
-                </dt>
-              </div>
-              <div aria-hidden="true" class="h-2.5 rounded-sm bg-[rgb(198_219_247/0.18)]">
-                <div
-                  class="h-2.5 rounded-sm bg-[color:var(--color-blue-200)]"
-                  style={`width:${entry.percent}%`}
-                />
-              </div>
-            </div>
-          ))}
-        </dl>
-      ) : (
-        rest.length > 0 && (
-          <dl class="m-0 grid [grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-x-8 gap-y-9">
-            {rest.map((entry) => (
-              <div class="flex flex-col gap-2.5 border-t border-[color:var(--color-line-navy)] pt-5">
-                <dd class="t-numeral -order-1 m-0 !text-[length:clamp(2.275rem,3.5vw,3.325rem)]">
-                  {entry.value}
-                </dd>
-                <dt
-                  class="flex flex-col gap-1 text-lg leading-[1.35] font-semibold"
-                  lang={entry.label.isFallback ? entry.label.lang : undefined}
-                >
-                  {entry.label.value}
-                  {entry.context.value && (
-                    <span
-                      class="text-[15px] font-normal text-[color:var(--color-on-navy)]"
-                      lang={entry.context.isFallback ? entry.context.lang : undefined}
-                    >
-                      {entry.context.value}
-                    </span>
-                  )}
-                </dt>
-              </div>
-            ))}
-          </dl>
-        )
-      )}
+            {context.value && (
+              <span
+                class="program-stat__context"
+                lang={context.isFallback ? context.lang : undefined}
+              >
+                {context.value}
+              </span>
+            )}
+          </div>
+        );
+      })}
     </div>
   )
 }
+
+<script>
+  import { countUpOnEntry } from '~/lib/count-up';
+  countUpOnEntry();
+</script>

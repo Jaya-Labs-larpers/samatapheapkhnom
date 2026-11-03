@@ -11,7 +11,7 @@ interface Props {
 
 const { lang, pathname, full = false } = Astro.props;
 
-/** The language the link switches TO — a single toggle, not a two-way picker. */
+/** Flag of the language the link switches TO — a single toggle, not a two-way picker. */
 const otherLocale: Locale = lang === 'en' ? 'km' : 'en';
 const label = otherLocale === 'km' ? t(lang, 'switchToKhmer') : t(lang, 'switchToEnglish');
 ---
@@ -23,10 +23,24 @@ const label = otherLocale === 'km' ? t(lang, 'switchToKhmer') : t(lang, 'switchT
   title={label}
   aria-label={label}
   class:list={[
-    'inline-flex min-h-11 min-w-12 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--color-line-strong)] bg-white px-2.5 font-[family-name:var(--font-display)] text-[13px] font-bold text-[color:var(--color-ink-900)] no-underline transition-colors hover:border-[color:var(--color-blue-700)] hover:bg-[color:var(--color-blue-50)] hover:text-[color:var(--color-ink-900)]',
-    full && 'w-full py-3',
+    'inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--color-line-strong)] bg-white px-2.5 py-2 text-[13px] font-semibold text-[color:var(--color-ink-600)] no-underline transition-colors hover:border-[color:var(--color-blue-200)] hover:bg-[color:var(--color-blue-50)]',
+    full && 'w-full justify-center py-3',
   ]}
 >
-  <span lang="en" class="tracking-[0.08em]">{otherLocale === 'km' ? 'KH' : 'EN'}</span>
+  {
+    otherLocale === 'km' ? (
+      <span lang="en" class="leading-[14px] tracking-[0.04em]">
+        KH
+      </span>
+    ) : (
+      <img
+        src={`/flags/${otherLocale}.svg`}
+        width="20"
+        height="14"
+        alt=""
+        class="rounded-[2px] ring-1 ring-black/10"
+      />
+    )
+  }
   {full && <span>{localeName[otherLocale]}</span>}
 </a>

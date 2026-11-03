@@ -1,0 +1,85 @@
+---
+/**
+ * The loading screen at the start of a visit to the home page. Its bar follows
+ * the page's real progress: the HTML parsed, then each eagerly loaded image
+ * and the web fonts, then the load event. It shows once per visit, and only
+ * when the visit starts here: a reload, a return from another page of the
+ * site, or a visitor who asked for reduced motion goes straight to the page.
+ * It stays up at least 1.2s so a fast load does not flash it, never more than
+ * 10s, and any key or tap skips it. Without JavaScript it never shows.
+ *
+ * The script is inline and comes before the overlay so html[data-intro] is set
+ * before the first paint.
+ */
+import ButterflyGlyph from '~/components/media/ButterflyGlyph.astro';
+---
+
+<script is:inline>
+  (function () {
+    try {
+      if (sessionStorage.getItem('sko-intro')) return;
+      sessionStorage.setItem('sko-intro', '1');
+    } catch (error) {
+      return;
+    }
+    if (document.referrer && new URL(document.referrer).origin === location.origin) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var root = document.documentElement;
+    var started = Date.now();
+    var shown = 0;
+    root.setAttribute('data-intro', '');
+
+    function progress(value) {
+      if (value <= shown) return;
+      shown = value;
+      root.style.setProperty('--intro-progress', String(value));
+    }
+    function end() {
+      if (root.getAttribute('data-intro') !== '') return;
+      root.setAttribute('data-intro', 'done');
+      setTimeout(function () {
+        root.removeAttribute('data-intro');
+        root.style.removeProperty('--intro-progress');
+      }, 500);
+    }
+
+    progress(0.1);
+    document.addEventListener('DOMContentLoaded', function () {
+      var assets = [];
+      Array.prototype.forEach.call(document.images, function (image) {
+        if (image.loading === 'lazy' || image.complete) return;
+        assets.push(
+          new Promise(function (settle) {
+            image.addEventListener('load', settle);
+            image.addEventListener('error', settle);
+          }),
+        );
+      });
+      if (document.fonts) assets.push(document.fonts.ready);
+      var settled = 0;
+      progress(0.4);
+      assets.forEach(function (asset) {
+        asset.then(function () {
+          settled += 1;
+          progress(0.4 + 0.55 * (settled / assets.length));
+        });
+      });
+    });
+    addEventListener('load', function () {
+      progress(1);
+      setTimeout(end, Math.max(600, 1200 - (Date.now() - started)));
+    });
+    setTimeout(end, 10000);
+    addEventListener('keydown', end, { once: true });
+    addEventListener('pointerdown', end, { once: true });
+  })();
+</script>
+
+<div class="page-loader" role="status">
+  <ButterflyGlyph class="page-loader__butterfly" />
+  <span class="page-loader__track" aria-hidden="true">
+    <span class="page-loader__fill"></span>
+  </span>
+  <span class="page-loader__label" lang="en">Loading</span>
+</div>

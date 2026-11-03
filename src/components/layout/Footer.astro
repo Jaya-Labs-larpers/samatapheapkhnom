@@ -1,7 +1,7 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
-import { localizePath, pick, t, text } from '~/lib/i18n/utils';
+import { localizePath, parsePath, pick, t, text } from '~/lib/i18n/utils';
 import { footerNav } from '~/lib/nav';
 import Icon from '~/components/Icon.astro';
 import Logo from '~/components/Logo.astro';
@@ -9,9 +9,13 @@ import Logo from '~/components/Logo.astro';
 interface Props {
   lang: Locale;
   settings: SiteSettings;
+  pathname: string;
 }
 
-const { lang, settings } = Astro.props;
+const { lang, settings, pathname } = Astro.props;
+
+/** The contact page is the invitation already; closing on it again would repeat the page. */
+const showClosing = parsePath(pathname).path.replace(/\/$/, '') !== '/contact';
 
 const orgName = text(settings.orgName, lang);
 const address = pick(settings.address, lang);
@@ -28,97 +32,120 @@ function iconForPlatform(platform: string): string {
 }
 ---
 
-<footer class="site-footer bg-[color:var(--color-blue-900)] text-white">
-  <div
-    class="mx-auto flex max-w-[var(--container-page)] flex-col gap-14 pt-[72px] pr-[var(--gutter-right)] pb-[calc(2.5rem+var(--safe-bottom))] pl-[var(--gutter-left)]"
-  >
-    <div class="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
-      <div class="flex min-w-0 flex-col gap-6 sm:col-span-2 lg:col-span-1">
-        <Logo lazy variant="reversed" width={200} title={orgName} class="block h-auto w-[200px]" />
-        <ul
-          class="m-0 flex list-none flex-col gap-3 p-0 text-[15px] leading-normal text-[color:var(--color-on-navy)]"
-        >
-          {
-            address.value && (
-              <li class="flex gap-3">
-                <Icon
-                  name="map-pin"
-                  size={18}
-                  class="mt-[3px] flex-none text-[color:var(--color-sky-400)]"
-                />
-                <span
-                  class="whitespace-pre-line"
-                  lang={address.isFallback ? address.lang : undefined}
-                >
-                  {address.value}
+<footer
+  class="site-footer on-inverse bg-[color:var(--color-blue-900)] pt-[60px] pb-[calc(1.75rem+var(--safe-bottom))] text-[14.5px] text-white/70"
+>
+  <div class="wrap">
+    {
+      /*
+      Closing line: the invitation and the two direct ways to reach SKO, set
+      as display type, so contact is the last thing every page says.
+    */
+    }
+    {
+      showClosing && (
+        <div class="footer-closing">
+          <p class="footer-closing__title">{t(lang, 'contactUs')}</p>
+          <div class="footer-closing__links">
+            {settings.email && (
+              <a href={`mailto:${settings.email}`} class="footer-closing__link">
+                <span class="roll">
+                  <span class="roll__text" data-text={settings.email}>
+                    {settings.email}
+                  </span>
                 </span>
-              </li>
-            )
-          }
+              </a>
+            )}
+            {settings.phone && (
+              <a href={`tel:${settings.phone.replace(/[^+\d]/g, '')}`} class="footer-closing__link">
+                <span class="roll">
+                  <span class="roll__text" data-text={settings.phone}>
+                    {settings.phone}
+                  </span>
+                </span>
+              </a>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    <div class="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
+      <div class="col-span-2 md:col-span-1">
+        <Logo variant="reversed" width={220} />
+
+        {
+          address.value && (
+            <p
+              class="mt-4 flex max-w-[34ch] gap-2 whitespace-pre-line text-[color:var(--color-sky-400)]"
+              lang={address.isFallback ? address.lang : undefined}
+            >
+              <Icon name="map-pin" size={20} class="mt-0.5 flex-none" />
+              <span class="text-white/70">{address.value}</span>
+            </p>
+          )
+        }
+
+        <p class="mt-2.5 space-y-1.5 text-[color:var(--color-sky-400)]">
           {
             settings.phone && (
-              <li class="flex gap-3">
-                <Icon
-                  name="phone"
-                  size={18}
-                  class="mt-[3px] flex-none text-[color:var(--color-sky-400)]"
-                />
-                <a
-                  href={`tel:${settings.phone.replace(/[^+\d]/g, '')}`}
-                  class="text-white no-underline hover:text-[color:var(--color-sky-400)]"
-                >
-                  {settings.phone}
-                </a>
-              </li>
+              <span class="flex items-center gap-2">
+                <Icon name="phone" size={20} />
+                <span class="text-white/70">{settings.phone}</span>
+              </span>
             )
           }
           {
             settings.email && (
-              <li class="flex gap-3">
-                <Icon
-                  name="envelope"
-                  size={18}
-                  class="mt-[3px] flex-none text-[color:var(--color-sky-400)]"
-                />
-                <a
-                  href={`mailto:${settings.email}`}
-                  class="[overflow-wrap:anywhere] text-white no-underline hover:text-[color:var(--color-sky-400)]"
-                >
-                  {settings.email}
-                </a>
-              </li>
+              <a
+                href={`mailto:${settings.email}`}
+                class="flex items-center gap-2 text-white/70 no-underline hover:text-white"
+              >
+                <Icon name="envelope" size={20} class="text-[color:var(--color-sky-400)]" />
+                {settings.email}
+              </a>
             )
           }
-          {
-            settings.socials?.map((social) => (
-              <li class="flex gap-3">
-                <Icon
-                  name={iconForPlatform(social.platform)}
-                  size={18}
-                  class="mt-[3px] flex-none text-[color:var(--color-sky-400)]"
-                />
-                <a
-                  href={social.url}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  class="text-white no-underline hover:text-[color:var(--color-sky-400)]"
-                >
-                  {social.platform}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
+        </p>
+
+        {
+          settings.socials && settings.socials.length > 0 && (
+            <ul class="mt-4 flex list-none flex-col gap-2 p-0">
+              {settings.socials.map((social) => (
+                <li>
+                  <a
+                    href={social.url}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    class="flex items-center gap-2 text-white/70 no-underline hover:text-white"
+                  >
+                    <Icon
+                      name={iconForPlatform(social.platform)}
+                      size={20}
+                      class="text-[color:var(--color-sky-400)]"
+                    />
+                    {social.platform}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )
+        }
       </div>
 
       {
         footerNav.map((group) => (
-          <nav aria-label={t(lang, group.heading)} class="flex flex-col gap-3.5">
-            <h2 class="eyebrow !text-[color:var(--color-sky-400)]">{t(lang, group.heading)}</h2>
-            <ul class="m-0 flex list-none flex-col p-0">
+          <nav aria-label={t(lang, group.heading)}>
+            <h2 class="mb-4 text-[13px] tracking-[0.1em] text-white uppercase">
+              {t(lang, group.heading)}
+            </h2>
+            <ul class="list-none p-0">
               {group.items.map((item) => (
                 <li>
-                  <a href={localizePath(item.path, lang)} class="footer-link">
+                  <a
+                    href={localizePath(item.path, lang)}
+                    class="block py-1 text-white/70 no-underline hover:text-white"
+                  >
                     {t(lang, item.key)}
                   </a>
                 </li>
@@ -130,31 +157,28 @@ function iconForPlatform(platform: string): string {
     </div>
 
     <div
-      class="flex flex-wrap items-center justify-between gap-4 border-t border-[color:var(--color-line-navy)] pt-6 text-sm text-[color:var(--color-on-navy)]"
+      class="mt-11 flex flex-wrap justify-between gap-5 border-t border-white/15 pt-5.5 text-[13px] text-white/55"
     >
-      <p class="m-0 flex items-start gap-2.5">
+      <span
+        class="flex items-center gap-1.5"
+        lang={registration.isFallback ? registration.lang : undefined}
+      >
         {
           registration.value && (
-            <Icon
-              name="check"
-              size={16}
-              class="mt-[3px] flex-none text-[color:var(--color-sky-400)]"
-            />
+            <Icon name="check-badge" size={16} class="text-[color:var(--color-sky-400)]" />
           )
         }
-        <span lang={registration.isFallback ? registration.lang : undefined}>
-          © {year}{' '}
-          {orgName}. {registration.value}
-        </span>
-      </p>
-      <div class="flex gap-6">
-        <a href={localizePath('/privacy', lang)} class="footer-link !min-h-11 !text-sm"
+        © {year}
+        {orgName}. {registration.value}
+      </span>
+      <span class="flex gap-4.5">
+        <a href={localizePath('/privacy', lang)} class="text-white/55 no-underline hover:text-white"
           >{t(lang, 'navPrivacy')}</a
         >
-        <a href={localizePath('/contact', lang)} class="footer-link !min-h-11 !text-sm"
+        <a href={localizePath('/contact', lang)} class="text-white/55 no-underline hover:text-white"
           >{t(lang, 'navContact')}</a
         >
-      </div>
+      </span>
     </div>
   </div>
 </footer>

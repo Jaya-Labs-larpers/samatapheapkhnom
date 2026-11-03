@@ -11,12 +11,16 @@ const { lang } = Astro.props;
 ---
 
 <BaseLayout lang={lang} title={t(lang, 'notFoundTitle')} noindex>
-  <section
-    class="mx-auto flex max-w-[var(--container-page)] flex-col items-start gap-6 px-[var(--gutter-left)] py-[clamp(88px,9vw,136px)]"
-  >
-    <p class="eyebrow">404</p>
-    <h1 class="t-xl m-0">{t(lang, 'notFoundTitle')}</h1>
-    <p class="t-lead-sm m-0 max-w-[48ch]">{t(lang, 'notFoundBody')}</p>
-    <a href={localizePath('/', lang)} class="btn btn-primary btn-lg">{t(lang, 'notFoundCta')}</a>
+  <section class="section">
+    <div class="wrap py-16">
+      <p class="eyebrow">404</p>
+      <h1 class="mt-3 text-[length:var(--text-h1)] leading-[var(--text-h1--line-height)]">
+        {t(lang, 'notFoundTitle')}
+      </h1>
+      <p class="mt-4 text-[length:var(--text-lead)] text-[color:var(--color-ink-400)]">
+        {t(lang, 'notFoundBody')}
+      </p>
+      <a href={localizePath('/', lang)} class="btn btn-primary mt-7">{t(lang, 'notFoundCta')}</a>
+    </div>
   </section>
 </BaseLayout>

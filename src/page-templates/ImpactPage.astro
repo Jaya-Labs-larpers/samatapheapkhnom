@@ -5,9 +5,10 @@ import { localizePath, pick, t } from '~/lib/i18n/utils';
 import { resolveSeo } from '~/lib/seo';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import PageHero from '~/components/content/PageHero.astro';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 import ImpactStats from '~/components/content/ImpactStats.astro';
 import SectionedBody from '~/components/content/SectionedBody.astro';
+import SectionHeading from '~/components/content/SectionHeading.astro';
+import ProgramRows from '~/components/content/ProgramRows.astro';
 import StoryQuote from '~/components/content/StoryQuote.astro';
 import CtaBand from '~/components/content/CtaBand.astro';
 
@@ -27,7 +28,7 @@ const title = pick(page?.title, lang);
 const intro = pick(page?.intro, lang);
 const heading = title.value ?? t(lang, 'pageImpact');
 const introText = intro.value ?? t(lang, 'introImpact');
-const story = stories[0];
+const story = stories[0] ? { ...stories[0], body: null } : null;
 const seo = resolveSeo(page?.seo, lang, {
   title: heading,
   description: introText,
@@ -36,6 +37,7 @@ const seo = resolveSeo(page?.seo, lang, {
 ---
 
 <BaseLayout
+  headerOverlay
   lang={lang}
   title={seo.title}
   description={seo.description}
@@ -43,73 +45,54 @@ const seo = resolveSeo(page?.seo, lang, {
   noindex={seo.noindex}
 >
   <PageHero
-    dark
-    size="xxl"
     lang={lang}
     title={heading}
     intro={introText}
     introLang={intro.isFallback ? intro.lang : undefined}
     trail={[{ label: heading }]}
-  >
-    <a href={localizePath('/reports', lang)} class="btn btn-accent btn-lg"
-      >{t(lang, 'seeReports')}</a
-    >
-  </PageHero>
+  />
 
-  {
-    stats.length > 0 && (
-      <section aria-labelledby="glance-title" class="on-wing band band--wing band--tight">
-        <div class="wrap-inner flex flex-col gap-10">
-          <h2 id="glance-title" class="eyebrow">
-            {t(lang, 'resultsAtAGlance')}
-          </h2>
-          <ImpactStats lang={lang} stats={stats} variant="tiles" />
-        </div>
-      </section>
-    )
-  }
+  <div class="bg-white pb-[var(--spacing-section)]">
+    {
+      stats.length > 0 && (
+        <section class="section pb-0">
+          <div class="wrap">
+            <h2 class="eyebrow">{t(lang, 'resultsAtAGlance')}</h2>
+            <div class="mt-5">
+              <ImpactStats lang={lang} stats={stats} />
+            </div>
+            <p class="mt-6">
+              <a href={localizePath('/reports', lang)} class="link-arrow">
+                {t(lang, 'seeReports')}
+                <span class="arrow" aria-hidden="true">
+                  →
+                </span>
+              </a>
+            </p>
+          </div>
+        </section>
+      )
+    }
 
-  <SectionedBody lang={lang} body={page?.body} variant="plain" />
+    <SectionedBody lang={lang} body={page?.body} />
+  </div>
 
   {
     programs.length > 0 && (
-      <section
-        aria-label={t(lang, 'ourPrograms')}
-        class="band band--tint !py-[clamp(80px,8vw,120px)]"
-      >
-        <div class="wrap-inner">
-          <ol class="m-0 grid list-none [grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-6 p-0">
-            {programs.map((program, index) => {
-              const title = pick(program.title, lang);
-              return (
-                <li>
-                  <a
-                    href={localizePath(`/programs/${program.slug}`, lang)}
-                    class="flex flex-col gap-3.5 no-underline"
-                  >
-                    <div class="aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)]">
-                      <ResponsiveImage
-                        image={program.cardImage ?? program.image}
-                        lang={lang}
-                        alt=""
-                        aspect="4/3"
-                        sizes="(min-width: 64rem) 22vw, 50vw"
-                      />
-                    </div>
-                    <span class="font-[family-name:var(--font-display)] text-sm font-bold text-[color:var(--color-blue-700)]">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <span
-                      class="font-[family-name:var(--font-display)] text-[1.32rem] leading-[1.1] font-bold text-[color:var(--color-ink-900)]"
-                      lang={title.isFallback ? title.lang : undefined}
-                    >
-                      {title.value}
-                    </span>
-                  </a>
-                </li>
-              );
-            })}
-          </ol>
+      <section class="section">
+        <div class="wrap">
+          <div class="flex flex-wrap items-end justify-between gap-5">
+            <SectionHeading title={t(lang, 'ourPrograms')} />
+            <a href={localizePath('/programs', lang)} class="link-arrow">
+              {t(lang, 'viewAll')}
+              <span class="arrow" aria-hidden="true">
+                →
+              </span>
+            </a>
+          </div>
+          <div class="mt-8.5">
+            <ProgramRows lang={lang} programs={programs} />
+          </div>
         </div>
       </section>
     )
@@ -117,8 +100,10 @@ const seo = resolveSeo(page?.seo, lang, {
 
   {
     story && (
-      <section aria-label="Story" class="px-[var(--gutter-left)] py-[clamp(88px,9vw,136px)]">
-        <StoryQuote lang={lang} story={story} quoteOnly linkProgram />
+      <section class="story-band on-inverse">
+        <div class="wrap">
+          <StoryQuote lang={lang} story={story} inverse linkProgram />
+        </div>
       </section>
     )
   }
