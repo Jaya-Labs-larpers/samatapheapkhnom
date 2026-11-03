@@ -3,7 +3,6 @@ import type { Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
 import { localizePath, t, text } from '~/lib/i18n/utils';
 import { mainNav, mobileNav } from '~/lib/nav';
-import { donationEnabled } from '~/lib/donation';
 import LanguageToggle from './LanguageToggle.astro';
 import Icon from '~/components/Icon.astro';
 import Logo from '~/components/Logo.astro';
@@ -12,9 +11,11 @@ interface Props {
   lang: Locale;
   pathname: string;
   settings: SiteSettings;
+  /** Float the header over a full-bleed hero until the page scrolls. */
+  overlay?: boolean;
 }
 
-const { lang, pathname, settings } = Astro.props;
+const { lang, pathname, settings, overlay = false } = Astro.props;
 
 const orgName = text(settings.orgName, lang);
 
@@ -24,60 +25,54 @@ function isCurrent(path: string): boolean {
 }
 ---
 
-<header class="site-header sticky top-0 z-20">
+<header
+  class="site-header sticky top-0 z-20"
+  data-overlay={overlay ? '' : undefined}
+  data-at-top={overlay ? '' : undefined}
+>
   <div
-    class="mx-auto flex min-h-[var(--header-h)] w-full max-w-[var(--container-page)] flex-wrap items-center gap-x-8 gap-y-3 py-2 pt-[calc(0.5rem+var(--safe-top))] pr-[var(--gutter-right)] pl-[var(--gutter-left)]"
+    class="flex h-full w-full items-center gap-6 pt-[var(--safe-top)] pr-[var(--gutter-right)] pl-[var(--gutter-left)]"
   >
     <a href={localizePath('/', lang)} class="flex flex-none items-center no-underline">
       <Logo
-        variant="emblem"
-        wide="full"
-        height={44}
+        variant="full"
+        height={92}
         title={orgName}
-        class="block h-11 w-auto sm:h-12 lg:aspect-[1384/829] lg:h-auto lg:w-[180px]"
+        class="h-[68px] w-auto sm:h-[92px] lg:h-[118px]"
       />
     </a>
 
-    <nav class="hidden flex-1 justify-end lg:flex" aria-label={t(lang, 'mainNavLabel')}>
-      <ul class="m-0 flex list-none flex-wrap justify-end gap-x-1 gap-y-1 p-0">
-        {
-          mainNav.map((item) => (
-            <li>
-              <a
-                href={localizePath(item.path, lang)}
-                aria-current={isCurrent(item.path) ? 'page' : undefined}
-                class="nav-link"
-              >
+    <nav class="ml-auto hidden lg:flex lg:gap-0.5" aria-label={t(lang, 'mainNavLabel')}>
+      {
+        mainNav.map((item) => (
+          <a
+            href={localizePath(item.path, lang)}
+            aria-current={isCurrent(item.path) ? 'page' : undefined}
+            class="nav-link"
+          >
+            <span class="roll">
+              <span class="roll__text" data-text={t(lang, item.key)}>
                 {t(lang, item.key)}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
+              </span>
+            </span>
+          </a>
+        ))
+      }
     </nav>
 
-    <div class="ml-auto flex flex-none items-center gap-2 sm:gap-3 lg:ml-0">
-      <div class="hidden lg:block"><LanguageToggle lang={lang} pathname={pathname} /></div>
+    <div
+      class="ml-auto flex items-center gap-3 lg:ml-0 lg:border-l lg:border-[color:var(--color-line)] lg:pl-3.5"
+    >
+      <LanguageToggle lang={lang} pathname={pathname} />
       <a
         href={localizePath('/contact', lang)}
-        class:list={[
-          'btn hidden',
-          donationEnabled ? 'btn-secondary xl:inline-flex' : 'btn-primary lg:inline-flex',
-        ]}
+        class="btn btn-primary btn-fill hidden sm:inline-flex"
       >
-        {t(lang, 'contactUs')}
+        <span class="btn-fill__blob" aria-hidden="true"></span>
+        <span class="roll">
+          <span class="roll__text" data-text={t(lang, 'contactUs')}>{t(lang, 'contactUs')}</span>
+        </span>
       </a>
-      {
-        donationEnabled && (
-          <a
-            href={localizePath('/donate', lang)}
-            class="btn btn-accent btn-sm sm:min-h-12 sm:px-[22px] sm:text-base"
-            aria-current={isCurrent('/donate') ? 'page' : undefined}
-          >
-            {t(lang, 'navDonate')}
-          </a>
-        )
-      }
       <button
         type="button"
         id="menu-toggle"
@@ -95,6 +90,8 @@ function isCurrent(path: string): boolean {
   </div>
 </header>
 
+{overlay && <div class="header-sentinel" aria-hidden="true" />}
+
 <!-- Mobile navigation panel -->
 <div
   id="mobile-nav"
@@ -105,12 +102,9 @@ function isCurrent(path: string): boolean {
   aria-label={t(lang, 'menu')}
 >
   <div
-    class="wrap flex h-[var(--header-h)] flex-none items-center border-b border-[color:var(--color-line)] pt-[var(--safe-top)]"
+    class="wrap flex h-[var(--header-h)] flex-none items-center border-b border-[color:var(--color-line-subtle)] pt-[var(--safe-top)]"
   >
-    <span
-      class="font-[family-name:var(--font-display)] text-[15px] font-bold text-[color:var(--color-ink-900)]"
-      >{orgName}</span
-    >
+    <span class="text-[14px] font-bold text-[color:var(--color-ink-900)]">{orgName}</span>
     <button
       type="button"
       id="menu-close"
@@ -126,12 +120,11 @@ function isCurrent(path: string): boolean {
     aria-label={t(lang, 'mainNavLabel')}
   >
     {
-      mobileNav.map((item, i) => (
+      mobileNav.map((item) => (
         <a
           href={localizePath(item.path, lang)}
-          style={`--i:${i}`}
           aria-current={isCurrent(item.path) ? 'page' : undefined}
-          class="flex min-h-14 items-center justify-between border-b border-[color:var(--color-line)] text-[18px] font-semibold text-[color:var(--color-ink-900)] no-underline"
+          class="flex items-center justify-between border-b border-[color:var(--color-line-subtle)] py-[15px] text-[17px] font-semibold text-[color:var(--color-ink-900)] no-underline"
         >
           {t(lang, item.key)}
           <span class="text-[color:var(--color-blue-700)]" aria-hidden="true">
@@ -141,43 +134,43 @@ function isCurrent(path: string): boolean {
       ))
     }
 
-    <a
-      href={localizePath('/contact', lang)}
-      style={`--i:${mobileNav.length}`}
-      class="btn btn-primary btn-lg btn-block mt-6"
-    >
+    <a href={localizePath('/contact', lang)} class="btn btn-primary btn-block mt-6 py-4">
       {t(lang, 'contactUs')}
     </a>
-    {
-      donationEnabled && (
-        <a
-          href={localizePath('/donate', lang)}
-          style={`--i:${mobileNav.length + 1}`}
-          class="btn btn-accent btn-lg btn-block mt-2.5"
-        >
-          {t(lang, 'navDonate')}
-        </a>
-      )
-    }
     <a
       href={localizePath('/contact?topic=volunteer', lang)}
-      style={`--i:${mobileNav.length + 2}`}
-      class="btn btn-secondary btn-lg btn-block mt-2.5"
+      class="btn btn-secondary btn-block mt-2.5 py-4"
     >
       {t(lang, 'navVolunteer')}
     </a>
 
-    <div
-      style={`--i:${mobileNav.length + 3}`}
-      class="mt-7 border-t border-[color:var(--color-line)] pt-5 pb-8"
-    >
-      <span class="eyebrow mb-3 block">{t(lang, 'language')}</span>
+    <div class="mt-7 border-t border-[color:var(--color-line)] pt-5 pb-8">
+      <span
+        class="mb-3 block font-mono text-[11px] font-semibold tracking-[0.1em] text-[color:var(--color-ink-400)] uppercase"
+        >{t(lang, 'language')}</span
+      >
       <LanguageToggle lang={lang} pathname={pathname} full />
     </div>
   </nav>
 </div>
 
 <script>
+  /**
+   * Overlay header: transparent while the top of the hero is in view, solid
+   * once the page has scrolled past it. Watching a marker element rather than
+   * the scroll offset means the browser reports the crossing itself — two
+   * callbacks per visit instead of one per frame.
+   */
+  const overlayHeader = document.querySelector<HTMLElement>('.site-header[data-overlay]');
+  const sentinel = document.querySelector('.header-sentinel');
+
+  if (overlayHeader && sentinel) {
+    new IntersectionObserver(([entry]) => {
+      if (!entry) return;
+      overlayHeader.toggleAttribute('data-at-top', entry.isIntersecting);
+    }).observe(sentinel);
+  }
+
   /**
    * The header steps out of the way while the visitor reads downward and comes
    * back on any upward scroll, keyboard focus, or near the top of the page.
@@ -296,14 +289,9 @@ function isCurrent(path: string): boolean {
       const settle = () => {
         if (done) return;
         done = true;
-        panel.removeEventListener('animationend', onPanelEnd);
         finishClose();
       };
-      // The menu items animate too, and their animationend bubbles up here.
-      const onPanelEnd = (event: AnimationEvent) => {
-        if (event.target === panel) settle();
-      };
-      panel.addEventListener('animationend', onPanelEnd);
+      panel.addEventListener('animationend', settle, { once: true });
       window.setTimeout(settle, 400);
     };
 

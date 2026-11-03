@@ -1,9 +1,9 @@
 ---
 /**
- * Logo.astro — the traced SKO vector, served as a cached /logo/*.svg file rather than
- * inlined, so its ~50 KB is not repeated in every page's HTML.
+ * Logo.astro — the traced SKO vector, served as a cached /logo/*.svg file rather
+ * than inlined, so its ~50 KB is not repeated in every page's HTML.
  *
- *   <Logo variant="emblem" height={28} />            header on a phone
+ *   <Logo variant="emblem" height={28} />            header (above the fold)
  *   <Logo variant="reversed" width={220} />          footer on Deep Navy
  *   <Logo variant="full" width={240} />              light backgrounds (About, reports)
  *
@@ -20,9 +20,6 @@ interface Props {
   height?: number;
   class?: string;
   title?: string;
-  /** Swap to this lockup from `wideFrom` upward (a `<picture>`, so only one file is fetched). */
-  wide?: Variant;
-  wideFrom?: string;
   /** Below the fold: the file is not fetched until the logo is near the viewport. */
   lazy?: boolean;
 }
@@ -32,8 +29,6 @@ const {
   height,
   class: className = '',
   title = 'Samatapheap Khnom Organization',
-  wide,
-  wideFrom = '64rem',
   lazy = false,
 } = Astro.props;
 
@@ -59,33 +54,14 @@ if (!isEmblem && width && width < 180) {
 }
 const w = width ?? (height ? Math.round(height * ratio) : undefined);
 const h = height ?? (width ? Math.round(width / ratio) : undefined);
-const src = `/logo/${file}`;
-const wideSrc = wide ? `/logo/${files[wide]}` : null;
 ---
 
-{
-  wideSrc ? (
-    <picture>
-      <source media={`(min-width: ${wideFrom})`} srcset={wideSrc} />
-      <img
-        src={src}
-        width={w}
-        height={h}
-        alt={title}
-        class={className}
-        decoding="async"
-        loading={lazy ? 'lazy' : undefined}
-      />
-    </picture>
-  ) : (
-    <img
-      src={src}
-      width={w}
-      height={h}
-      alt={title}
-      class={className}
-      decoding="async"
-      loading={lazy ? 'lazy' : undefined}
-    />
-  )
-}
+<img
+  src={`/logo/${file}`}
+  width={w}
+  height={h}
+  alt={title}
+  class={`logo logo--${variant} ${className}`}
+  decoding="async"
+  loading={lazy ? 'lazy' : undefined}
+/>

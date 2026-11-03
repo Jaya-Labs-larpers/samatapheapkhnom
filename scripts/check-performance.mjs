@@ -24,8 +24,8 @@ export const BUDGETS = {
   cssGzipBytes: 16_000,
   /** Render-blocking stylesheets per page: the site's, plus a page's own. */
   stylesheetsPerPage: 2,
-  /** All first-party JavaScript in /_astro, gzipped. */
-  jsGzipBytes: 6_000,
+  /** All first-party JavaScript in /_astro, gzipped: butterflies, intro, reveals, count-up. */
+  jsGzipBytes: 8_000,
   /** Fonts preloaded per page: more starves the LCP image of bandwidth. */
   fontPreloads: 3,
 };

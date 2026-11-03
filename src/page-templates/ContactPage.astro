@@ -4,7 +4,6 @@ import type { UIKey } from '~/lib/i18n/strings';
 import { getSiteSettings } from '~/lib/content';
 import { pick, t } from '~/lib/i18n/utils';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Icon from '~/components/Icon.astro';
 import PageHero from '~/components/content/PageHero.astro';
 import ContactForm from '~/components/forms/ContactForm.astro';
 import InlineLinks from '~/components/content/InlineLinks.astro';
@@ -34,13 +33,82 @@ const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: titl
 ---
 
 <BaseLayout
+  headerOverlay
   lang={lang}
   title={title}
   description={description}
   jsonLd={contactPage}
   orgJsonLd={{ openingHoursSpecification: officeOpeningHours }}
 >
-  <PageHero size="lg" lang={lang} title={heading} intro={intro} trail={[{ label: heading }]} />
+  <PageHero
+    lang={lang}
+    title={heading}
+    intro={intro}
+    trail={[{ label: heading }]}
+  />
+
+  <section class="section pb-0">
+    <div class="wrap">
+      <dl class="contact-details contact-enter max-w-none" data-enter="pending">
+        {
+          settings.phone && (
+            <div class="contact-details__item">
+              <dt>{t(lang, 'contactCall')}</dt>
+              <dd>
+                <a href={tel(settings.phone)}>{settings.phone}</a>
+                {hours.value && (
+                  <span
+                    class="contact-details__meta"
+                    lang={hours.isFallback ? hours.lang : undefined}
+                  >
+                    {hours.value}
+                  </span>
+                )}
+              </dd>
+            </div>
+          )
+        }
+        {
+          settings.email && (
+            <div class="contact-details__item">
+              <dt>{t(lang, 'contactEmail')}</dt>
+              <dd>
+                <a href={`mailto:${settings.email}`} class="break-all">
+                  {settings.email}
+                </a>
+                <span class="contact-details__meta">{t(lang, 'contactEmailAction')}</span>
+              </dd>
+            </div>
+          )
+        }
+        {
+          address.value && (
+            <div class="contact-details__item">
+              <dt>{t(lang, 'contactVisit')}</dt>
+              <dd>
+                <span
+                  class="whitespace-pre-line"
+                  lang={address.isFallback ? address.lang : undefined}
+                >
+                  {address.value}
+                </span>
+                {settings.mapUrl && (
+                  <a
+                    href={settings.mapUrl}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    class="contact-details__meta"
+                  >
+                    {t(lang, 'viewOnGoogleMaps')}
+                  </a>
+                )}
+              </dd>
+            </div>
+          )
+        }
+      </dl>
+    </div>
+  </section>
 
   {
     /*
@@ -49,156 +117,130 @@ const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: titl
     :has(), so the page works before (and without) any script.
   */
   }
-  <section
-    class="contact-desk mx-auto flex max-w-[var(--container-page)] flex-wrap items-start gap-10 px-[var(--gutter-left)] pb-[clamp(88px,9vw,136px)]"
-  >
-    <div class="min-w-0 flex-[999_1_560px]">
-      <ContactForm lang={lang} id={formId} />
+  <section class="section contact-desk pt-10 lg:pt-12">
+    <div class="wrap">
+      <div class="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-10">
+        <div>
+          <ContactForm lang={lang} id={formId} />
 
-      <div class="safeguarding-panel" role="region" aria-label={t(lang, 'safeguardingPanelTitle')}>
-        <h2 class="safeguarding-panel__title">{t(lang, 'safeguardingPanelTitle')}</h2>
-        {
-          safeguarding.value && (
-            <p
-              class="safeguarding-panel__body"
-              lang={safeguarding.isFallback ? safeguarding.lang : undefined}
-            >
-              {safeguarding.value}
-            </p>
-          )
-        }
-        {
-          t(lang, 'contactSafeguardingPolicy') && (
-            <p class="safeguarding-panel__body inline-links">
-              <InlineLinks text={t(lang, 'contactSafeguardingPolicy')} />
-            </p>
-          )
-        }
-        <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {
-            settings.phone && (
-              <a href={tel(settings.phone)} class="btn btn-primary">
-                {settings.phone}
-              </a>
-            )
-          }
-          {
-            settings.safeguardingEmail && (
-              <a href={`mailto:${settings.safeguardingEmail}`} class="btn btn-secondary break-all">
-                {settings.safeguardingEmail}
-              </a>
-            )
-          }
-        </div>
-      </div>
-    </div>
-
-    <aside
-      aria-label={t(lang, 'contactReach')}
-      class="flex min-w-0 flex-[1_1_360px] flex-col gap-0.5 lg:sticky lg:top-[calc(var(--header-offset)+1.5rem)]"
-    >
-      <div
-        class="on-navy flex flex-col gap-6 rounded-t-[var(--radius-lg)] bg-[color:var(--color-blue-900)] p-[clamp(28px,3vw,44px)] text-white"
-      >
-        <h2
-          class="m-0 font-[family-name:var(--font-display)] text-[1.75rem] leading-[1.08] font-extrabold !text-white"
-        >
-          {t(lang, 'contactReach')}
-        </h2>
-        <dl class="m-0 flex flex-col">
-          {
-            settings.phone && (
-              <div class="flex flex-col gap-0.5 border-t border-[color:var(--color-line-navy)] py-4">
-                <dt class="eyebrow !text-xs">{t(lang, 'contactCall')}</dt>
-                <dd class="m-0 flex flex-col">
-                  <a
-                    href={tel(settings.phone)}
-                    class="text-[26px] font-bold !text-white no-underline"
-                  >
+          <div
+            class="safeguarding-panel"
+            role="region"
+            aria-label={t(lang, 'safeguardingPanelTitle')}
+          >
+            <h2 class="safeguarding-panel__title">
+              {t(lang, 'safeguardingPanelTitle')}
+            </h2>
+            {
+              safeguarding.value && (
+                <p
+                  class="safeguarding-panel__body"
+                  lang={safeguarding.isFallback ? safeguarding.lang : undefined}
+                >
+                  {safeguarding.value}
+                </p>
+              )
+            }
+            {
+              t(lang, 'contactSafeguardingPolicy') && (
+                <p class="safeguarding-panel__body inline-links">
+                  <InlineLinks text={t(lang, 'contactSafeguardingPolicy')} />
+                </p>
+              )
+            }
+            <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              {
+                settings.phone && (
+                  <a href={tel(settings.phone)} class="btn btn-primary">
                     {settings.phone}
                   </a>
-                  {hours.value && (
-                    <span
-                      class="text-[15px] text-[color:var(--color-on-navy)]"
-                      lang={hours.isFallback ? hours.lang : undefined}
-                    >
-                      {hours.value}
-                    </span>
-                  )}
-                </dd>
-              </div>
-            )
-          }
-          {
-            settings.email && (
-              <div class="flex flex-col gap-0.5 border-t border-[color:var(--color-line-navy)] py-4">
-                <dt class="eyebrow !text-xs">{t(lang, 'contactEmail')}</dt>
-                <dd class="m-0 [overflow-wrap:anywhere]">
-                  <a href={`mailto:${settings.email}`} class="text-xl font-semibold !text-white">
-                    {settings.email}
+                )
+              }
+              {
+                settings.safeguardingEmail && (
+                  <a
+                    href={`mailto:${settings.safeguardingEmail}`}
+                    class="btn btn-secondary break-all"
+                  >
+                    {settings.safeguardingEmail}
                   </a>
-                </dd>
-              </div>
+                )
+              }
+            </div>
+          </div>
+        </div>
+
+        <aside
+          class="contact-next contact-enter lg:sticky lg:top-[calc(var(--header-offset)+1.5rem)]"
+          data-enter="pending"
+        >
+          <h2 class="contact-next__title">{t(lang, 'nextTitle')}</h2>
+          <ol class="contact-next__steps">
+            {nextSteps.map((step) => <li>{t(lang, step)}</li>)}
+          </ol>
+          {
+            t(lang, 'nextFaq') && (
+              <p class="contact-next__block inline-links">
+                <InlineLinks text={t(lang, 'nextFaq')} />
+              </p>
             )
           }
           {
-            address.value && (
-              <div class="flex flex-col gap-0.5 border-y border-[color:var(--color-line-navy)] py-4">
-                <dt class="eyebrow !text-xs">{t(lang, 'contactVisit')}</dt>
-                <dd
-                  class="m-0 leading-normal whitespace-pre-line"
-                  lang={address.isFallback ? address.lang : undefined}
-                >
-                  {address.value}
-                </dd>
+            hours.value && (
+              <div class="contact-next__block">
+                <b>{t(lang, 'nextHours')}</b>
+                <span lang={hours.isFallback ? hours.lang : undefined}>{hours.value}</span>
               </div>
             )
           }
-        </dl>
-        {
-          settings.mapUrl && (
-            <a
-              href={settings.mapUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-              class="btn btn-accent self-start"
-            >
-              {t(lang, 'viewOnGoogleMaps')}
-              <Icon name="arrow-top-right-on-square" size={16} />
-            </a>
-          )
-        }
+          <p class="contact-next__block contact-next__privacy">
+            {t(lang, 'nextPrivacy')}
+          </p>
+        </aside>
       </div>
-      <div
-        class="flex flex-col gap-5 rounded-b-[var(--radius-lg)] bg-[color:var(--color-blue-50)] p-[clamp(28px,3vw,44px)]"
-      >
-        <h2 class="eyebrow m-0">{t(lang, 'nextTitle')}</h2>
-        <ol class="m-0 flex list-none flex-col p-0">
-          {
-            nextSteps.map((step, index) => (
-              <li
-                class:list={[
-                  'grid grid-cols-[3rem_minmax(0,1fr)] gap-3 border-t border-[color:var(--color-blue-200)] py-3.5',
-                  index === nextSteps.length - 1 && 'border-b',
-                ]}
-              >
-                <span class="font-[family-name:var(--font-display)] text-[21px] leading-[1.08] font-extrabold text-[color:var(--color-blue-700)]">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <span>{t(lang, step)}</span>
-              </li>
-            ))
-          }
-        </ol>
-        {
-          t(lang, 'nextFaq') && (
-            <p class="inline-links m-0 text-[15px]">
-              <InlineLinks text={t(lang, 'nextFaq')} />
-            </p>
-          )
-        }
-        <p class="m-0 text-sm text-[color:var(--color-ink-400)]">{t(lang, 'nextPrivacy')}</p>
-      </div>
-    </aside>
+    </div>
   </section>
 </BaseLayout>
+
+{
+  /*
+  The three boxes arrive one after another as each comes into view: a slow
+  rise that sharpens from a blur (.contact-enter, global.css). The form's own
+  rows follow inside that window. A box already on screen at load goes first.
+*/
+}
+<script>
+  const ENTER_MS = 2000;
+  const STAGGER_MS = 180;
+  const boxes = Array.from(document.querySelectorAll<HTMLElement>('.contact-enter'));
+
+  const show = (box: HTMLElement, index: number) => {
+    const delay = index * STAGGER_MS;
+    box.style.setProperty('--enter-delay', `${delay}ms`);
+    box.dataset.enter = 'shown';
+    setTimeout(
+      () => {
+        box.dataset.enter = 'done';
+        box.style.removeProperty('--enter-delay');
+      },
+      delay + ENTER_MS + 900,
+    );
+  };
+
+  if (typeof IntersectionObserver !== 'function') {
+    boxes.forEach(show);
+  } else {
+    const arrival = new IntersectionObserver(
+      (entries) => {
+        entries
+          .filter((entry) => entry.isIntersecting)
+          .forEach((entry, index) => {
+            arrival.unobserve(entry.target);
+            show(entry.target as HTMLElement, index);
+          });
+      },
+      { threshold: 0.05 },
+    );
+    boxes.forEach((box) => arrival.observe(box));
+  }
+</script>

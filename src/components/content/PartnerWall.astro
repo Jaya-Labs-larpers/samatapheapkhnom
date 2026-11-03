@@ -7,61 +7,62 @@ import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 interface Props {
   lang: Locale;
   partners: Partner[];
-  /** `strip` is the home page's ruled grid of logos; `cards` names each partner under its logo. */
-  variant?: 'strip' | 'cards';
+  columns?: 3 | 5;
 }
 
-const { lang, partners, variant = 'strip' } = Astro.props;
-const cards = variant === 'cards';
+const { lang, partners, columns = 5 } = Astro.props;
 ---
 
 <ul
   class:list={[
-    'm-0 grid list-none p-0',
-    cards
-      ? '[grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-6'
-      : '[grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))] border-t border-l border-[color:var(--color-line)]',
+    'reveal reveal-cascade grid list-none gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--color-line)] bg-[color:var(--color-line-subtle)] p-0',
+    'grid-cols-2 sm:grid-cols-3',
+    columns === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-3',
   ]}
 >
   {
-    partners.map((partner) => {
+    partners.map((partner, index) => {
       const Tag = partner.url ? 'a' : 'div';
-      const logo = hasImage(partner.logo) ? (
-        <div class="grid h-full min-h-0 w-full place-items-center [&_img]:max-h-full [&_img]:object-contain">
-          <ResponsiveImage
-            image={partner.logo}
-            lang={lang}
-            alt={cards ? '' : partner.name}
-            aspect="5/3"
-            sizes="220px"
-            blurUp={false}
-          />
-        </div>
-      ) : (
-        <span
-          class="grid h-full w-full place-items-center bg-[color:var(--color-blue-50)] px-3 text-center text-[15px] leading-snug font-bold text-[color:var(--color-ink-900)]"
-          aria-hidden={cards ? 'true' : undefined}
-        >
-          {partner.name}
-        </span>
-      );
       return (
-        <li class:list={[cards ? 'flex flex-col gap-3.5' : 'contents']}>
+        <li class="contents">
           <Tag
+            style={`--i:${index}`}
             {...(partner.url
-              ? { href: partner.url, rel: 'noopener noreferrer', target: '_blank' }
+              ? {
+                  href: partner.url,
+                  rel: 'noopener noreferrer',
+                  target: '_blank',
+                }
               : {})}
-            class:list={[
-              'block no-underline',
-              cards
-                ? 'h-[148px] rounded-[var(--radius-lg)] border border-[color:var(--color-line)] p-6'
-                : 'h-[152px] border-r border-b border-[color:var(--color-line)] p-7',
-            ]}
+            class="grid aspect-5/3 place-items-center overflow-hidden bg-white p-4 no-underline transition-colors hover:bg-[color:var(--color-blue-50)]"
           >
-            {!cards && <span class="sr-only">{partner.name}</span>}
-            {logo}
+            <span class="sr-only-focusable">{partner.name}</span>
+            {/*
+              A partner whose logo file has not arrived yet is shown as their
+              name set in type, not as an empty "[LOGO]" box. The organisation
+              is a real one either way, and a wordmark is a legitimate way to
+              credit a partner.
+            */}
+            {hasImage(partner.logo) ? (
+              <div class="grid h-full min-h-0 w-full place-items-center [&_img]:max-h-full [&_img]:object-contain">
+                <ResponsiveImage
+                  image={partner.logo}
+                  lang={lang}
+                  alt=""
+                  aspect="5/3"
+                  sizes="180px"
+                  blurUp={false}
+                />
+              </div>
+            ) : (
+              <span
+                aria-hidden="true"
+                class="text-center text-[13.5px] leading-snug font-semibold text-balance text-[color:var(--color-ink-600)]"
+              >
+                {partner.name}
+              </span>
+            )}
           </Tag>
-          {cards && <span class="text-lg leading-[1.3] font-bold">{partner.name}</span>}
         </li>
       );
     })

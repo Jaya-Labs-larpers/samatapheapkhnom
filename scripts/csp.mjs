@@ -25,7 +25,7 @@
 
 import { createHash } from 'node:crypto';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { join, relative, sep } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // fileURLToPath, not URL.pathname — the latter leaves %20 in paths like
@@ -51,24 +51,6 @@ const SCRIPT_HOSTS = [
   'https://challenges.cloudflare.com',
   'https://static.cloudflareinsights.com',
   'https://*.googletagmanager.com',
-];
-
-/**
- * The donate pages carry the KHQR codes that decide where money goes, so no
- * third-party script may run beside them: no GTM, no analytics, no Turnstile,
- * no Sanity images. Only this site's own scripts and this page's hashes.
- */
-const STRICT_PAGES = new Set(['donate/index.html', 'km/donate/index.html']);
-const STRICT_DIRECTIVES = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-  "form-action 'self'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
-  "font-src 'self'",
-  "connect-src 'self'",
-  'upgrade-insecure-requests',
 ];
 
 /**
@@ -104,9 +86,8 @@ for await (const file of htmlFiles(DIST)) {
     hashes.add(`'sha256-${createHash('sha256').update(body, 'utf8').digest('base64')}'`);
   }
 
-  const strict = STRICT_PAGES.has(relative(DIST, file).split(sep).join('/'));
-  const scriptSrc = ["script-src 'self'", ...(strict ? [] : SCRIPT_HOSTS), ...hashes].join(' ');
-  const policy = [...(strict ? STRICT_DIRECTIVES : BASE_DIRECTIVES), scriptSrc].join('; ');
+  const scriptSrc = ["script-src 'self'", ...SCRIPT_HOSTS, ...hashes].join(' ');
+  const policy = [...BASE_DIRECTIVES, scriptSrc].join('; ');
 
   await writeFile(file, html.replaceAll(PLACEHOLDER, policy), 'utf8');
   pages += 1;

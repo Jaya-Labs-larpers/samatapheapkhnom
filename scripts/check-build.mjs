@@ -17,8 +17,8 @@ const env = { ...loadEnv('production', process.cwd(), ''), ...process.env };
 const production = deploymentEnvironment(env) === 'production';
 const localContent = env.PUBLIC_CONTENT_SOURCE === 'fixtures';
 const cmsContent =
-  (env.PUBLIC_CONTENT_SOURCE?.trim() ||
-    (env.PUBLIC_SANITY_PROJECT_ID?.trim() ? 'sanity' : 'fixtures')) === 'sanity';
+  (env.PUBLIC_CONTENT_SOURCE?.trim() || (env.PUBLIC_SANITY_PROJECT_ID?.trim() ? 'sanity' : 'fixtures')) ===
+  'sanity';
 const siteUrl = (env.PUBLIC_SITE_URL || 'http://localhost:4321').replace(/\/+$/, '');
 
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
@@ -41,7 +41,6 @@ const TEXT_FILE = /\.(?:html|js|mjs|css|json|xml|txt|svg|webmanifest|map)$/;
 const failures = [];
 const warnings = [];
 let checked = 0;
-let donatePages = 0;
 
 function check(condition, page, message) {
   if (!condition) failures.push(`${page}: ${message}`);
@@ -94,19 +93,6 @@ for await (const file of htmlFiles(DIST)) {
     `${inlineCount} inline script(s) but only ${hashCount} hash(es) in the policy`,
   );
 
-  // Donate pages: nothing third-party may run beside the KHQR codes
-  if (/^\/(?:km\/)?donate\/index\.html$/.test(page)) {
-    donatePages += 1;
-    check(!/https?:/.test(policy), page, 'donate page CSP allows another origin');
-    check(
-      !/<script[^>]*\bsrc="(?:https?:)?\/\//.test(html),
-      page,
-      'third-party script on a donate page',
-    );
-    check(!html.includes('googletagmanager'), page, 'GTM on a donate page');
-    check(html.includes('src="/donate.js"'), page, 'donate.js is not loaded as an external file');
-  }
-
   // Canonical + both hreflang alternates (404s are noindex, so exempt)
   if (!is404) {
     check(/<link rel="canonical"/.test(html), page, 'no canonical link');
@@ -122,11 +108,7 @@ for await (const file of htmlFiles(DIST)) {
       page,
       `og:image is not an absolute site or Sanity CDN URL: ${ogImage}`,
     );
-    check(
-      /<meta name="twitter:card" content="summary_large_image"/.test(html),
-      page,
-      'no summary_large_image card',
-    );
+    check(/<meta name="twitter:card" content="summary_large_image"/.test(html), page, 'no summary_large_image card');
   }
 
   // Structured data
@@ -140,32 +122,6 @@ for await (const file of htmlFiles(DIST)) {
   const imgsWithoutAlt = (html.match(/<img(?![^>]*\salt(?:=|[\s/>]))[^>]*>/g) ?? []).length;
   check(imgsWithoutAlt === 0, page, `${imgsWithoutAlt} <img> without alt`);
 }
-
-// Donate is left out of production builds until SKO's real details are in
-// src/config/donation.ts (src/lib/donation.ts, donationEnabled). Anywhere else, or
-// once the details exist, both language pages must be there.
-const donationConfig = await readFile(
-  fileURLToPath(new URL('../src/config/donation.ts', import.meta.url)),
-  'utf8',
-);
-const donationOff =
-  production && /export const donation: DonationConfig \| null = null;/.test(donationConfig);
-check(
-  donatePages === (donationOff ? 0 : 2),
-  '/donate/',
-  donationOff
-    ? `Donate is switched off but ${donatePages} donate page(s) were built`
-    : `expected the English and Khmer donate pages, found ${donatePages}`,
-);
-if (donationOff)
-  for await (const file of htmlFiles(DIST)) {
-    const html = await readFile(file, 'utf8');
-    check(
-      !/href="(?:\/km)?\/donate\/?"/.test(html),
-      `/${relative(DIST, file).split(sep).join('/')}`,
-      'links to /donate while Donate is switched off',
-    );
-  }
 
 // Crawler files: llms.txt lists the site for answer engines. A sitemap lastmod
 // is the page's last CMS edit, never the build time, or Google stops trusting it;

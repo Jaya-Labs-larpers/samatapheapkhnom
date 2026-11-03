@@ -1,6 +1,7 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
 import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import ButterflyField from '~/components/media/ButterflyField.astro';
 import type { Crumb } from '~/lib/breadcrumbs';
 import InlineLinks from './InlineLinks.astro';
 
@@ -9,85 +10,46 @@ interface Props {
   title: string;
   intro?: string | null;
   introLang?: string | undefined;
-  /** Small line above the title, e.g. "Program 01 / 04". */
   eyebrow?: string;
   trail?: Crumb[];
-  /** Navy band instead of white. */
-  dark?: boolean;
-  /** Title size role from global.css. */
-  size?: 'xxl' | 'xl' | 'lg';
-  /** Title above the intro (default is side by side on wide screens). */
-  stacked?: boolean;
 }
 
-const {
-  lang,
-  title,
-  intro,
-  introLang,
-  eyebrow,
-  trail,
-  dark = false,
-  size = 'xl',
-  stacked = false,
-} = Astro.props;
+const { lang, title, intro, introLang, eyebrow, trail } = Astro.props;
 ---
 
+{
+  /*
+  Pulled up under the header, which stays transparent while the page is at the
+  top (headerOverlay on BaseLayout), so the band's colour runs to the top of the
+  window as the home hero's does. The padding pays the header's height back.
+  The same flock as the home hero's (ButterflyField) flies inside this band,
+  behind the text, and is clipped to it.
+*/
+}
 <section
-  aria-labelledby="page-title"
-  class:list={[
-    'pt-10 pb-[clamp(56px,6vw,88px)]',
-    dark ? 'on-navy bg-[color:var(--color-blue-900)] text-white' : '',
-  ]}
+  class="hero-overlap relative border-b border-[color:var(--color-line-subtle)] bg-[color:var(--color-surface-subtle)] pt-[calc(var(--header-h)+3.5rem)] pb-13"
 >
-  <div
-    class:list={[
-      'mx-auto flex flex-col gap-10 px-[var(--gutter-left)]',
-      dark ? 'max-w-[var(--container-inner)]' : 'max-w-[var(--container-page)]',
-    ]}
-  >
-    {trail && <Breadcrumbs lang={lang} trail={trail} inverse={dark} />}
-    <div
-      class:list={[
-        'grid gap-x-[clamp(48px,6vw,96px)] gap-y-8',
-        stacked
-          ? 'items-start'
-          : '[grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr))] items-end',
-      ]}
-    >
-      <div class="flex min-w-0 flex-col gap-5">
-        {
-          eyebrow && (
-            <p
-              class:list={['eyebrow !text-[15px]', !dark && '!text-[color:var(--color-blue-700)]']}
-            >
-              {eyebrow}
-            </p>
-          )
-        }
-        <h1
-          id="page-title"
-          class:list={[`t-${size}`, stacked && 'max-w-[18ch]', dark && '!text-white']}
-        >
-          {title}
-        </h1>
-      </div>
-      <div class="flex min-w-0 flex-col items-start gap-6">
-        {
-          intro && (
-            <p
-              class:list={[
-                'inline-links t-lead-sm m-0 max-w-[48ch]',
-                dark ? 'text-[color:var(--color-on-navy)]' : 'text-[color:var(--color-ink-900)]',
-              ]}
-              lang={introLang}
-            >
-              <InlineLinks text={intro} />
-            </p>
-          )
-        }
-        <slot />
-      </div>
+  <ButterflyField />
+  <div class="wrap relative">
+    <div data-butterfly-shelter>
+      {trail && <Breadcrumbs lang={lang} trail={trail} />}
+      {eyebrow && <p class="eyebrow mt-4">{eyebrow}</p>}
+      <h1
+        class="mt-3.5 text-[length:var(--text-h1)] leading-[var(--text-h1--line-height)] tracking-[var(--text-h1--letter-spacing)]"
+      >
+        {title}
+      </h1>
+      {
+        intro && (
+          <p
+            class="justify inline-links mt-4 text-[length:var(--text-lead)] text-[color:var(--color-ink-400)]"
+            lang={introLang}
+          >
+            <InlineLinks text={intro} />
+          </p>
+        )
+      }
+      <slot />
     </div>
   </div>
 </section>

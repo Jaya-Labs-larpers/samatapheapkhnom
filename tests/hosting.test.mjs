@@ -130,7 +130,7 @@ test("the Khmer 404 page is copied to where the nearest-404 lookup finds it", as
   );
 });
 
-test("_redirects sends the retired careers, partner and volunteer URLs to contact with a 301", async () => {
+test("_redirects sends the retired donate, careers, partner and volunteer URLs to contact with a 301", async () => {
   const text = await readFile(new URL("public/_redirects", root), "utf8");
   const rules = new Map();
   for (const raw of text.split("\n")) {
@@ -140,6 +140,10 @@ test("_redirects sends the retired careers, partner and volunteer URLs to contac
     rules.set(from, { to, status: Number(status) });
   }
   for (const [from, to] of [
+    ["/donate", "/contact/"],
+    ["/donate/", "/contact/"],
+    ["/km/donate", "/km/contact/"],
+    ["/km/donate/", "/km/contact/"],
     ["/careers", "/contact/"],
     ["/careers/*", "/contact/"],
     ["/km/careers", "/km/contact/"],

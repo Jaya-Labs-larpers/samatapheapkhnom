@@ -2,14 +2,12 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { Activity } from '~/lib/content/types';
 import { localizePath, pick, t } from '~/lib/i18n/utils';
-import InlineLinks from '~/components/content/InlineLinks.astro';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
-import Icon from '~/components/Icon.astro';
-import ActivityRow from '~/components/content/ActivityRow.astro';
-import { getSiteSettings } from '~/lib/content';
+import PageHero from '~/components/content/PageHero.astro';
+import ActivityCard from '~/components/content/ActivityCard.astro';
 import EmptyState from '~/components/content/EmptyState.astro';
 import Pagination from '~/components/content/Pagination.astro';
+import { cardGridCols, cardImageSizes } from '~/lib/grid';
 import { stripInlineLinks } from '~/lib/inline-links';
 import { canonicalUrl, collectionPageJsonLd } from '~/lib/seo/page-schema';
 
@@ -22,17 +20,6 @@ interface Props {
 
 const { lang, activities, currentPage, totalPages } = Astro.props;
 const heading = t(lang, 'pageActivities');
-const settings = await getSiteSettings();
-const facebook = settings.socials?.find((social) => /facebook/i.test(social.platform));
-
-/** Listed newest first, each run of a year under its own small label. */
-const byYear = activities.reduce<{ year: string; items: Activity[] }[]>((groups, activity) => {
-  const year = activity.publishedAt?.slice(0, 4) ?? '';
-  const last = groups.at(-1);
-  if (last && last.year === year) last.items.push(activity);
-  else groups.push({ year, items: [activity] });
-  return groups;
-}, []);
 
 const hrefFor = (page: number) =>
   page === 1 ? localizePath('/activities', lang) : localizePath(`/activities/page/${page}`, lang);
@@ -51,74 +38,38 @@ const collection = collectionPageJsonLd({
 ---
 
 <BaseLayout
+  headerOverlay
   lang={lang}
   title={title}
   description={description}
   noindex={currentPage > 1}
   jsonLd={collection}
 >
-  <section
-    aria-labelledby="page-title"
-    class="mx-auto flex max-w-[var(--container-page)] flex-col gap-10 px-[var(--gutter-left)] pt-10 pb-[clamp(56px,6vw,80px)]"
-  >
-    <Breadcrumbs lang={lang} trail={[{ label: heading }]} />
-    <h1
-      id="page-title"
-      class="t-lg m-0 max-w-[18ch]"
-      style="font-size:calc(clamp(2.45rem,5.18vw,5.25rem)*var(--display-scale))"
-    >
-      {heading}
-    </h1>
-    <p class="inline-links t-lead-sm m-0 max-w-[58ch] font-medium">
-      <InlineLinks text={t(lang, 'introActivities')} />
-    </p>
-    <div class="rule-top flex flex-wrap gap-3 pt-6">
-      <a
-        href={localizePath('/activities', lang)}
-        aria-current="page"
-        class="inline-flex min-h-12 items-center rounded-[var(--radius-md)] bg-[color:var(--color-ink-900)] px-5 font-semibold !text-white no-underline"
-      >
-        {t(lang, 'allActivities')}
-      </a>
+  <PageHero
+    lang={lang}
+    title={heading}
+    intro={t(lang, 'introActivities')}
+    trail={[{ label: heading }]}
+  />
+  <section class="section" aria-labelledby="all-activities">
+    <div class="wrap">
+      <h2 id="all-activities" class="sr-only">{t(lang, 'allActivities')}</h2>
       {
-        facebook && (
-          <a
-            href={facebook.url}
-            rel="noopener noreferrer"
-            target="_blank"
-            class="inline-flex min-h-12 items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--color-line-strong)] px-5 font-semibold !text-[color:var(--color-ink-900)] no-underline hover:border-[color:var(--color-blue-700)]"
-          >
-            {facebook.platform}
-            <Icon name="arrow-top-right-on-square" size={16} />
-          </a>
+        activities.length === 0 ? (
+          <EmptyState message={t(lang, 'emptyActivities')} />
+        ) : (
+          <div class={cardGridCols(activities.length)}>
+            {activities.map((activity) => (
+              <ActivityCard
+                lang={lang}
+                activity={activity}
+                sizes={cardImageSizes(activities.length)}
+              />
+            ))}
+          </div>
         )
       }
+      <Pagination lang={lang} current={currentPage} total={totalPages} hrefFor={hrefFor} />
     </div>
   </section>
-
-  <div
-    class="mx-auto max-w-[var(--container-page)] px-[var(--gutter-left)] pb-[clamp(88px,9vw,136px)]"
-  >
-    {
-      activities.length === 0 ? (
-        <EmptyState message={t(lang, 'emptyActivities')} />
-      ) : (
-        byYear.map((group) => (
-          <section class="grid [grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))] items-start gap-x-[clamp(40px,5vw,80px)] gap-y-6">
-            <h2 class="t-index m-0" style="font-size:clamp(3.72rem,6.82vw,6.82rem)">
-              {group.year || '—'}
-            </h2>
-            <ol class="m-0 min-w-0 list-none p-0 md:col-span-2">
-              {group.items.map((activity) => (
-                <li>
-                  <ActivityRow lang={lang} activity={activity} />
-                </li>
-              ))}
-            </ol>
-          </section>
-        ))
-      )
-    }
-    <Pagination lang={lang} current={currentPage} total={totalPages} hrefFor={hrefFor} />
-  </div>
 </BaseLayout>

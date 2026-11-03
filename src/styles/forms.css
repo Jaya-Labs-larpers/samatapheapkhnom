@@ -1,14 +1,13 @@
-/* Contact form, its topic picker and the safeguarding panel. Loaded only where
-   ContactForm.astro is, so no other page pays for it. */
+/* Contact form, its topic picker, the safeguarding panel and the contact page
+   layout. Loaded only where ContactForm.astro is, so no other page pays for it. */
 @layer components {
   /* --- Form controls ------------------------------------------------------ */
   .field {
     width: 100%;
-    min-height: 3.25rem;
     padding: 0.75rem 0.875rem;
     background: #fff;
     color: var(--color-ink-900);
-    border: 1px solid var(--color-field);
+    border: 1px solid var(--color-line-strong);
     border-radius: var(--radius-md);
     font-family: inherit;
     font-size: 1rem;
@@ -38,7 +37,7 @@
   .field--select {
     appearance: none;
     padding-right: 2.5rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234c5a6e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235c6689' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.875rem center;
     background-size: 1rem;
@@ -69,25 +68,42 @@
     display: flex;
     flex-direction: column;
     background: var(--color-surface);
-    border: 1px solid var(--color-line-strong);
-    border-top: 6px solid var(--color-blue-700);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-blue-200);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
     /* Fields inside respond to the PANEL's width, not the viewport's, so the
        same panel lays out correctly in a narrow column and a full-width one. */
     container-type: inline-size;
   }
 
+  /* The brand stripe across the top. 3px of --color-blue-700 into the logo
+     cyan: the two colours the identity is actually built from. */
+  .form-panel::before {
+    content: '';
+    display: block;
+    height: 3px;
+    flex: none;
+    border-start-start-radius: inherit;
+    border-start-end-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      var(--color-blue-700) 0%,
+      var(--color-blue-600) 55%,
+      var(--color-sky-400) 100%
+    );
+  }
+
   .form-panel-head {
-    padding: clamp(1.75rem, 3.5vw, 3.5rem) var(--form-panel-pad, clamp(1.5rem, 3.5vw, 3.5rem)) 0;
+    padding: 1.5rem var(--form-panel-pad, 1.5rem) 1.375rem;
+    border-bottom: 1px solid var(--color-line);
   }
   .form-panel-title {
     margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.575rem, 2.52vw, 2.45rem);
-    line-height: 1.08;
-    letter-spacing: -0.02em;
-    color: var(--color-blue-700);
-    font-weight: 800;
+    font-size: var(--text-h3);
+    line-height: var(--text-h3--line-height);
+    letter-spacing: var(--text-h3--letter-spacing);
+    color: var(--color-ink-900);
+    font-weight: 700;
   }
   .form-panel-note {
     margin: 0.4375rem 0 0;
@@ -107,7 +123,7 @@
   .form-section {
     display: grid;
     gap: 1.125rem;
-    padding: 1.75rem var(--form-panel-pad, clamp(1.5rem, 3.5vw, 3.5rem));
+    padding: 1.5rem var(--form-panel-pad, 1.5rem);
     border-top: 1px solid var(--color-line);
   }
   .form-section:first-child {
@@ -130,8 +146,8 @@
   /* The submit row sits on its own tinted band so the action never floats
      ambiguously under the last field. */
   .form-panel-foot {
-    padding: 1.5rem var(--form-panel-pad, clamp(1.5rem, 3.5vw, 3.5rem)) 1.75rem;
-    background: transparent;
+    padding: 1.125rem var(--form-panel-pad, 1.5rem) 1.25rem;
+    background: var(--color-surface-subtle);
     border-top: 1px solid var(--color-line);
     border-end-start-radius: inherit;
     border-end-end-radius: inherit;
@@ -512,6 +528,107 @@
     color: var(--color-danger-700);
   }
 
+  /* --- Contact page --------------------------------------------------------- */
+  /* Each box on the page arrives once it is on screen: a slow rise that
+     sharpens out of a blur, its rows following one after another inside the
+     same window (ContactPage.astro sets the timing). Only under scripting,
+     so a page with no script never hides anything. */
+  @media (scripting: enabled) {
+    .contact-enter[data-enter='pending'] {
+      opacity: 0;
+      translate: 0 36px;
+      filter: blur(14px);
+    }
+    .contact-enter[data-enter='shown'] {
+      transition:
+        opacity 2000ms var(--ease-reveal) var(--enter-delay, 0ms),
+        translate 2000ms var(--ease-pop) var(--enter-delay, 0ms),
+        filter 1600ms var(--ease-reveal) var(--enter-delay, 0ms);
+    }
+    .contact-enter[data-enter='pending'] .form-enter-row {
+      opacity: 0;
+      translate: 0 14px;
+    }
+    .contact-enter[data-enter='shown'] .form-enter-row {
+      transition:
+        opacity 900ms var(--ease-reveal),
+        translate 900ms var(--ease-pop);
+      transition-delay: calc(var(--enter-delay, 0ms) + 250ms + var(--i, 0) * 170ms);
+    }
+  }
+
+  /* A panel spanning exactly the width of the form and aside below it, so all
+     three share the same left and right edges; each detail is centred in its
+     third, with a hairline between them. */
+  .contact-details {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+  }
+  .contact-details__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.75rem 1.5rem;
+  }
+  .contact-details__item + .contact-details__item {
+    border-top: 1px solid var(--color-line);
+  }
+  @media (width >= 48rem) {
+    .contact-details {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .contact-details__item {
+      padding: 2rem 2rem 2.125rem;
+    }
+    .contact-details__item + .contact-details__item {
+      border-top: 0;
+      border-left: 1px solid var(--color-line);
+    }
+  }
+  .contact-details dt {
+    font-size: var(--text-eyebrow);
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-400);
+  }
+  .contact-details dt:lang(km) {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  .contact-details dd {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: center;
+    margin: 0.5rem 0 0;
+    font-size: 1.0625rem;
+    line-height: 1.45;
+    color: var(--color-ink-900);
+  }
+  .contact-details dd > a:first-child {
+    color: var(--color-ink-900);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .contact-details dd > a:first-child:hover {
+    color: var(--color-blue-700);
+  }
+  .contact-details__meta {
+    font-size: 0.875rem;
+    color: var(--color-ink-400);
+  }
+  a.contact-details__meta {
+    color: var(--color-blue-700);
+  }
+
   /* Only the chosen topic's questions show; safeguarding swaps the form for
      the direct-contact panel. */
   .contact-desk .form-topic,
@@ -558,5 +675,70 @@
   .safeguarding-panel__body {
     margin-top: 0.625rem;
     color: var(--color-ink-700);
+  }
+
+  .contact-next {
+    padding: 1.5rem;
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    box-shadow: var(--shadow-sm);
+  }
+  .contact-next__title {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-line);
+    font-size: var(--text-h4);
+    line-height: var(--text-h4--line-height);
+    color: var(--color-ink-900);
+  }
+  .contact-next__steps {
+    counter-reset: step;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--color-ink-700);
+  }
+  .contact-next__steps li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 1.625rem 1fr;
+    gap: 0.75rem;
+    padding: 0.875rem 0;
+  }
+  .contact-next__steps li + li {
+    border-top: 1px solid var(--color-line-subtle);
+  }
+  .contact-next__steps li::before {
+    content: counter(step, decimal-leading-zero);
+    display: grid;
+    place-items: center;
+    width: 1.625rem;
+    height: 1.625rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-blue-200);
+    background: var(--color-blue-50);
+    color: var(--color-blue-700);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .contact-next__block {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-line);
+    font-size: 0.875rem;
+    color: var(--color-ink-600);
+  }
+  .contact-next__block + .contact-next__block {
+    margin-top: 1rem;
+  }
+  .contact-next__block b {
+    color: var(--color-ink-900);
+  }
+  .contact-next__privacy {
+    color: var(--color-ink-400);
   }
 }

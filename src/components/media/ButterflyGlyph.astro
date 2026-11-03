@@ -1,0 +1,42 @@
+---
+/**
+ * The logo butterfly as inline SVG, from the same traced paths the /video
+ * swarm draws. `.butterfly-wings` is the group that flaps: it scales about the
+ * body line (see global.css), so callers only ever set one transform.
+ */
+import {
+  BUTTERFLY_VIEWBOX,
+  LEFT_WING,
+  RIGHT_WING,
+  WING_DARK,
+  WING_PALE,
+} from '~/lib/butterflies/shape';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<svg
+  class:list={['butterfly-glyph', className]}
+  viewBox={`0 0 ${BUTTERFLY_VIEWBOX.width} ${BUTTERFLY_VIEWBOX.height}`}
+  aria-hidden="true"
+  focusable="false"
+>
+  <g class="butterfly-wings">
+    {
+      [LEFT_WING, RIGHT_WING].map((wing) => (
+        <>
+          {wing.pale.map((d) => (
+            <path d={d} fill={WING_PALE} />
+          ))}
+          {wing.dark.map((d) => (
+            <path d={d} fill={WING_DARK} />
+          ))}
+        </>
+      ))
+    }
+  </g>
+</svg>

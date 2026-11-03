@@ -32,37 +32,33 @@ const description = t(lang, 'metaPartners') || stripInlineLinks(t(lang, 'introPa
 const partnerList = partnersJsonLd({ name: title, partners });
 ---
 
-<BaseLayout lang={lang} title={title} description={description} jsonLd={partnerList}>
+<BaseLayout headerOverlay lang={lang} title={title} description={description} jsonLd={partnerList}>
   <PageHero
     lang={lang}
     title={heading}
     intro={t(lang, 'introPartners')}
     trail={[{ label: heading }]}
   />
-  <section
-    aria-label={heading}
-    class="mx-auto flex max-w-[var(--container-page)] flex-col px-[var(--gutter-left)] pb-[clamp(88px,9vw,128px)]"
-  >
-    {
-      partners.length === 0 ? (
-        <EmptyState message={t(lang, 'emptyGeneric')} />
-      ) : (
-        groups.map((group) => (
-          <div class="grid [grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-x-10 gap-y-6 border-t-[3px] border-t-[color:var(--color-ink-900)] py-10">
-            <h2 class="eyebrow !text-sm !text-[color:var(--color-blue-700)]">
-              {categoryLabels[group]?.[lang] ?? group}
-            </h2>
-            <div class="min-w-0 md:col-span-3">
+  <section class="section">
+    <div class="wrap">
+      {
+        partners.length === 0 ? (
+          <EmptyState message={t(lang, 'emptyGeneric')} />
+        ) : (
+          groups.map((group) => (
+            <div class="mb-10">
+              <h2 class="mb-4 font-mono text-[11px] font-semibold tracking-[0.1em] text-[color:var(--color-ink-400)] uppercase">
+                {categoryLabels[group]?.[lang] ?? group}
+              </h2>
               <PartnerWall
                 lang={lang}
-                variant="cards"
                 partners={partners.filter((partner) => (partner.category ?? 'other') === group)}
               />
             </div>
-          </div>
-        ))
-      )
-    }
+          ))
+        )
+      }
+    </div>
   </section>
   <CtaBand lang={lang} title={t(lang, 'ctaPartnersTitle')} />
 </BaseLayout>

@@ -13,12 +13,12 @@ const policies = (await getReports()).filter((report) => report.type === 'policy
   Khmer routes render from one source and can never drift apart.
   Locale: km
 -->
-<GenericPage lang={lang} slug="safeguarding" fallbackTitleKey="pageSafeguarding" band>
+<GenericPage lang={lang} slug="safeguarding" fallbackTitleKey="pageSafeguarding">
   {
     policies.length > 0 && (
-      <div class="flex flex-col gap-6 pt-[clamp(80px,8vw,120px)]">
-        <h2 class="eyebrow">{t(lang, 'navSafeguarding')}</h2>
-        <ReportList lang={lang} reports={policies} tone="light" />
+      <div class="mt-9">
+        <h2 class="mb-4 text-[length:var(--text-h3)]">{t(lang, 'navSafeguarding')}</h2>
+        <ReportList lang={lang} reports={policies} />
       </div>
     )
   }

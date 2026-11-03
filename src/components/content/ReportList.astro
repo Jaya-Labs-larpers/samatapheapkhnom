@@ -4,17 +4,13 @@ import type { Report } from '~/lib/content/types';
 import { formatFileSize, pick, t } from '~/lib/i18n/utils';
 import { hasInlineLinks } from '~/lib/inline-links';
 import InlineLinks from './InlineLinks.astro';
-import Icon from '~/components/Icon.astro';
 
 interface Props {
   lang: Locale;
   reports: Report[];
-  /** `navy` is the Reports page's band; `light` sits on white (Safeguarding). */
-  tone?: 'navy' | 'light';
 }
 
-const { lang, reports, tone = 'navy' } = Astro.props;
-const navy = tone === 'navy';
+const { lang, reports } = Astro.props;
 
 const typeLabels: Record<string, Record<Locale, string>> = {
   'annual-report': { en: 'Annual report', km: 'របាយការណ៍ប្រចាំឆ្នាំ' },
@@ -24,13 +20,8 @@ const typeLabels: Record<string, Record<Locale, string>> = {
 };
 ---
 
-<ol
-  class:list={[
-    'm-0 list-none p-0',
-    navy
-      ? 'mx-auto max-w-[var(--container-inner)] border-t border-[color:var(--color-line-navy)]'
-      : 'rule-top',
-  ]}
+<ul
+  class="reveal list-none overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--color-line)] bg-white p-0"
 >
   {
     reports.map((report) => {
@@ -42,61 +33,47 @@ const typeLabels: Record<string, Record<Locale, string>> = {
         lang === 'km' && report.fileKm?.url ? t(lang, 'languageKhmer') : t(lang, 'languageEnglish');
       const typeLabel = report.type ? typeLabels[report.type]?.[lang] : null;
       const size = formatFileSize(file?.size);
-      const meta = [typeLabel, fileLanguage, 'PDF', size].filter(Boolean).join(' · ');
+      const meta = [typeLabel, fileLanguage, size].filter(Boolean).join(' · ');
 
       return (
-        <li
-          class:list={[
-            'grid [grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))] items-center gap-x-10 gap-y-5',
-            navy ? 'border-b border-[color:var(--color-line-navy)] py-10' : 'rule-row py-9',
-          ]}
-        >
-          {report.year && (
-            <span
-              class:list={['t-index', navy && '!text-[color:var(--color-sky-400)]']}
-              style={navy ? 'font-size:clamp(3.41rem,5.58vw,5.58rem)' : undefined}
-              aria-hidden={navy ? undefined : 'true'}
-            >
-              {report.year}
-            </span>
-          )}
-          <div class="flex min-w-0 flex-col gap-2.5 md:col-span-2">
-            <h2
-              class:list={[
-                't-h3-lg m-0',
-                navy ? '!text-white' : '!text-[color:var(--color-blue-700)]',
-              ]}
-              lang={title.isFallback ? title.lang : undefined}
-            >
-              {title.value}
-              {report.year ? ` (${report.year})` : ''}
-            </h2>
-            <p class:list={['eyebrow m-0 !text-sm', navy && '!text-[color:var(--color-on-navy)]']}>
-              {meta}
-            </p>
-            {summary.value && hasInlineLinks(summary.value) && (
-              <p
-                class="inline-links m-0 text-sm text-[color:var(--color-on-navy)]"
-                lang={summary.isFallback ? summary.lang : undefined}
-              >
-                <InlineLinks text={summary.value} />
-              </p>
-            )}
-          </div>
+        <li class="border-b border-[color:var(--color-line-subtle)] last:border-b-0">
           <a
             href={file?.url ?? '#'}
             download={file?.url ? '' : undefined}
             aria-disabled={file?.url ? undefined : 'true'}
-            class:list={[
-              'btn btn-lg justify-self-start md:justify-self-end',
-              navy ? 'btn-accent' : 'btn-primary',
-            ]}
+            class="flex items-center gap-4.5 px-5.5 py-4.5 no-underline transition-colors hover:bg-[color:var(--color-blue-50)]"
           >
-            <Icon name="arrow-down-tray" size={18} />
-            {t(lang, 'download')}
+            <span
+              class="grid h-12 w-10 flex-none place-items-center rounded-[var(--radius-xs)] border border-[color:var(--color-line-strong)] bg-[color:var(--color-surface-subtle)] font-mono text-[9px] font-bold text-[color:var(--color-danger-700)]"
+              aria-hidden="true"
+            >
+              PDF
+            </span>
+            <span class="min-w-0 flex-1">
+              <b
+                class="block text-[16px] font-semibold text-[color:var(--color-ink-900)]"
+                lang={title.isFallback ? title.lang : undefined}
+              >
+                {title.value}
+                {report.year ? ` (${report.year})` : ''}
+              </b>
+              <span class="mt-1 block text-[13px] text-[color:var(--color-ink-400)]">{meta}</span>
+            </span>
+            <span class="flex flex-none items-center gap-1.5 text-[14px] font-semibold text-[color:var(--color-blue-800)]">
+              {t(lang, 'download')}
+              <span aria-hidden="true">↓</span>
+            </span>
           </a>
+          {summary.value && hasInlineLinks(summary.value) && (
+            <p
+              class="inline-links px-5.5 pb-4.5 text-[14px] text-[color:var(--color-ink-400)]"
+              lang={summary.isFallback ? summary.lang : undefined}
+            >
+              <InlineLinks text={summary.value} />
+            </p>
+          )}
         </li>
       );
     })
   }
-</ol>
+</ul>

@@ -1,7 +1,6 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
-import { getSiteSettings } from '~/lib/content';
-import { localizePath, pick, t } from '~/lib/i18n/utils';
+import { localizePath, t } from '~/lib/i18n/utils';
 
 interface Props {
   lang: Locale;
@@ -10,80 +9,31 @@ interface Props {
 }
 
 const { lang, title, body } = Astro.props;
-
-const settings = await getSiteSettings();
-const address = pick(settings.address, lang);
-const hours = pick(settings.officeHours, lang);
-const tel = settings.phone ? `tel:${settings.phone.replace(/[^+\d]/g, '')}` : null;
-const hasDetails = Boolean(settings.phone || settings.email || address.value);
 ---
 
-<section
-  aria-labelledby="close-title"
-  class="on-navy bg-[color:var(--color-blue-900)] px-[var(--gutter-left)] py-[clamp(88px,9vw,128px)] text-white"
->
-  <div
-    class="mx-auto grid max-w-[var(--container-inner)] [grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))] gap-[clamp(48px,6vw,96px)]"
-  >
-    <div class="flex flex-col items-start gap-7">
-      <h2 id="close-title" class="t-md m-0">{title}</h2>
-      {body && <p class="m-0 max-w-[46ch] text-[19px] text-[color:var(--color-on-navy)]">{body}</p>}
-      <div class="flex flex-wrap gap-4">
-        <a href={localizePath('/contact', lang)} class="btn btn-accent btn-lg">
-          {t(lang, 'contactUs')}
-        </a>
-        <a href={localizePath('/reports', lang)} class="btn btn-inverse-outline btn-lg">
-          {t(lang, 'seeReports')}
-        </a>
+<section class="pb-[var(--spacing-section)]">
+  <div class="wrap">
+    <div
+      class="reveal on-inverse flex flex-wrap items-center justify-between gap-7 rounded-[var(--radius-xl)] bg-[color:var(--color-blue-900)] px-6 py-8 text-white sm:gap-9 sm:px-12 sm:py-13"
+    >
+      <div>
+        <h2
+          class="max-w-[22ch] text-[length:var(--text-h2)] leading-[1.2] tracking-[-0.02em] text-white sm:text-[30px]"
+        >
+          {title}
+        </h2>
+        {
+          body && (
+            <p class="mt-3 max-w-[46ch] text-[15.5px] text-white/78 sm:text-[16.5px]">{body}</p>
+          )
+        }
+      </div>
+      <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
+        <a href={localizePath('/contact', lang)} class="btn btn-inverse">{t(lang, 'contactUs')}</a>
+        <a href={localizePath('/reports', lang)} class="btn btn-inverse-outline"
+          >{t(lang, 'seeReports')}</a
+        >
       </div>
     </div>
-    {
-      hasDetails && (
-        <dl class="contact-dl m-0 flex flex-col self-end">
-          {settings.phone && tel && (
-            <div>
-              <dt>{t(lang, 'contactCall')}</dt>
-              <dd class="m-0 flex flex-col">
-                <a href={tel} class="text-[22px] font-semibold text-white no-underline">
-                  {settings.phone}
-                </a>
-                {hours.value && (
-                  <span
-                    class="text-[15px] text-[color:var(--color-on-navy)]"
-                    lang={hours.isFallback ? hours.lang : undefined}
-                  >
-                    {hours.value}
-                  </span>
-                )}
-              </dd>
-            </div>
-          )}
-          {settings.email && (
-            <div>
-              <dt>{t(lang, 'contactEmail')}</dt>
-              <dd class="m-0">
-                <a
-                  href={`mailto:${settings.email}`}
-                  class="text-[22px] font-semibold [overflow-wrap:anywhere] text-white underline underline-offset-[5px]"
-                >
-                  {settings.email}
-                </a>
-              </dd>
-            </div>
-          )}
-          {address.value && (
-            <div>
-              <dt>{t(lang, 'contactVisit')}</dt>
-              <dd
-                class="m-0 leading-normal whitespace-pre-line text-white"
-                lang={address.isFallback ? address.lang : undefined}
-              >
-                {address.value}
-              </dd>
-            </div>
-          )}
-        </dl>
-      )
-    }
   </div>
 </section>

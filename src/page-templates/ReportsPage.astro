@@ -20,29 +20,39 @@ const { lang, types } = Astro.props;
 const all = await getReports();
 const reports = types ? all.filter((report) => types.includes(report.type ?? 'other')) : all;
 
+const years = [...new Set(reports.map((report) => report.year ?? 0))].sort((a, b) => b - a);
 const heading = t(lang, 'pageReports');
 const title = t(lang, 'seoReports') || heading;
 const description = t(lang, 'metaReports') || stripInlineLinks(t(lang, 'introReports'));
 const collection = collectionPageJsonLd({ pathname: Astro.url.pathname, name: title, description });
 ---
 
-<BaseLayout lang={lang} title={title} description={description} jsonLd={collection}>
+<BaseLayout headerOverlay lang={lang} title={title} description={description} jsonLd={collection}>
   <PageHero
     lang={lang}
     title={heading}
     intro={t(lang, 'introReports')}
     trail={[{ label: heading }]}
   />
-  <section
-    aria-label={heading}
-    class="on-navy bg-[color:var(--color-blue-900)] px-[var(--gutter-left)] pt-[clamp(64px,6vw,96px)] pb-[clamp(88px,9vw,128px)] text-white"
-  >
-    {
-      reports.length === 0 ? (
-        <EmptyState message={t(lang, 'emptyReports')} />
-      ) : (
-        <ReportList lang={lang} reports={reports} />
-      )
-    }
+  <section class="section">
+    <div class="wrap">
+      <div class="measure">
+        {
+          reports.length === 0 ? (
+            <EmptyState message={t(lang, 'emptyReports')} />
+          ) : (
+            years.map((year) => (
+              <div class="mb-9">
+                <h2 class="mb-4 text-[length:var(--text-h3)]">{year || '—'}</h2>
+                <ReportList
+                  lang={lang}
+                  reports={reports.filter((report) => (report.year ?? 0) === year)}
+                />
+              </div>
+            ))
+          )
+        }
+      </div>
+    </div>
   </section>
 </BaseLayout>

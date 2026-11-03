@@ -1,10 +1,13 @@
 # Applied by Cloudflare Workers before the static asset lookup. These carry
-# over the 301s that vercel.json declared when careers was folded into contact
-# (docs/15-contact-consolidation.md), so no old link 404s. /donate was folded
-# in too and has since been restored as its own page.
+# over the 301s that vercel.json declared when donate and careers were folded
+# into contact (docs/15-contact-consolidation.md), so no old link 404s.
 # Both slash forms are listed because redirects run before the trailing-slash
 # normalisation that html_handling applies to real pages.
 
+/donate            /contact/     301
+/donate/           /contact/     301
+/km/donate         /km/contact/  301
+/km/donate/        /km/contact/  301
 /careers           /contact/     301
 /careers/*         /contact/     301
 /km/careers        /km/contact/  301

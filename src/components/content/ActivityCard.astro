@@ -1,0 +1,91 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Activity } from '~/lib/content/types';
+import { formatDate, localizePath, pick, t } from '~/lib/i18n/utils';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import Icon from '~/components/Icon.astro';
+
+interface Props {
+  lang: Locale;
+  activity: Activity;
+  /** Must match the grid the card sits in; see cardImageSizes. */
+  sizes?: string;
+}
+
+const { lang, activity, sizes } = Astro.props;
+
+const title = pick(activity.title, lang);
+const excerpt = pick(activity.excerpt, lang);
+const href = localizePath(`/activities/${activity.slug}`, lang);
+
+const categoryLabels: Record<string, Record<Locale, string>> = {
+  news: { en: 'News', km: 'ព័ត៌មាន' },
+  event: { en: 'Event', km: 'ព្រឹត្តិការណ៍' },
+  story: { en: 'Story', km: 'រឿងរ៉ាវ' },
+  announcement: { en: 'Announcement', km: 'សេចក្តីជូនដំណឹង' },
+};
+const category = activity.category ? categoryLabels[activity.category]?.[lang] : null;
+---
+
+<article class="card reveal group relative" data-cursor-label={t(lang, 'readMore')}>
+  <div class="card-media">
+    <ResponsiveImage image={activity.coverImage} lang={lang} alt="" aspect="3/2" sizes={sizes} />
+  </div>
+  <div class="flex flex-1 flex-col gap-2.5 p-5.5 pb-6">
+    {
+      category && (
+        <span class="chip">
+          <Icon name="tag" size={16} />
+          {category}
+        </span>
+      )
+    }
+    <h3
+      class="text-[17px] leading-[1.3] tracking-[-0.01em] sm:text-[19px]"
+      lang={title.isFallback ? title.lang : undefined}
+    >
+      <a
+        href={href}
+        class="text-inherit no-underline before:absolute before:inset-0 before:content-['']"
+      >
+        {title.value}
+      </a>
+    </h3>
+    <p
+      class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[color:var(--color-ink-400)]"
+    >
+      <span class="flex items-center gap-1.5">
+        <Icon name="calendar-days" size={16} />
+        <time datetime={activity.publishedAt ?? undefined}
+          >{formatDate(activity.publishedAt, lang)}</time
+        >
+      </span>
+      {
+        activity.author && (
+          <span class="flex items-center gap-1.5">
+            <Icon name="user" size={16} />
+            {activity.author}
+          </span>
+        )
+      }
+    </p>
+    {
+      excerpt.value && (
+        <p
+          class="line-clamp-3 text-[15px] leading-[1.6] text-[color:var(--color-ink-400)]"
+          lang={excerpt.isFallback ? excerpt.lang : undefined}
+        >
+          {excerpt.value}
+        </p>
+      )
+    }
+    <span class="link-arrow mt-auto border-0 pt-2.5 text-[14.5px]">
+      {t(lang, 'readMore')}
+      <span class="arrow" aria-hidden="true">→</span>
+    </span>
+  </div>
+</article>
+
+<script>
+  import '~/lib/card-morph';
+</script>

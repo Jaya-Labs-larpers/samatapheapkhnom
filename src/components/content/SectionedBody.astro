@@ -5,10 +5,6 @@
  * ~/lib/content/sections only decides where each "## " section breaks and
  * which layout its shape suits. A Khmer body gets the same layouts; until one
  * exists the English falls back with lang="en" on every section.
- *
- * `about` lays the sections out as the About page's bands; `program` as a
- * programme page's "What we do" grid and "Impact and results" band; `plain`
- * is running sections under a statement lead (Impact).
  */
 import type { Locale } from '~/lib/i18n/config';
 import type { LocaleBlocks, Partner } from '~/lib/content/types';
@@ -22,7 +18,6 @@ import {
   splitBody,
   splitLeadIn,
   splitPoint,
-  type BodySection,
   type TermLimits,
 } from '~/lib/content/sections';
 import { renderSpans } from '~/lib/portable-text';
@@ -35,10 +30,11 @@ interface Props {
   limits?: TermLimits;
   /** Partners whose name a statement mentions get their logo set beneath it. */
   partners?: Partner[];
-  variant?: 'about' | 'program' | 'plain';
+  /** Set the opening paragraph of running prose as a lead. */
+  leadProse?: boolean;
 }
 
-const { lang, body, limits = TERM_LIMITS, partners = [], variant = 'about' } = Astro.props;
+const { lang, body, limits = TERM_LIMITS, partners = [], leadProse = false } = Astro.props;
 
 const picked = pick(body, lang);
 const bodyLang = picked.lang;
@@ -66,273 +62,118 @@ function mentioned(text: string): Partner[] {
       .some((part) => part.length >= 4 && haystack.includes(part)),
   );
 }
-
-/** Figures in a fact ("14 khans", "105 Sangkat") are picked out in the band's accent. */
-function accentFigures(text: string): string {
-  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return escaped.replace(
-    /(\d[\d,]*\s+\p{L}+)/gu,
-    '<span class="text-[color:var(--color-sky-400)]">$1</span>',
-  );
-}
-
-/*
-  Group the sections into rows: a run of statements (vision, mission) is one
-  split row on About; a statement straight after the programme's rows is that
-  programme's partner and joins the grid as its last cell.
-*/
-type Row =
-  | { kind: 'pair'; items: BodySection[] }
-  | { kind: 'terms'; section: BodySection; partner?: BodySection }
-  | { kind: 'section'; section: BodySection };
-const rows: Row[] = [];
-for (const section of sections) {
-  const previous = rows[rows.length - 1];
-  if (variant === 'about' && section.layout === 'statement') {
-    if (previous?.kind === 'pair' && previous.items.length < 2) previous.items.push(section);
-    else rows.push({ kind: 'pair', items: [section] });
-  } else if (
-    variant === 'program' &&
-    section.layout === 'statement' &&
-    previous?.kind === 'terms' &&
-    !previous.partner
-  ) {
-    previous.partner = section;
-  } else if (section.layout === 'terms') {
-    rows.push({ kind: 'terms', section });
-  } else {
-    rows.push({ kind: 'section', section });
-  }
-}
-
-const logosFor = (section: BodySection) => mentioned(section.blocks.map(blockText).join(' '));
 ---
 
 {
-  variant === 'about' && lead.length > 0 && (
-    <section
-      aria-label="Who we are"
-      class="on-navy bg-[color:var(--color-blue-900)] px-[var(--gutter-left)] py-[clamp(80px,8vw,120px)] text-white"
-      lang={fallbackLang}
-    >
-      <RichText
-        blocks={asBlocks(lead)}
-        lang={lang}
-        class="mx-auto !max-w-[1180px] text-[length:clamp(1.5rem,2.6vw,2.375rem)] leading-[1.35] font-medium [&_*]:!text-white [&_p]:!text-white"
-      />
+  lead.length > 0 && (
+    <section class="section pb-0">
+      <div class="wrap">
+        <RichText blocks={asBlocks(lead)} lang={lang} class="about-lead" />
+      </div>
     </section>
   )
 }
 
 {
-  variant !== 'about' && lead.length > 0 && (
-    <section class="wrap section pb-0" lang={fallbackLang}>
-      <RichText
-        blocks={asBlocks(lead)}
-        lang={lang}
-        class={
-          variant === 'program'
-            ? 't-lead-sm'
-            : 'font-[family-name:var(--font-display)] text-[length:clamp(1.65rem,2.99vw,2.75rem)] leading-[1.1] font-bold tracking-[-0.02em] text-[color:var(--color-blue-700)] [&_p]:!max-w-[34ch]'
-        }
-      />
-    </section>
-  )
-}
+  sections.map((section) => {
+    const logos =
+      section.layout === 'statement' ? mentioned(section.blocks.map(blockText).join(' ')) : [];
+    return (
+      <section
+        class:list={['about-section', `about-section--${section.layout}`]}
+        lang={fallbackLang}
+      >
+        <div class="wrap about-section__grid">
+          <h2
+            class:list={['about-section__label eyebrow', section.layout === 'points' && 'reveal']}
+          >
+            {section.heading}
+          </h2>
 
-{
-  rows.map((row) => {
-    if (row.kind === 'pair') {
-      return (
-        <section
-          aria-label={row.items.map((item) => item.heading).join(' / ')}
-          class="grid [grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))]"
-          lang={fallbackLang}
-        >
-          {row.items.map((item, index) => (
-            <div
-              class:list={[
-                'flex flex-col gap-6 px-[var(--gutter-left)] py-[clamp(64px,7vw,104px)]',
-                index === 0 ? 'on-wing band--wing' : 'on-navy band--blue',
-              ]}
-            >
-              <h2 class:list={['eyebrow', index === 1 && '!text-[color:var(--color-on-navy)]']}>
-                {item.heading}
-              </h2>
-              <p
-                class:list={[
-                  'm-0 font-[family-name:var(--font-display)] leading-[1.08] font-bold tracking-[-0.02em]',
-                  index === 0 ? 'text-[color:var(--color-blue-750)]' : 'text-white',
-                ]}
-                style="font-size:calc(clamp(1.65rem,2.82vw,2.64rem)*var(--display-scale))"
-              >
-                {item.blocks.map(blockText).join(' ')}
-              </p>
-            </div>
-          ))}
-        </section>
-      );
-    }
-
-    const section = row.section;
-
-    if (row.kind === 'terms') {
-      const partner = row.partner;
-      const partnerLogos = partner ? logosFor(partner) : [];
-      const large = variant === 'about';
-      return (
-        <section class="wrap section flex flex-col gap-12" lang={fallbackLang}>
-          <h2 class="t-lg m-0">{section.heading}</h2>
-          <ol class="rule-top m-0 grid list-none [grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))] p-0">
-            {section.blocks.map((block, index) => {
-              const split = splitLeadIn(blockText(block), limits)!;
-              const html = restHtml(block, split.rest);
-              return (
-                <li class="rule-row flex flex-col gap-3 py-8 pr-8 pb-10">
-                  <span
-                    aria-hidden="true"
-                    class:list={[
-                      'font-[family-name:var(--font-display)] font-extrabold text-[color:var(--color-blue-700)]',
-                      large ? 'text-[2.48rem] leading-[0.95]' : 'text-[15px] font-bold',
-                    ]}
-                  >
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <h3 class="t-h3 m-0">{split.term}</h3>
-                  {html ? (
-                    <p class="m-0 text-[color:var(--color-ink-400)]" set:html={html} />
-                  ) : (
-                    <p class="m-0 text-[color:var(--color-ink-400)]">{split.rest}</p>
-                  )}
-                </li>
-              );
-            })}
-            {partner && (
-              <li class="rule-row flex flex-col justify-center gap-4 py-8 pr-8 pb-10">
-                <h3 class="eyebrow">{partner.heading}</h3>
-                {partnerLogos.map((logo) =>
-                  hasImage(logo.logo) ? (
-                    <div class="h-16 w-48 [&_img]:object-contain [&_img]:object-left">
-                      <ResponsiveImage
-                        image={logo.logo}
-                        lang={lang}
-                        alt={logo.name}
-                        aspect="5/3"
-                        sizes="192px"
-                        blurUp={false}
-                      />
-                    </div>
-                  ) : null,
-                )}
-                <RichText
-                  blocks={asBlocks(partner.blocks)}
-                  lang={lang}
-                  class="font-semibold [&_p]:!text-[color:var(--color-ink-900)]"
-                />
-              </li>
-            )}
-          </ol>
-        </section>
-      );
-    }
-
-    if (section.layout === 'points') {
-      return (
-        <section class="band band--tint" lang={fallbackLang}>
-          <div class="wrap-inner grid [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-x-[clamp(48px,6vw,96px)] gap-y-12">
-            <h2 class="t-md m-0 self-start">{section.heading}</h2>
-            <ol class="m-0 grid min-w-0 list-none [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-x-10 p-0 md:col-span-2">
-              {section.blocks.map((block, index) => {
-                const split = splitPoint(blockText(block))!;
-                const html = restHtml(block, split.rest);
-                return (
-                  <li class="grid grid-cols-[3rem_minmax(0,1fr)] gap-4 border-t border-[color:var(--color-blue-200)] py-6">
-                    <span
-                      aria-hidden="true"
-                      class="pt-[3px] font-[family-name:var(--font-display)] text-[15px] font-bold text-[color:var(--color-blue-700)]"
-                    >
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <div>
-                      <h3 class="mb-1.5 text-[19px] leading-[1.35] font-bold">{split.term}</h3>
-                      {html ? (
-                        <p
-                          class="m-0 text-base text-[color:var(--color-ink-400)]"
-                          set:html={html}
+          {section.layout === 'statement' && (
+            <div>
+              <RichText blocks={asBlocks(section.blocks)} lang={lang} class="about-statement" />
+              {logos.length > 0 && (
+                <ul class="statement-logos reveal reveal-cascade list-none p-0">
+                  {logos.map((partner, index) => (
+                    <li class="statement-logo [&_img]:object-contain" style={`--i:${index}`}>
+                      {hasImage(partner.logo) ? (
+                        <ResponsiveImage
+                          image={partner.logo}
+                          lang={lang}
+                          alt={partner.name}
+                          aspect="5/3"
+                          sizes="160px"
+                          blurUp={false}
                         />
                       ) : (
-                        <p class="m-0 text-base text-[color:var(--color-ink-400)]">{split.rest}</p>
+                        <span>{partner.name}</span>
                       )}
-                    </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {section.layout === 'terms' && (
+            <ol class="about-terms reveal reveal-cascade list-none p-0">
+              {section.blocks.map((block, index) => {
+                const split = splitLeadIn(blockText(block), limits)!;
+                const html = restHtml(block, split.rest);
+                return (
+                  <li class="about-term" style={`--i:${index}`}>
+                    <span class="about-term__index" aria-hidden="true">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <span class="about-term__name">{split.term}</span>
+                    {html ? (
+                      <span class="about-term__text" set:html={html} />
+                    ) : (
+                      <span class="about-term__text">{split.rest}</span>
+                    )}
                   </li>
                 );
               })}
             </ol>
-          </div>
-        </section>
-      );
-    }
+          )}
 
-    if (section.layout === 'facts') {
-      const facts = section.blocks.map((block) => ({
-        text: blockText(block),
-        html: hasLinkMarks(block) ? renderSpans(block as never) : null,
-      }));
-      const [first, ...others] = facts;
-      return (
-        <section
-          class="on-navy bg-[color:var(--color-blue-900)] px-[var(--gutter-left)] py-[clamp(88px,9vw,128px)] text-white"
-          lang={fallbackLang}
-        >
-          <div class="wrap-inner flex flex-col gap-8">
-            <h2 class="eyebrow">{section.heading}</h2>
-            {first && (
-              <p
-                class="m-0 max-w-[22ch] font-[family-name:var(--font-display)] leading-[1.08] font-bold tracking-[-0.02em] text-white"
-                style="font-size:calc(clamp(1.9rem,4vw,3.8rem)*var(--display-scale))"
-                set:html={first.html ?? accentFigures(first.text)}
-              />
-            )}
-            {others.length > 0 && (
-              <ul class="m-0 flex list-none flex-col gap-3 border-t border-[color:var(--color-line-navy)] p-0 pt-6 text-xl text-[color:var(--color-on-navy)] [&_a]:text-white">
-                {others.map((fact) => (
-                  <li
-                    class="max-w-[60ch]"
-                    set:html={fact.html ?? fact.text.replace(/&/g, '&amp;').replace(/</g, '&lt;')}
-                  />
-                ))}
-              </ul>
-            )}
-          </div>
-        </section>
-      );
-    }
+          {section.layout === 'points' && (
+            <ol
+              class="about-terms reveal reveal-cascade reveal-cascade--slow list-none p-0"
+              data-reveal-ms="2400"
+            >
+              {section.blocks.map((block, index) => {
+                const split = splitPoint(blockText(block))!;
+                const html = restHtml(block, split.rest);
+                return (
+                  <li class="about-term" style={`--i:${index}`}>
+                    <span class="about-term__index" aria-hidden="true">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <span class="about-term__name">{split.term}</span>
+                    {html ? (
+                      <span class="about-term__text" set:html={html} />
+                    ) : (
+                      <span class="about-term__text">{split.rest}</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
 
-    // statement outside a pair, and long prose (Networking, Impact and results)
-    const tint = variant === 'program';
-    return (
-      <section class:list={[tint ? 'band band--tint' : 'wrap section']} lang={fallbackLang}>
-        <div
-          class:list={[
-            'grid [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-x-[clamp(48px,6vw,96px)] gap-y-10',
-            tint ? 'wrap-inner' : 'items-center',
-          ]}
-        >
-          <h2
-            class="t-xs m-0 self-start"
-            style={
-              tint
-                ? 'font-size:calc(clamp(2.1rem,3.78vw,3.675rem)*var(--display-scale))'
-                : undefined
-            }
-          >
-            {section.heading}
-          </h2>
-          <RichText
-            blocks={asBlocks(section.blocks)}
-            lang={lang}
-            class="lead-first flex min-w-0 flex-col gap-6 md:col-span-2 [&_p]:m-0"
-          />
+          {section.layout === 'facts' && (
+            <RichText blocks={asBlocks(section.blocks)} lang={lang} class="about-facts" />
+          )}
+
+          {section.layout === 'prose' && (
+            <RichText
+              blocks={asBlocks(section.blocks)}
+              lang={lang}
+              class={leadProse ? 'about-prose about-prose--lead' : 'about-prose'}
+            />
+          )}
         </div>
       </section>
     );
