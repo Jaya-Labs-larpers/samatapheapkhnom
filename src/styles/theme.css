@@ -225,7 +225,7 @@
     --gutter-left: max(var(--spacing-gutter), var(--safe-left));
     --gutter-right: max(var(--spacing-gutter), var(--safe-right));
 
-    --header-h: calc(64px + var(--safe-top));
+    --header-h: calc(76px + var(--safe-top));
 
     /*
      * THE MEASURE — one column width for every piece of running text on the
@@ -255,12 +255,12 @@
   }
   @media (width >= 40rem) {
     :root {
-      --header-h: calc(72px + var(--safe-top));
+      --header-h: calc(96px + var(--safe-top));
     }
   }
   @media (width >= 64rem) {
     :root {
-      --header-h: calc(124px + var(--safe-top));
+      --header-h: calc(132px + var(--safe-top));
     }
   }
 

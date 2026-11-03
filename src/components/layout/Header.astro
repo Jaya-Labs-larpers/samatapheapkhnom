@@ -26,20 +26,20 @@ function isCurrent(path: string): boolean {
 
 <header class="site-header sticky top-0 z-20">
   <div
-    class="mx-auto flex min-h-[var(--header-h)] w-full max-w-[var(--container-page)] flex-wrap items-center gap-x-8 gap-y-3 py-2 pt-[calc(0.5rem+var(--safe-top))] pr-[var(--gutter-right)] pl-[var(--gutter-left)]"
+    class="mx-auto flex min-h-[var(--header-h)] w-full max-w-[var(--container-page)] flex-wrap items-center gap-x-8 gap-y-3 py-3 pt-[calc(0.75rem+var(--safe-top))] pr-[var(--gutter-right)] pl-[var(--gutter-left)]"
   >
     <a href={localizePath('/', lang)} class="flex flex-none items-center no-underline">
       <Logo
         variant="emblem"
         wide="full"
-        height={44}
+        height={52}
         title={orgName}
-        class="block h-11 w-auto sm:h-12 lg:aspect-[1384/829] lg:h-auto lg:w-[180px]"
+        class="block h-[52px] w-auto lg:aspect-[1384/829] lg:h-auto lg:w-[184px]"
       />
     </a>
 
-    <nav class="hidden flex-1 justify-end lg:flex" aria-label={t(lang, 'mainNavLabel')}>
-      <ul class="m-0 flex list-none flex-wrap justify-end gap-x-1 gap-y-1 p-0">
+    <nav class="hidden flex-1 justify-center lg:flex" aria-label={t(lang, 'mainNavLabel')}>
+      <ul class="m-0 flex list-none flex-wrap gap-x-2 gap-y-1 p-0">
         {
           mainNav.map((item) => (
             <li>
@@ -58,13 +58,7 @@ function isCurrent(path: string): boolean {
 
     <div class="ml-auto flex flex-none items-center gap-2 sm:gap-3 lg:ml-0">
       <div class="hidden lg:block"><LanguageToggle lang={lang} pathname={pathname} /></div>
-      <a
-        href={localizePath('/contact', lang)}
-        class:list={[
-          'btn hidden',
-          donationEnabled ? 'btn-secondary xl:inline-flex' : 'btn-primary lg:inline-flex',
-        ]}
-      >
+      <a href={localizePath('/contact', lang)} class="btn btn-secondary hidden lg:inline-flex">
         {t(lang, 'contactUs')}
       </a>
       {
@@ -126,10 +120,9 @@ function isCurrent(path: string): boolean {
     aria-label={t(lang, 'mainNavLabel')}
   >
     {
-      mobileNav.map((item, i) => (
+      mobileNav.map((item) => (
         <a
           href={localizePath(item.path, lang)}
-          style={`--i:${i}`}
           aria-current={isCurrent(item.path) ? 'page' : undefined}
           class="flex min-h-14 items-center justify-between border-b border-[color:var(--color-line)] text-[18px] font-semibold text-[color:var(--color-ink-900)] no-underline"
         >
@@ -141,36 +134,24 @@ function isCurrent(path: string): boolean {
       ))
     }
 
-    <a
-      href={localizePath('/contact', lang)}
-      style={`--i:${mobileNav.length}`}
-      class="btn btn-primary btn-lg btn-block mt-6"
-    >
+    <a href={localizePath('/contact', lang)} class="btn btn-primary btn-lg btn-block mt-6">
       {t(lang, 'contactUs')}
     </a>
     {
       donationEnabled && (
-        <a
-          href={localizePath('/donate', lang)}
-          style={`--i:${mobileNav.length + 1}`}
-          class="btn btn-accent btn-lg btn-block mt-2.5"
-        >
+        <a href={localizePath('/donate', lang)} class="btn btn-accent btn-lg btn-block mt-2.5">
           {t(lang, 'navDonate')}
         </a>
       )
     }
     <a
       href={localizePath('/contact?topic=volunteer', lang)}
-      style={`--i:${mobileNav.length + 2}`}
       class="btn btn-secondary btn-lg btn-block mt-2.5"
     >
       {t(lang, 'navVolunteer')}
     </a>
 
-    <div
-      style={`--i:${mobileNav.length + 3}`}
-      class="mt-7 border-t border-[color:var(--color-line)] pt-5 pb-8"
-    >
+    <div class="mt-7 border-t border-[color:var(--color-line)] pt-5 pb-8">
       <span class="eyebrow mb-3 block">{t(lang, 'language')}</span>
       <LanguageToggle lang={lang} pathname={pathname} full />
     </div>
@@ -296,14 +277,9 @@ function isCurrent(path: string): boolean {
       const settle = () => {
         if (done) return;
         done = true;
-        panel.removeEventListener('animationend', onPanelEnd);
         finishClose();
       };
-      // The menu items animate too, and their animationend bubbles up here.
-      const onPanelEnd = (event: AnimationEvent) => {
-        if (event.target === panel) settle();
-      };
-      panel.addEventListener('animationend', onPanelEnd);
+      panel.addEventListener('animationend', settle, { once: true });
       window.setTimeout(settle, 400);
     };
 
