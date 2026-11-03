@@ -1,8 +1,9 @@
 ---
 /**
- * Logo.astro — the traced SKO vector. Replaces the hand-coded triangle+ellipses SVG.
+ * Logo.astro — the traced SKO vector, served as a cached /logo/*.svg file rather
+ * than inlined, so its ~50 KB is not repeated in every page's HTML.
  *
- *   <Logo variant="emblem" height={28} />            header (inline, above the fold)
+ *   <Logo variant="emblem" height={28} />            header (above the fold)
  *   <Logo variant="reversed" width={220} />          footer on Deep Navy
  *   <Logo variant="full" width={240} />              light backgrounds (About, reports)
  *
@@ -10,9 +11,6 @@
  * Reversed on Deep Navy, photos and cyan blocks. Never recolour, stretch, or move the butterflies.
  * The emblem is NOT a UI icon: header, footer, favicon only.
  */
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
 type Variant =
   'full' | 'reversed' | 'mono' | 'mono-white' | 'emblem' | 'emblem-reversed' | 'emblem-mono';
 
@@ -22,6 +20,8 @@ interface Props {
   height?: number;
   class?: string;
   title?: string;
+  /** Below the fold: the file is not fetched until the logo is near the viewport. */
+  lazy?: boolean;
 }
 const {
   variant = 'full',
@@ -29,16 +29,8 @@ const {
   height,
   class: className = '',
   title = 'Samatapheap Khnom Organization',
+  lazy = false,
 } = Astro.props;
-
-/* The file is read from disk and spliced into a `set:html` fragment, so every
-   caller-supplied value interpolated into it has to be escaped. Nothing passes
-   CMS content today; this keeps it safe when something eventually does. */
-const escapeHtml = (value: string) =>
-  value.replace(
-    /[&<>"']/g,
-    (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] as string,
-  );
 
 // Keyed by Variant, not string — an indexed read then yields a definite string.
 const files: Record<Variant, string> = {
@@ -62,14 +54,14 @@ if (!isEmblem && width && width < 180) {
 }
 const w = width ?? (height ? Math.round(height * ratio) : undefined);
 const h = height ?? (width ? Math.round(width / ratio) : undefined);
-
-let svg = readFileSync(resolve(process.cwd(), 'public/logo', file), 'utf8');
-svg = svg
-  .replace(
-    '<svg ',
-    `<svg width="${w}" height="${h}" class="logo logo--${variant} ${escapeHtml(className)}" `,
-  )
-  .replace(/<title id="t">[^<]*<\/title>/, `<title id="t">${escapeHtml(title)}</title>`);
 ---
 
-<Fragment set:html={svg} />
+<img
+  src={`/logo/${file}`}
+  width={w}
+  height={h}
+  alt={title}
+  class={`logo logo--${variant} ${className}`}
+  decoding="async"
+  loading={lazy ? 'lazy' : undefined}
+/>

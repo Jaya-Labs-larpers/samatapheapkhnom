@@ -4,7 +4,7 @@ import '~/styles/global.css';
 import { htmlLang, type Locale } from '~/lib/i18n/config';
 import { t } from '~/lib/i18n/utils';
 import { getSiteSettings } from '~/lib/content';
-import { gtmId } from '~/lib/config';
+import { gtmId, hasSanity } from '~/lib/config';
 import type { CmsImage } from '~/lib/content/types';
 import Header from '~/components/layout/Header.astro';
 import Footer from '~/components/layout/Footer.astro';
@@ -50,9 +50,19 @@ const {
 
 const settings = await getSiteSettings();
 const pathname = Astro.url.pathname;
+/*
+  GTM waits for the page's own load and then for an idle moment, so its download
+  and parse never compete with the first paint. Page views are still counted:
+  GTM fires its own page-view from the dataLayer once it starts.
+*/
+const gtmLoader = gtmId
+  ? `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`
+  : '';
 const gtmSnippet =
-  gtmId &&
-  `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`;
+  gtmLoader &&
+  `(function(){var go=function(){${gtmLoader}};var idle=function(){(window.requestIdleCallback||function(f){setTimeout(f,1)})(go,{timeout:4000})};if(document.readyState==='complete')idle();else addEventListener('load',idle);})();`;
+const preloadFonts =
+  lang === 'km' ? ['kantumruy-pro-khmer', 'inter-latin'] : ['inter-latin', 'source-serif-4-latin'];
 ---
 
 <!doctype html>
@@ -80,19 +90,27 @@ const gtmSnippet =
 
     {
       /*
-      Preload only the font this locale sets its body copy in. The other script
-      still loads — the language toggle renders "ខ្មែរ" on English pages — but it
-      loads lazily with font-display: swap, so it never blocks LCP for one word
-      of chrome.
+      Preload what the first paint needs, and no more: the locale's body font and
+      the face its headline is set in (Source Serif 4 in English; Khmer headlines
+      stay on Kantumruy, with Inter for the Latin around them). The other script
+      still loads — the language toggle renders "ខ្មែរ" on English pages — but
+      lazily, under font-display: swap, so it never blocks LCP for one word of
+      chrome.
     */
     }
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      crossorigin="anonymous"
-      href={lang === 'km' ? '/fonts/kantumruy-pro-khmer.woff2' : '/fonts/inter-latin.woff2'}
-    />
+    {
+      preloadFonts.map((font) => (
+        <link
+          rel="preload"
+          as="font"
+          type="font/woff2"
+          crossorigin="anonymous"
+          href={`/fonts/${font}.woff2`}
+        />
+      ))
+    }
+    {hasSanity && <link rel="preconnect" href="https://cdn.sanity.io" />}
+    <link rel="preload" as="image" type="image/svg+xml" href="/logo/sko-logo-full-colour.svg" />
     <SeoHead
       lang={lang}
       pathname={pathname}

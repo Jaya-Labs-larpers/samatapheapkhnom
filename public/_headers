@@ -18,8 +18,17 @@
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Static files that change only when someone replaces them: a month, so a repeat
+# visit never re-downloads a font, logo or photo. Replace a file under a new name
+# if it must change sooner.
 /fonts/*
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=2592000
+/images/*
+  Cache-Control: public, max-age=2592000
+/logo/*
+  Cache-Control: public, max-age=2592000
+/icons/*
+  Cache-Control: public, max-age=2592000
 
 # The workers.dev rehearsal must never be indexed. Absent from production by construction.
 https://sko-website.maplematernity-api-825.workers.dev/*

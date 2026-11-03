@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node scripts/csp.mjs && node scripts/not-found.mjs && node scripts/check-build.mjs",
+    "build": "astro build && node scripts/csp.mjs && node scripts/not-found.mjs && node scripts/check-build.mjs && node scripts/check-performance.mjs",
     "build:production": "PUBLIC_DEPLOYMENT_ENV=production npm run build",
     "check": "npm test && npm run typecheck && npm run build",
     "check:edge": "node scripts/check-edge.mjs",

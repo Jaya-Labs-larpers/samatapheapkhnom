@@ -201,12 +201,14 @@ export async function runEdgeChecks(
   } else {
     record(false, "homepage references a /_astro/ asset");
   }
-  const font = await get("/fonts/inter-latin.woff2", { method: "HEAD" });
-  record(
-    font.status === 200 && /max-age=86400/.test(header(font, "cache-control")),
-    "fonts cached for a day",
-    header(font, "cache-control"),
-  );
+  for (const file of ["/fonts/inter-latin.woff2", "/logo/sko-logo-full-colour.svg"]) {
+    const res = await get(file, { method: "HEAD" });
+    record(
+      res.status === 200 && /max-age=2592000/.test(header(res, "cache-control")),
+      `${file} cached for a month`,
+      header(res, "cache-control"),
+    );
+  }
 
   // Discovery files
   const robots = await get("/robots.txt");
