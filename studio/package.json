@@ -14,15 +14,15 @@
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
-    "@sanity/vision": "6.13.2",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "sanity": "6.13.2",
-    "styled-components": "6.4.4"
+    "@sanity/vision": "6.21.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "sanity": "6.21.0",
+    "styled-components": "6.6.0"
   },
   "devDependencies": {
     "@types/node": "24.13.3",
-    "@types/react": "19.2.18",
+    "@types/react": "19.3.0",
     "typescript": "5.9.3"
   },
   "overrides": {
