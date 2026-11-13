@@ -9,6 +9,13 @@
 
 import { runEdgeChecks } from '../scripts/edge-checks.mjs';
 import { syncDecision } from '../scripts/content-sync.mjs';
+import {
+  INDEXNOW_ENDPOINT,
+  changedSince,
+  indexNowRequest,
+  isValidKey,
+  sitemapEntries,
+} from '../scripts/indexnow.mjs';
 import type { Env } from './index';
 
 /** Must match `triggers.crons` in wrangler.jsonc. */
@@ -20,6 +27,9 @@ export const CRONS = {
 
 /** The publishedAt the content sync last started a build for. */
 const TRIGGERED_KEY = 'cron:content-sync:triggered';
+
+/** The newest sitemap lastmod already sent to IndexNow. */
+const INDEXNOW_KEY = 'cron:indexnow:submitted';
 
 type Log = (line: string) => void;
 
@@ -74,6 +84,47 @@ async function contentSync(env: Env, log: Log): Promise<string | undefined> {
   return `Content sync started a rebuild: ${reason}`;
 }
 
+/**
+ * Submits the pages changed since the last run. Unconfigured is not a
+ * failure, so the rehearsal and a site without a key stay quiet. A rejected
+ * key is reported; a rate limit or an outage is only logged, since the same
+ * pages are picked up again on the next run.
+ */
+async function indexNow(env: Env, log: Log): Promise<string | undefined> {
+  if (!env.SITE_URL || !env.INDEXNOW_KEY || !env.RATE_LIMIT_KV) return;
+  if (!isValidKey(env.INDEXNOW_KEY)) return 'IndexNow: INDEXNOW_KEY is not a valid key';
+  const origin = new URL(env.SITE_URL).origin;
+
+  const sitemap = await fetch(`${origin}/sitemap-0.xml`, { signal: AbortSignal.timeout(10_000) });
+  if (!sitemap.ok) return `IndexNow: the sitemap returned ${sitemap.status}`;
+  const since = await env.RATE_LIMIT_KV.get(INDEXNOW_KEY);
+  const { urls, mark } = changedSince({
+    entries: sitemapEntries(await sitemap.text()),
+    since,
+    origin,
+  });
+  if (urls.length === 0 || !mark) {
+    log('[indexnow] nothing changed since the last submission');
+    return;
+  }
+
+  const response = await fetch(INDEXNOW_ENDPOINT, {
+    method: 'POST',
+    signal: AbortSignal.timeout(10_000),
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify(indexNowRequest({ origin, key: env.INDEXNOW_KEY, urls })),
+  });
+  if (response.ok) {
+    await env.RATE_LIMIT_KV.put(INDEXNOW_KEY, mark);
+    log(`[indexnow] submitted ${urls.length} changed pages`);
+    return;
+  }
+  log(`[indexnow] ${urls.length} pages not accepted: ${response.status}`);
+  if (response.status === 403 || response.status === 422) {
+    return `IndexNow rejected the key (${response.status}); check /${env.INDEXNOW_KEY}.txt is served`;
+  }
+}
+
 async function alert(env: Env, problem: string, lines: string[]): Promise<void> {
   if (!env.ALERT_TO_EMAIL || !env.RESEND_API_KEY || !env.MAIL_FROM) return;
   const escape = (text: string) =>
@@ -109,6 +160,7 @@ export async function scheduled(controller: { cron: string }, env: Env): Promise
       break;
     case CRONS.contentSync:
       problem = await contentSync(env, log);
+      if (!problem) problem = await indexNow(env, log);
       break;
     case CRONS.nightlyRebuild:
       problem = await rebuild(env);

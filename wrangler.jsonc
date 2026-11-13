@@ -39,6 +39,8 @@
         "SANITY_PROJECT_ID": "xm91vtfk",
         "SANITY_DATASET": "production",
         "SANITY_API_VERSION": "2026-01-01",
+        // Public by design: IndexNow verifies it against public/<key>.txt.
+        "INDEXNOW_KEY": "3d43fb3b4d208a71117f5fe59db090fe",
       },
       // DEPLOY_HOOK_URL and ALERT_TO_EMAIL are secrets: `wrangler secret put <NAME> --env production`.
       "kv_namespaces": [

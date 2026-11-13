@@ -56,6 +56,8 @@ test("production is a separate Worker on the canonical host with its own KV name
     "SANITY_PROJECT_ID",
     "SANITY_DATASET",
     "SANITY_API_VERSION",
+    // Published at /<key>.txt by design; IndexNow has no secret.
+    "INDEXNOW_KEY",
   ];
   for (const key of Object.keys({ ...config.vars, ...production.vars })) {
     assert.ok(publicVars.includes(key), `${key} is not a secret-safe var`);
@@ -159,6 +161,8 @@ test("_redirects sends the retired donate, careers, partner and volunteer URLs t
   ]) {
     assert.deepEqual(rules.get(from), { to, status: 301 }, from);
   }
+  assert.deepEqual(rules.get("/sitemap.xml"), { to: "/sitemap-index.xml", status: 301 });
+  rules.delete("/sitemap.xml");
   for (const [from, { to }] of rules) {
     assert.match(
       to,

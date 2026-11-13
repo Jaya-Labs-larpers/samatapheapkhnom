@@ -23,3 +23,7 @@
 /volunteer/           /contact/?topic=volunteer     301
 /km/volunteer         /km/contact/?topic=volunteer  301
 /km/volunteer/        /km/contact/?topic=volunteer  301
+
+# Crawlers and webmaster tools that are not told otherwise look for the
+# sitemap here; the real one is the index @astrojs/sitemap writes.
+/sitemap.xml  /sitemap-index.xml  301
