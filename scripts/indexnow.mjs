@@ -9,9 +9,13 @@
  * live sitemap, not Sanity, means a page is only submitted once the build
  * carrying its change is actually being served.
  *
- * The key is public by design: IndexNow proves ownership by finding the same
- * key at /<key>.txt on the host (public/<key>.txt).
+ * The key is public by design: IndexNow proves ownership by finding it at
+ * keyLocation on the same host. It lives only in public/indexnow-key.txt, and
+ * the cron reads it back from the live site, so there is nothing to configure
+ * and a submission can never name a key the site is not actually serving.
  */
+
+export const KEY_PATH = '/indexnow-key.txt';
 
 export const INDEXNOW_ENDPOINT = 'https://api.indexnow.org/indexnow';
 
@@ -71,7 +75,7 @@ export function indexNowRequest({ origin, key, urls }) {
   return {
     host: new URL(origin).host,
     key,
-    keyLocation: `${origin}/${key}.txt`,
+    keyLocation: `${origin}${KEY_PATH}`,
     urlList: urls,
   };
 }

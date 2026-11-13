@@ -32,7 +32,6 @@ export interface Env {
   SANITY_API_VERSION?: string;
   DEPLOY_HOOK_URL?: string;
   ALERT_TO_EMAIL?: string;
-  INDEXNOW_KEY?: string;
 }
 
 function json(body: unknown, status: number, headers: Record<string, string> = {}): Response {

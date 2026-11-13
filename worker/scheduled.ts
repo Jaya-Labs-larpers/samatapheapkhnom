@@ -11,6 +11,7 @@ import { runEdgeChecks } from '../scripts/edge-checks.mjs';
 import { syncDecision } from '../scripts/content-sync.mjs';
 import {
   INDEXNOW_ENDPOINT,
+  KEY_PATH,
   changedSince,
   indexNowRequest,
   isValidKey,
@@ -29,7 +30,7 @@ export const CRONS = {
 const TRIGGERED_KEY = 'cron:content-sync:triggered';
 
 /** The newest sitemap lastmod already sent to IndexNow. */
-const INDEXNOW_KEY = 'cron:indexnow:submitted';
+const INDEXNOW_MARK = 'cron:indexnow:submitted';
 
 type Log = (line: string) => void;
 
@@ -91,13 +92,17 @@ async function contentSync(env: Env, log: Log): Promise<string | undefined> {
  * pages are picked up again on the next run.
  */
 async function indexNow(env: Env, log: Log): Promise<string | undefined> {
-  if (!env.SITE_URL || !env.INDEXNOW_KEY || !env.RATE_LIMIT_KV) return;
-  if (!isValidKey(env.INDEXNOW_KEY)) return 'IndexNow: INDEXNOW_KEY is not a valid key';
+  if (!env.SITE_URL || !env.RATE_LIMIT_KV) return;
   const origin = new URL(env.SITE_URL).origin;
+
+  const keyFile = await fetch(`${origin}${KEY_PATH}`, { signal: AbortSignal.timeout(10_000) });
+  if (!keyFile.ok) return `IndexNow: ${KEY_PATH} returned ${keyFile.status}`;
+  const key = (await keyFile.text()).trim();
+  if (!isValidKey(key)) return `IndexNow: ${KEY_PATH} does not hold a valid key`;
 
   const sitemap = await fetch(`${origin}/sitemap-0.xml`, { signal: AbortSignal.timeout(10_000) });
   if (!sitemap.ok) return `IndexNow: the sitemap returned ${sitemap.status}`;
-  const since = await env.RATE_LIMIT_KV.get(INDEXNOW_KEY);
+  const since = await env.RATE_LIMIT_KV.get(INDEXNOW_MARK);
   const { urls, mark } = changedSince({
     entries: sitemapEntries(await sitemap.text()),
     since,
@@ -112,16 +117,16 @@ async function indexNow(env: Env, log: Log): Promise<string | undefined> {
     method: 'POST',
     signal: AbortSignal.timeout(10_000),
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
-    body: JSON.stringify(indexNowRequest({ origin, key: env.INDEXNOW_KEY, urls })),
+    body: JSON.stringify(indexNowRequest({ origin, key, urls })),
   });
   if (response.ok) {
-    await env.RATE_LIMIT_KV.put(INDEXNOW_KEY, mark);
+    await env.RATE_LIMIT_KV.put(INDEXNOW_MARK, mark);
     log(`[indexnow] submitted ${urls.length} changed pages`);
     return;
   }
   log(`[indexnow] ${urls.length} pages not accepted: ${response.status}`);
   if (response.status === 403 || response.status === 422) {
-    return `IndexNow rejected the key (${response.status}); check /${env.INDEXNOW_KEY}.txt is served`;
+    return `IndexNow rejected the key (${response.status}); check ${KEY_PATH} is served`;
   }
 }
 

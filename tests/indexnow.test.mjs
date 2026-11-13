@@ -1,9 +1,16 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { changedSince, indexNowRequest, isValidKey, sitemapEntries } from '../scripts/indexnow.mjs';
+import {
+  KEY_PATH,
+  changedSince,
+  indexNowRequest,
+  isValidKey,
+  sitemapEntries,
+} from '../scripts/indexnow.mjs';
 
 const ORIGIN = 'https://www.example.org';
+const SAMPLE = 'sample'.repeat(3);
 const url = (path, lastmod) =>
   `<url><loc>${ORIGIN}${path}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}<xhtml:link rel="alternate" hreflang="km-KH" href="${ORIGIN}/km${path}"/></url>`;
 const xml = (...urls) => `<?xml version="1.0"?><urlset>${urls.join('')}</urlset>`;
@@ -55,23 +62,17 @@ test('a URL on another host is never submitted', () => {
 });
 
 test('the request names the host and where the key file is', () => {
-  assert.deepEqual(
-    indexNowRequest({ origin: ORIGIN, key: 'abcdef1234567890', urls: [`${ORIGIN}/`] }),
-    {
-      host: 'www.example.org',
-      key: 'abcdef1234567890',
-      keyLocation: `${ORIGIN}/abcdef1234567890.txt`,
-      urlList: [`${ORIGIN}/`],
-    },
-  );
+  assert.deepEqual(indexNowRequest({ origin: ORIGIN, key: SAMPLE, urls: [`${ORIGIN}/`] }), {
+    host: 'www.example.org',
+    key: SAMPLE,
+    keyLocation: `${ORIGIN}${KEY_PATH}`,
+    urlList: [`${ORIGIN}/`],
+  });
 });
 
-test('the configured key is valid and served from public/', async () => {
-  const config = await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
-  const key = /"INDEXNOW_KEY":\s*"([^"]+)"/.exec(config)?.[1];
-  assert.ok(isValidKey(key));
-  const file = await readFile(new URL(`../public/${key}.txt`, import.meta.url), 'utf8');
-  assert.equal(file, key);
+test('public/ serves a valid key at the key location', async () => {
+  const file = await readFile(new URL(`../public${KEY_PATH}`, import.meta.url), 'utf8');
+  assert.ok(isValidKey(file.trim()));
   assert.equal(isValidKey('short'), false);
   assert.equal(isValidKey('has/slash/../traversal'), false);
 });

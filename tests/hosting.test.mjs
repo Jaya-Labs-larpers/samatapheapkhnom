@@ -56,8 +56,6 @@ test("production is a separate Worker on the canonical host with its own KV name
     "SANITY_PROJECT_ID",
     "SANITY_DATASET",
     "SANITY_API_VERSION",
-    // Published at /<key>.txt by design; IndexNow has no secret.
-    "INDEXNOW_KEY",
   ];
   for (const key of Object.keys({ ...config.vars, ...production.vars })) {
     assert.ok(publicVars.includes(key), `${key} is not a secret-safe var`);
