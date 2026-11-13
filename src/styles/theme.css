@@ -106,13 +106,10 @@
   --text-hero: clamp(2.25rem, 0.75rem + 9vw, 6rem);
   --text-hero--line-height: 1.04;
   --text-hero--letter-spacing: -0.03em;
-  /* Khmer's stacked vowels need a smaller size and far more leading. */
-  --text-hero-km: calc(var(--text-hero) * 0.72);
   /* A single sentence set as a statement (the home "who we are" block). */
   --text-statement: clamp(1.125rem, 0.6rem + 2.25vw, 2.625rem);
-  /* The story quote on its navy band; Khmer runs smaller for its taller glyphs. */
+  /* The story quote on its navy band. */
   --text-quote: clamp(1.3125rem, 0.75rem + 2.7vw, 3rem);
-  --text-quote-km: clamp(1.125rem, 0.85rem + 1.55vw, 2.125rem);
 
   --text-h1: clamp(1.75rem, 1.1rem + 2.8vw, 3rem);
   --text-h1--line-height: 1.12;
@@ -307,9 +304,14 @@
      Applied by :lang(), so they follow the language wherever it appears,
      including a Khmer name inside an English sentence.
      -------------------------------------------------------------------- */
+  /* Only where lang is declared, so descendants inherit it: matching every
+     element by :lang() overrode a parent's leading-none on its inline spans
+     and pushed counted-up stat figures out of line. */
+  [lang|='km'] {
+    line-height: 1.9; /* subscript consonants + vowel signs need room */
+  }
   :lang(km) {
     font-family: var(--font-khmer);
-    line-height: 1.9; /* subscript consonants + vowel signs need room */
     letter-spacing: normal; /* tracking mangles the script */
     word-break: normal;
     overflow-wrap: normal;
@@ -327,13 +329,6 @@
      above (which fires before the language cascade widens the family here). */
   :lang(km) h1 {
     font-weight: 700;
-  }
-  /* em-scoped so it never compounds through nesting */
-  p:lang(km),
-  li:lang(km),
-  dd:lang(km),
-  figcaption:lang(km) {
-    font-size: 1.0625em;
   }
   :lang(km) .uppercase,
   :lang(km) [class*='eyebrow'] {
