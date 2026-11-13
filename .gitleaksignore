@@ -1,0 +1,8 @@
+# The IndexNow key is public by protocol: crawlers must be able to fetch it
+# from the host. c7a1e4a also carried it in config and test literals, which the
+# generic-api-key rule cannot tell apart from a credential. The following
+# commit serves it from public/indexnow-key.txt and reads it back from the live
+# site, so these are the only occurrences.
+c7a1e4a1180d40cb3000069545496f69d35d2706:wrangler.jsonc:generic-api-key:43
+c7a1e4a1180d40cb3000069545496f69d35d2706:tests/indexnow.test.mjs:generic-api-key:59
+c7a1e4a1180d40cb3000069545496f69d35d2706:tests/indexnow.test.mjs:generic-api-key:62

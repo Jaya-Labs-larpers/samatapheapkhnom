@@ -772,8 +772,7 @@ details[open] > summary > .disclosure-icon {
   }
   .prose.about-statement:lang(km) p {
     max-width: 36ch;
-    font-size: var(--text-lead);
-    line-height: 1.9;
+    line-height: 1.6;
     letter-spacing: normal;
   }
 
@@ -1037,8 +1036,7 @@ details[open] > summary > .disclosure-icon {
   }
   .footer-closing__title:lang(km) {
     font-family: var(--font-khmer);
-    font-size: clamp(1.5rem, 0.9rem + 3.3vw, 3.5rem);
-    line-height: 1.45;
+    line-height: 1.35;
     letter-spacing: normal;
   }
   .footer-closing__links {

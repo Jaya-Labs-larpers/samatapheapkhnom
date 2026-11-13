@@ -159,6 +159,8 @@ test("_redirects sends the retired donate, careers, partner and volunteer URLs t
   ]) {
     assert.deepEqual(rules.get(from), { to, status: 301 }, from);
   }
+  assert.deepEqual(rules.get("/sitemap.xml"), { to: "/sitemap-index.xml", status: 301 });
+  rules.delete("/sitemap.xml");
   for (const [from, { to }] of rules) {
     assert.match(
       to,

@@ -11,6 +11,9 @@ interface Props {
 }
 
 const { lang, stats, columns = 4 } = Astro.props;
+// A lead-in ("Nearly") sits on its own line above the figure; when one card
+// has it, every card keeps that line so the figures stay level across the row.
+const hasPrefix = stats.some((stat) => pick(stat.prefix, lang).value);
 ---
 
 {
@@ -32,17 +35,23 @@ const { lang, stats, columns = 4 } = Astro.props;
           (typeof stat.value === 'number' ? formatNumber(stat.value, lang) : '');
         return (
           <div class="min-w-0 bg-white px-4 py-5 sm:px-6 sm:py-7">
+            {hasPrefix && (
+              <span
+                class="mb-1.5 block h-6 truncate text-[15px] leading-6 font-semibold text-[color:var(--color-blue-700)]"
+                lang={prefix.isFallback ? prefix.lang : undefined}
+              >
+                {prefix.value}
+              </span>
+            )}
             <b class="block text-[length:var(--text-stat)] leading-none font-bold tracking-[var(--text-stat--letter-spacing)] text-[color:var(--color-blue-700)] tabular-nums">
-              {prefix.value && (
-                <span
-                  class="mr-1.5 text-[0.45em] tracking-normal"
-                  lang={prefix.isFallback ? prefix.lang : undefined}
-                >
-                  {prefix.value}
+              {countsUp(stat) ? (
+                <span class="leading-none" data-count-to={stat.value}>
+                  {display}
                 </span>
+              ) : (
+                display
               )}
-              {countsUp(stat) ? <span data-count-to={stat.value}>{display}</span> : display}
-              {suffix.value && <span class="text-[0.6em]">{suffix.value}</span>}
+              {suffix.value && <span class="text-[0.6em] leading-none">{suffix.value}</span>}
             </b>
             <span
               class="mt-2.5 block text-[14px] leading-[1.35] font-semibold text-[color:var(--color-ink-900)] sm:mt-3 sm:text-[15px]"
