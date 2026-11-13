@@ -24,6 +24,21 @@ const FILE = `{
 
 const SEO = `{ title, description, noindex, image ${IMAGE} }`;
 
+/**
+ * Studio stores a body photo as `imageWithAlt`; the renderer draws `image`
+ * blocks and needs the asset's dimensions to reserve its space.
+ */
+const BODY_BLOCK = `{
+  ...,
+  _type == "imageWithAlt" => {
+    "_type": "image",
+    "lqip": asset->metadata.lqip,
+    "dimensions": asset->metadata.dimensions
+  }
+}`;
+
+const BODY = `body{ "en": en[]${BODY_BLOCK}, "km": km[]${BODY_BLOCK} }`;
+
 const FAQ = `{ question, answer }`;
 
 const IMPACT_STAT = `{ _id, label, value, displayValue, prefix, suffix, context, countUp, order }`;
@@ -47,7 +62,7 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0]{
 }`;
 
 export const pageBySlugQuery = `*[_type == "page" && slug.current == $slug][0]{
-  _id, "slug": slug.current, title, intro, body,
+  _id, "slug": slug.current, title, intro, ${BODY},
   faqs[]${FAQ},
   heroImage ${IMAGE},
   seo ${SEO}
@@ -60,7 +75,7 @@ export const programsQuery = `*[_type == "program"] | order(order asc, _createdA
 }`;
 
 export const programBySlugQuery = `*[_type == "program" && slug.current == $slug][0]{
-  _id, "slug": slug.current, title, summary, body, order,
+  _id, "slug": slug.current, title, summary, ${BODY}, order,
   image ${IMAGE},
   "impactStats": impactStats[]->${IMPACT_STAT},
   seo ${SEO}
@@ -73,7 +88,7 @@ export const activitiesQuery = `*[_type == "activity" && defined(slug.current)] 
 }`;
 
 export const activityBySlugQuery = `*[_type == "activity" && slug.current == $slug][0]{
-  _id, "slug": slug.current, title, excerpt, body, publishedAt, category, author,
+  _id, "slug": slug.current, title, excerpt, ${BODY}, publishedAt, category, author,
   coverImage ${IMAGE},
   program->${PROGRAM_REF},
   seo ${SEO}
