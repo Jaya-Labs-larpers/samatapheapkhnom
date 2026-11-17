@@ -8,7 +8,7 @@ import ProgramCard from '~/components/content/ProgramCard.astro';
 import SectionHeading from '~/components/content/SectionHeading.astro';
 import EmptyState from '~/components/content/EmptyState.astro';
 import CtaBand from '~/components/content/CtaBand.astro';
-import { cardGridCols, cardImageSizes } from '~/lib/grid';
+import { cardGridCols } from '~/lib/grid';
 import { stripInlineLinks } from '~/lib/inline-links';
 import { canonicalUrl, collectionPageJsonLd } from '~/lib/seo/page-schema';
 
@@ -32,7 +32,7 @@ const collection = collectionPageJsonLd({
 });
 ---
 
-<BaseLayout headerOverlay lang={lang} title={title} description={description} jsonLd={collection}>
+<BaseLayout lang={lang} title={title} description={description} jsonLd={collection}>
   <PageHero
     lang={lang}
     title={heading}
@@ -54,7 +54,7 @@ const collection = collectionPageJsonLd({
         ) : (
           <div class={cardGridCols(programs.length)}>
             {programs.map((program) => (
-              <ProgramCard lang={lang} program={program} sizes={cardImageSizes(programs.length)} />
+              <ProgramCard lang={lang} program={program} />
             ))}
           </div>
         )

@@ -1,0 +1,54 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { DirectorMessage } from '~/lib/content/types';
+import { langAttr, pick } from '~/lib/i18n/utils';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkSection from './SkSection.astro';
+
+interface Props {
+  lang: Locale;
+  director: DirectorMessage;
+  heading: string;
+  link: { label: string; href: string };
+}
+
+const { lang, director, heading, link } = Astro.props;
+const quote = pick(director.pullQuote, lang);
+const name = pick(director.name, lang);
+const role = pick(director.title, lang);
+---
+
+{
+  quote.value && (
+    <SkSection tone="tint">
+      <div class="sk-director">
+        {director.photo && (
+          <div class="sk-media sk-director__photo">
+            <ResponsiveImage
+              image={director.photo}
+              lang={lang}
+              alt=""
+              aspect="4/5"
+              sizes="(min-width: 48rem) 280px, 60vw"
+            />
+          </div>
+        )}
+        <figure class="sk-figure sk-director__body">
+          <p class="sk-eyebrow">{heading}</p>
+          <blockquote class="sk-quote sk-director__quote" lang={langAttr(quote)}>
+            “{quote.value}”
+          </blockquote>
+          <figcaption class="sk-person">
+            <b lang={langAttr(name)}>{name.value}</b>
+            <span class="sk-small" lang={langAttr(role)}>
+              {role.value}
+            </span>
+          </figcaption>
+          <a href={link.href} class="sk-link">
+            {link.label} →
+          </a>
+        </figure>
+      </div>
+    </SkSection>
+  )
+}

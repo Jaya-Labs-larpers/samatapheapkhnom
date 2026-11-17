@@ -1,25 +1,20 @@
 ---
 import { getReports } from '~/lib/content';
-import GenericPage from '~/page-templates/GenericPage.astro';
+import { tStrict } from '~/lib/skeleton-content';
+import Policy from '~/page-templates/sko/Policy.astro';
 import ReportList from '~/components/content/ReportList.astro';
-import { t } from '~/lib/i18n/utils';
 
 const lang = 'en' as const;
 const policies = (await getReports()).filter((report) => report.type === 'policy');
 ---
 
-<!--
-  Route shell. All page markup lives in src/page-templates/ so the English and
-  Khmer routes render from one source and can never drift apart.
-  Locale: en
--->
-<GenericPage lang={lang} slug="safeguarding" fallbackTitleKey="pageSafeguarding">
+<Policy lang={lang} slug="safeguarding" fallbackTitleKey="pageSafeguarding">
   {
     policies.length > 0 && (
-      <div class="mt-9">
-        <h2 class="mb-4 text-[length:var(--text-h3)]">{t(lang, 'navSafeguarding')}</h2>
+      <>
+        <h2 class="sk-h2">{tStrict(lang, 'navSafeguarding')}</h2>
         <ReportList lang={lang} reports={policies} />
-      </div>
+      </>
     )
   }
-</GenericPage>
+</Policy>

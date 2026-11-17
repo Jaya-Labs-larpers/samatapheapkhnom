@@ -1,12 +1,11 @@
 ---
 import { getActivities, getActivity } from '~/lib/content';
-import ActivityDetail from '~/page-templates/ActivityDetail.astro';
-import type { Activity } from '~/lib/content/types';
+import type { Activity as ActivityDoc } from '~/lib/content/types';
+import Activity from '~/page-templates/sko/Activity.astro';
 
 export async function getStaticPaths() {
   const list = await getActivities();
   const detailed = await Promise.all(list.map((entry) => getActivity(entry.slug)));
-
   return detailed
     .map((activity, index) =>
       activity
@@ -25,15 +24,10 @@ export async function getStaticPaths() {
 }
 
 const { activity, previous, next } = Astro.props as {
-  activity: Activity;
-  previous: Activity | null;
-  next: Activity | null;
+  activity: ActivityDoc;
+  previous: ActivityDoc | null;
+  next: ActivityDoc | null;
 };
 ---
 
-<!--
-  Route shell. All page markup lives in src/page-templates/ so the English and
-  Khmer routes render from one source and can never drift apart.
-  Locale: km
--->
-<ActivityDetail lang="km" activity={activity} previous={previous} next={next} />
+<Activity lang="km" activity={activity} previous={previous} next={next} />

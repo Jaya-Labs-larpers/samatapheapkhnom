@@ -1,18 +1,13 @@
 ---
 import { getActivities } from '~/lib/content';
-import ActivitiesPage from '~/page-templates/ActivitiesPage.astro';
 import { PER_PAGE } from '~/lib/pagination';
+import Activities from '~/page-templates/sko/Activities.astro';
 
 const all = await getActivities();
 const totalPages = Math.max(1, Math.ceil(all.length / PER_PAGE));
 ---
 
-<!--
-  Route shell. All page markup lives in src/page-templates/ so the English and
-  Khmer routes render from one source and can never drift apart.
-  Locale: km
--->
-<ActivitiesPage
+<Activities
   lang="km"
   activities={all.slice(0, PER_PAGE)}
   currentPage={1}

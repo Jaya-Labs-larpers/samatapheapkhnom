@@ -1,0 +1,66 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getPartners } from '~/lib/content';
+import { stripInlineLinks } from '~/lib/inline-links';
+import { partnersJsonLd } from '~/lib/seo/page-schema';
+import { ctaActions, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import EmptyState from '~/components/content/EmptyState.astro';
+import PartnerWall from '~/components/content/PartnerWall.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+import SkSplit from '~/components/skeleton/SkSplit.astro';
+import SkCta from '~/components/skeleton/SkCta.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const partners = await getPartners();
+const heading = tStrict(lang, 'pagePartners');
+
+const categoryLabels: Record<string, Record<Locale, string>> = {
+  'un-agency': { en: 'UN agencies', km: 'ទីភ្នាក់ងារអង្គការសហប្រជាជាតិ' },
+  ingo: { en: 'International NGOs', km: 'អង្គការក្រៅរដ្ឋាភិបាលអន្តរជាតិ' },
+  government: { en: 'Government', km: 'រដ្ឋាភិបាល' },
+  foundation: { en: 'Foundations', km: 'មូលនិធិ' },
+  corporate: { en: 'Corporate', km: 'ក្រុមហ៊ុន' },
+};
+
+const groups = [...new Set(partners.map((partner) => partner.category ?? 'other'))];
+const title = tStrict(lang, 'seoPartners') || heading;
+const description =
+  tStrict(lang, 'metaPartners') || stripInlineLinks(tStrict(lang, 'introPartners'));
+const partnerList = partnersJsonLd({ name: title, partners });
+---
+
+<BaseLayout lang={lang} title={title} description={description} noindex jsonLd={partnerList}>
+  <SkHero title={heading} intro={tStrict(lang, 'introPartners')} actions={[]}>
+    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
+  </SkHero>
+
+  {
+    partners.length === 0 ? (
+      <SkSection>
+        <EmptyState message={tStrict(lang, 'emptyGeneric')} />
+      </SkSection>
+    ) : (
+      groups.map((group, index) => (
+        <SkSplit
+          heading={categoryLabels[group]?.[lang] ?? group}
+          tone={index % 2 === 1 ? 'tint' : 'default'}
+        >
+          <PartnerWall
+            lang={lang}
+            partners={partners.filter((partner) => (partner.category ?? 'other') === group)}
+            columns={3}
+          />
+        </SkSplit>
+      ))
+    )
+  }
+
+  <SkCta heading={tStrict(lang, 'ctaPartnersTitle')} actions={ctaActions(lang)} />
+</BaseLayout>

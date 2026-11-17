@@ -1,0 +1,71 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Activity } from '~/lib/content/types';
+import { localizePath, pick } from '~/lib/i18n/utils';
+import { stripInlineLinks } from '~/lib/inline-links';
+import { canonicalUrl, collectionPageJsonLd } from '~/lib/seo/page-schema';
+import { postItem, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import EmptyState from '~/components/content/EmptyState.astro';
+import Pagination from '~/components/content/Pagination.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+import SkPosts from '~/components/skeleton/SkPosts.astro';
+
+interface Props {
+  lang: Locale;
+  activities: Activity[];
+  currentPage: number;
+  totalPages: number;
+}
+
+const { lang, activities, currentPage, totalPages } = Astro.props;
+const heading = tStrict(lang, 'pageActivities');
+
+const hrefFor = (page: number) =>
+  page === 1 ? localizePath('/activities', lang) : localizePath(`/activities/page/${page}`, lang);
+
+const title = tStrict(lang, 'seoActivities') || heading;
+const description =
+  tStrict(lang, 'metaActivities') || stripInlineLinks(tStrict(lang, 'introActivities'));
+const collection = collectionPageJsonLd({
+  pathname: Astro.url.pathname,
+  name: title,
+  description,
+  parts: activities.map((activity) => ({
+    name: pick(activity.title, lang).value ?? '',
+    url: canonicalUrl(localizePath(`/activities/${activity.slug}`, lang)),
+  })),
+});
+---
+
+<BaseLayout lang={lang} title={title} description={description} noindex jsonLd={collection}>
+  <SkHero title={heading} intro={tStrict(lang, 'introActivities')} actions={[]}>
+    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
+  </SkHero>
+
+  {
+    activities.length === 0 ? (
+      <SkSection>
+        <EmptyState message={tStrict(lang, 'emptyActivities')} />
+      </SkSection>
+    ) : (
+      <SkPosts
+        heading={tStrict(lang, 'allActivities')}
+        n={activities.length}
+        lang={lang}
+        readMore={tStrict(lang, 'readMore')}
+        items={activities.map((activity) => postItem(activity, lang))}
+      />
+    )
+  }
+
+  {
+    totalPages > 1 && (
+      <SkSection>
+        <Pagination lang={lang} current={currentPage} total={totalPages} hrefFor={hrefFor} />
+      </SkSection>
+    )
+  }
+</BaseLayout>

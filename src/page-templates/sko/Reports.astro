@@ -1,0 +1,50 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getReports } from '~/lib/content';
+import { stripInlineLinks } from '~/lib/inline-links';
+import { collectionPageJsonLd } from '~/lib/seo/page-schema';
+import { tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import EmptyState from '~/components/content/EmptyState.astro';
+import ReportList from '~/components/content/ReportList.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const reports = await getReports();
+const years = [...new Set(reports.map((report) => report.year ?? 0))].sort((a, b) => b - a);
+const heading = tStrict(lang, 'pageReports');
+const title = tStrict(lang, 'seoReports') || heading;
+const description = tStrict(lang, 'metaReports') || stripInlineLinks(tStrict(lang, 'introReports'));
+const collection = collectionPageJsonLd({ pathname: Astro.url.pathname, name: title, description });
+---
+
+<BaseLayout lang={lang} title={title} description={description} noindex jsonLd={collection}>
+  <SkHero title={heading} intro={tStrict(lang, 'introReports')} actions={[]}>
+    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
+  </SkHero>
+
+  <SkSection narrow>
+    {
+      reports.length === 0 ? (
+        <EmptyState message={tStrict(lang, 'emptyReports')} />
+      ) : (
+        years.map((year) => (
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <h2 class="sk-h2">{year || '—'}</h2>
+            <ReportList
+              lang={lang}
+              reports={reports.filter((report) => (report.year ?? 0) === year)}
+            />
+          </div>
+        ))
+      )
+    }
+  </SkSection>
+</BaseLayout>

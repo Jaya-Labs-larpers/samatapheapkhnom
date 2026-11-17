@@ -1,0 +1,50 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { CmsImage } from '~/lib/content/types';
+import type { SkAction } from '~/lib/skeleton-content';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+
+interface Props {
+  lang: Locale;
+  heading: string;
+  body?: string | null;
+  actions: SkAction[];
+  image?: CmsImage | null;
+}
+
+const { lang, heading, body, actions, image } = Astro.props;
+---
+
+<section class="sk-cta-split">
+  {
+    image && (
+      <div class="sk-cta-split__media">
+        <ResponsiveImage
+          image={image}
+          lang={lang}
+          alt=""
+          aspect="4/3"
+          sizes="(min-width: 64rem) 50vw, 100vw"
+        />
+      </div>
+    )
+  }
+  <div class="sk-cta-split__panel">
+    <h2 class="sk-h2">{heading}</h2>
+    {body && <p class="sk-lead">{body}</p>}
+    {
+      actions.length > 0 && (
+        <div class="sk-actions">
+          {actions.map((action, index) => (
+            <a
+              href={action.href}
+              class:list={['sk-btn', index === 0 ? 'sk-btn--light' : 'sk-btn--ghost']}
+            >
+              {action.label}
+            </a>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</section>

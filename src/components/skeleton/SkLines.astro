@@ -1,0 +1,19 @@
+---
+interface Props {
+  n?: number;
+}
+
+const { n = 3 } = Astro.props;
+const widths = [100, 94, 98, 88, 96];
+---
+
+<div class="sk-lines" aria-hidden="true">
+  {
+    Array.from({ length: n }, (_, i) => (
+      <div
+        class="sk-bar"
+        style={`width:${i === n - 1 && n > 1 ? 58 : widths[i % widths.length]}%`}
+      />
+    ))
+  }
+</div>

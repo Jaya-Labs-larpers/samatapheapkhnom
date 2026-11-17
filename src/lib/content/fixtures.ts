@@ -675,6 +675,7 @@ export const activities: Activity[] = [
 export const stories: Story[] = [
   {
     _id: 'story-1',
+    slug: 'sok-vanny',
     quote: { en: sokVannyStory[2] },
     body: enOnly(sokVannyStory),
     personName: 'Sok Vanny',

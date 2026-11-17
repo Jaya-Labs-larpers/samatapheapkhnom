@@ -29,6 +29,8 @@ interface Props {
    * areas (logos), where the blurred LQIP would show through.
    */
   blurUp?: boolean;
+  /** Always render the real image, never the placeholder: a diagram, or a photo the page is built around. */
+  keep?: boolean;
   class?: string;
 }
 
@@ -41,6 +43,7 @@ const {
   eager = false,
   defer = false,
   blurUp = true,
+  keep = false,
   class: className = '',
 } = Astro.props;
 
@@ -51,7 +54,8 @@ const {
  * real photograph lands, and it is hidden from assistive tech, which has no use
  * for an image that does not exist.
  */
-const present = hasImage(image);
+const isPhoto = blurUp && !keep;
+const present = !isPhoto && hasImage(image);
 const altText = alt ?? (image ? text(image.alt, lang) : '');
 const { width, height } = imageDimensions(image);
 const src = present && image ? imageUrl(image, { width: 1200 }) : null;
@@ -138,7 +142,21 @@ const frameStyle = lqip ? `--lqip:url(${lqip})` : undefined;
       class:list={['media-placeholder h-full w-full', className]}
       style={`aspect-ratio:${aspect}`}
       aria-hidden="true"
-    />
+    >
+      <svg
+        class="media-placeholder__icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <circle cx="9" cy="10" r="1.75" />
+        <path d="m21 16-5-5-9 9" />
+      </svg>
+    </div>
   )
 }
 

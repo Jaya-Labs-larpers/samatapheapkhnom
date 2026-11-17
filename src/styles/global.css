@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 @import './theme.css';
+@import './design.css';
+@import './skeleton.css';
 
 /* ============================================================================
    Component layer.
@@ -19,38 +21,12 @@
 }
 
 /* ============================================================================
-   TEXT MEASURE
+   BASE LAYOUT
    ----------------------------------------------------------------------------
-   Every text element inside <main> is capped at one shared width and anchored
-   to the left edge of its .wrap, so running text starts and ends on the same
-   two vertical lines on every page — the same box, page after page. The header
-   and footer sit outside <main> and are deliberately untouched: their job is to
-   span the full width.
-
-   Written with :where() so the rule carries ZERO specificity. It is a default,
-   not a decree — any max-w-* utility in the markup still wins the cascade, so a
-   wide table, a card grid or a full-bleed figure opts out with `max-w-none`
-   without an !important anywhere.
-
-   Responsive behaviour comes for free: a max-width is a cap, not a width, so
-   below ~44rem every one of these elements is simply as wide as its column, and
-   .wrap's fluid --spacing-gutter keeps the side margins identical at every
-   breakpoint. The Khmer value arrives through --measure (theme.css), which the
-   language cascade sets.
+   Pages carry their own widths and tints (see components/design). <main> only
+   guarantees the first screen is filled.
    ========================================================================= */
 @layer base {
-  main :where(p, h1, h2, h3, h4, h5, h6, blockquote, dl, figcaption) {
-    max-width: var(--measure);
-  }
-
-  /* Every page but the home page sits on the home hero's cool tint. Long pages
-     band their sections white and --color-surface-sunken in the templates. */
-  main:not(:has(> [data-home-hero])) {
-    background: var(--color-surface-subtle);
-  }
-
-  /* A page with no hero band (404, an activity) still fills the first screen
-     with its own tint before the footer can show. */
   main {
     min-height: calc(100vh - var(--header-h));
     min-height: calc(100svh - var(--header-h));
@@ -165,22 +141,6 @@ header.site-header[data-overlay][data-at-top] {
   width: 1px;
   height: 1px;
   pointer-events: none;
-}
-
-/*
- * The other half of overlay mode: the hero starts at the very top of the
- * window rather than below the header, so its art is what fills that band.
- * Content inside the hero still has to clear the header, which is why the
- * section pays the height back as padding where the art is a background
- * layer rather than a block in the flow.
- *
- * The band alone fills the first screen on every device. svh is the window
- * with a phone's browser bars showing, so nothing else appears above the fold.
- */
-.hero-overlap {
-  margin-top: calc(-1 * var(--header-h));
-  min-height: 100vh;
-  min-height: 100svh;
 }
 
 footer.site-footer {
@@ -640,7 +600,6 @@ details[open] > summary > .disclosure-icon {
     line-height: 1.55;
     color: var(--color-ink-400);
   }
-  .program-row__media,
   .program-row__arrow {
     display: none;
   }
@@ -660,11 +619,8 @@ details[open] > summary > .disclosure-icon {
     }
   }
   @media (min-width: 64rem) {
-    /* A compact thumbnail sets every row's height; the summary is clamped so
-     * no program can stretch its row past it. */
     .program-row {
-      grid-template-columns: 4.5rem minmax(0, 1fr) 16rem 2rem;
-      grid-template-rows: 12rem;
+      grid-template-columns: 4.5rem minmax(0, 1fr) 2rem;
       align-items: center;
       gap: 0 2.5rem;
       padding-block: 1.5rem;
@@ -675,14 +631,6 @@ details[open] > summary > .disclosure-icon {
     }
     .program-row__summary {
       -webkit-line-clamp: 4;
-    }
-    .program-row__media.card-media {
-      display: block;
-      width: 100%;
-      height: 100%;
-      aspect-ratio: auto;
-      overflow: hidden;
-      border-radius: var(--radius-lg);
     }
     .program-row__arrow {
       display: block;
@@ -703,9 +651,6 @@ details[open] > summary > .disclosure-icon {
     }
     .program-row:hover .program-row__arrow {
       translate: 6px 0;
-    }
-    .program-row:hover .card-media img {
-      transform: scale(1.05);
     }
   }
 
@@ -874,75 +819,19 @@ details[open] > summary > .disclosure-icon {
     max-height: 100%;
   }
 
-  /* --- Programme detail ---------------------------------------------------- *
-   * Hero: text and photo side by side on wide screens, photo first under the
-   * text on phones. The photo is the morph target for the card that opened it. */
-  /* The photo runs to the top of the window, under the transparent header, and
-     fades into the page tint wherever text or the nav sits on it. On a phone it
-     sits above the text; from 64rem it fills the whole band behind it. */
+  /* --- Programme detail ---------------------------------------------------- */
   .program-hero {
-    position: relative;
-    isolation: isolate;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
     background: var(--color-surface-subtle);
   }
-  .program-hero__media {
-    position: relative;
-    flex: none;
-    height: calc(var(--header-h) + 56vw);
-    max-height: 32rem;
-  }
-  .program-hero__media::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-      linear-gradient(
-        180deg,
-        rgb(245 247 253 / 0.95) 0,
-        rgb(245 247 253 / 0.85) calc(var(--header-h) * 0.9),
-        rgb(245 247 253 / 0) calc(var(--header-h) * 1.6)
-      ),
-      linear-gradient(0deg, var(--color-surface-subtle) 0, rgb(245 247 253 / 0) 30%);
-  }
   .program-hero__inner {
-    flex: 1;
-    padding-block: 1rem 3rem;
+    padding-block: 2.5rem 3rem;
   }
   @media (min-width: 64rem) {
-    .program-hero__media {
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      height: auto;
-      max-height: none;
-    }
-    .program-hero__media::after {
-      background:
-        linear-gradient(
-          180deg,
-          rgb(245 247 253 / 0.85) 0,
-          rgb(245 247 253 / 0) calc(var(--header-h) * 1.4)
-        ),
-        linear-gradient(
-          90deg,
-          var(--color-surface-subtle) 0,
-          rgb(245 247 253 / 0.94) 38%,
-          rgb(245 247 253 / 0.4) 62%,
-          rgb(245 247 253 / 0) 80%
-        );
-    }
     .program-hero__inner {
-      display: flex;
-      align-items: center;
-      min-height: 36rem;
-      padding-block: calc(var(--header-h) + 3rem) 4rem;
+      padding-block: 3.5rem 4.5rem;
     }
     .program-hero__text {
-      max-width: 34rem;
+      max-width: 40rem;
     }
   }
 
@@ -1055,12 +944,10 @@ details[open] > summary > .disclosure-icon {
   }
 
   /* --- Story band (home) -------------------------------------------------- *
-   * The page's one change of pace: navy, rounded at the top where it meets
-   * the paper, and static. */
+   * The page's one change of pace: navy, square-edged, and static. */
   .story-band {
     background: var(--color-blue-900);
     color: #fff;
-    border-radius: clamp(1.5rem, 4vw, 3.5rem) clamp(1.5rem, 4vw, 3.5rem) 0 0;
     padding-block: clamp(3.25rem, 2rem + 6vw, 9rem);
   }
   /* .prose paints ink on paper; on the navy band the story has to read in
@@ -1374,6 +1261,15 @@ details[open] > summary > .disclosure-icon {
     var(--color-surface-subtle) 0%,
     var(--color-surface-sunken) 100%
   );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-300, var(--color-ink-400));
+}
+.media-placeholder__icon {
+  width: min(28%, 4rem);
+  height: auto;
+  opacity: 0.5;
 }
 
 /*
@@ -1476,78 +1372,12 @@ details[open] > summary > .disclosure-icon {
   width: 40px;
   will-change: transform;
 }
-/* The butterfly that circles the pointer (ButterflyCursor). The outer box sits
-   on its flight point and rotates about it; the glyph is centred on its body
-   line so it banks around its own middle. */
-.butterfly-cursor {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 2147483647;
-  width: 34px;
-  pointer-events: none;
-  transform-origin: 0 0;
-  will-change: transform;
-  view-transition-name: butterfly-cursor;
-}
-.butterfly-cursor__glyph {
-  translate: -45% -50%;
-  transform-origin: 45% 50%;
-  filter: drop-shadow(0 1px 1.5px rgb(10 10 10 / 0.25));
-  transition:
-    opacity var(--duration-fast) var(--ease-out-soft),
-    scale 220ms var(--ease-out-soft);
-}
-.butterfly-cursor[data-state='link'] .butterfly-cursor__glyph {
-  scale: 1.3;
-}
-.butterfly-cursor[data-state='label'] .butterfly-cursor__glyph {
-  scale: 1.45;
-}
-/* The word beneath the butterfly over a card ("Read more"). The butterfly
-   perches above the pointer there, so the word hangs between the two and
-   never covers the pointer. */
-.butterfly-cursor__label {
-  position: absolute;
-  left: 0;
-  top: 18px;
-  translate: -50% 0;
-  padding: 0.3125rem 0.625rem;
-  border-radius: 999px;
-  background: var(--color-blue-900);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
-  opacity: 0;
-  scale: 0.6;
-  transform-origin: 50% 0;
-  transition:
-    opacity var(--duration-fast) var(--ease-out-soft),
-    scale 260ms var(--ease-reveal);
-}
-.butterfly-cursor[data-state='label'] .butterfly-cursor__label {
-  opacity: 1;
-  scale: 1;
-}
-.butterfly-cursor[data-pressed] .butterfly-cursor__glyph {
-  scale: 0.85;
-}
-.butterfly-cursor:is([data-state='hidden'], [data-state='text']) .butterfly-cursor__glyph {
-  opacity: 0;
-}
-html:not([data-butterfly-cursor]) .butterfly-cursor,
-html:has(:modal, :popover-open) .butterfly-cursor {
-  display: none;
-}
 
 /* --- Page loader ------------------------------------------------------------
    PageLoader, the loading screen at the start of a visit, driven by its own
    inline script. The butterfly holds still and only its wings beat; the bar
    follows the page's real loading progress (--intro-progress, 0 to 1). It sits
-   below the skip link and the pointer butterfly, and the page underneath does
-   not scroll while it shows. */
+   below the skip link, and the page underneath does not scroll while it shows. */
 .page-loader {
   --loader-size: clamp(9.5rem, 6rem + 14vw, 14rem);
   position: fixed;
@@ -1609,7 +1439,6 @@ html[data-intro='done'] .page-loader {
 
 @media print {
   .butterfly-flock,
-  .butterfly-cursor,
   .page-loader {
     display: none;
   }

@@ -1,324 +1,514 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
-import { localizePath, t, text } from '~/lib/i18n/utils';
+import { getPrograms } from '~/lib/content';
+import { localizePath, parsePath, pick, t, text } from '~/lib/i18n/utils';
 import { mainNav, mobileNav } from '~/lib/nav';
 import LanguageToggle from './LanguageToggle.astro';
-import Icon from '~/components/Icon.astro';
 import Logo from '~/components/Logo.astro';
 
 interface Props {
   lang: Locale;
   pathname: string;
   settings: SiteSettings;
-  /** Float the header over a full-bleed hero until the page scrolls. */
-  overlay?: boolean;
 }
 
-const { lang, pathname, settings, overlay = false } = Astro.props;
+const { lang, pathname, settings } = Astro.props;
 
 const orgName = text(settings.orgName, lang);
 
-function isCurrent(path: string): boolean {
-  const target = localizePath(path, lang);
-  return pathname === target || pathname.startsWith(target);
-}
+const current = parsePath(pathname).path.replace(/\/$/, '') || '/';
+const programs = await getPrograms();
+
+const dropdownLinks = (item: (typeof mainNav)[number]) => {
+  if (item.programs) {
+    return programs.flatMap((program) => {
+      const label = pick(program.title, lang).value;
+      return label ? [{ label, href: localizePath(`/programs/${program.slug}`, lang) }] : [];
+    });
+  }
+  return (item.sections ?? []).map((section) => ({
+    label: t(lang, section.key),
+    href: section.path
+      ? localizePath(section.path, lang)
+      : current === item.path
+        ? `#${section.id}`
+        : `${localizePath(item.path, lang)}#${section.id}`,
+  }));
+};
+const isCurrent = (path: string) => current === path || current.startsWith(`${path}/`);
 ---
 
-<header
-  class="site-header sticky top-0 z-20"
-  data-overlay={overlay ? '' : undefined}
-  data-at-top={overlay ? '' : undefined}
->
-  <div
-    class="flex h-full w-full items-center gap-6 pt-[var(--safe-top)] pr-[var(--gutter-right)] pl-[var(--gutter-left)]"
-  >
-    <a href={localizePath('/', lang)} class="flex flex-none items-center no-underline">
-      <Logo
-        variant="full"
-        height={92}
-        title={orgName}
-        class="h-[68px] w-auto sm:h-[92px] lg:h-[118px]"
-      />
+<header class="hdr site-header" data-header>
+  <div class="hdr__bar">
+    <a href={localizePath('/', lang)} class="hdr__brand">
+      <Logo variant="full" height={92} title={orgName} class="hdr__logo" />
     </a>
 
-    <nav class="ml-auto hidden lg:flex lg:gap-0.5" aria-label={t(lang, 'mainNavLabel')}>
+    <nav class="hdr__nav" aria-label={t(lang, 'navPrimaryLabel')}>
       {
-        mainNav.map((item) => (
-          <a
-            href={localizePath(item.path, lang)}
-            aria-current={isCurrent(item.path) ? 'page' : undefined}
-            class="nav-link"
-          >
-            <span class="roll">
-              <span class="roll__text" data-text={t(lang, item.key)}>
+        mainNav.map((item, index) => {
+          const links = dropdownLinks(item);
+          const menuId = `dd-${index}`;
+          return (
+            <div class="hdr__item" data-nav-item>
+              <a
+                href={localizePath(item.path, lang)}
+                class="nav-link hdr__link"
+                aria-current={isCurrent(item.path) ? 'page' : undefined}
+              >
                 {t(lang, item.key)}
-              </span>
-            </span>
-          </a>
-        ))
+              </a>
+              {links.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    class="hdr__chev"
+                    aria-expanded="false"
+                    aria-controls={menuId}
+                    aria-label={`${t(lang, item.key)}: ${t(lang, 'navShowSections')}`}
+                    data-dd-toggle
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+                  <div class="dd" id={menuId} data-dd>
+                    <div class="dd__inner">
+                      <ul class="dd__list">
+                        {links.map((link, i) => (
+                          <li style={`--i:${i}`}>
+                            <a href={link.href} class="dd__link" tabindex="-1">
+                              <span>{link.label}</span>
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="m9 6 6 6-6 6" />
+                              </svg>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })
       }
     </nav>
 
-    <div
-      class="ml-auto flex items-center gap-3 lg:ml-0 lg:border-l lg:border-[color:var(--color-line)] lg:pl-3.5"
-    >
-      <LanguageToggle lang={lang} pathname={pathname} />
+    <div class="hdr__tools">
+      <span class="hdr__toggle-desktop">
+        <LanguageToggle lang={lang} pathname={pathname} />
+      </span>
+      <span class="hdr__toggle-phone">
+        <LanguageToggle lang={lang} pathname={pathname} variant="phone" />
+      </span>
       <a
         href={localizePath('/contact', lang)}
-        class="btn btn-primary btn-fill hidden sm:inline-flex"
+        class="hdr__pill"
+        aria-current={current === '/contact' ? 'page' : undefined}>{t(lang, 'contactUs')}</a
       >
-        <span class="btn-fill__blob" aria-hidden="true"></span>
-        <span class="roll">
-          <span class="roll__text" data-text={t(lang, 'contactUs')}>{t(lang, 'contactUs')}</span>
-        </span>
-      </a>
       <button
         type="button"
-        id="menu-toggle"
-        class="grid h-11 w-11 place-items-center rounded-[var(--radius-md)] border border-[color:var(--color-line-strong)] bg-white text-[color:var(--color-ink-900)] lg:hidden"
-        aria-expanded="false"
-        aria-controls="mobile-nav"
+        class="hdr__burger"
         aria-label={t(lang, 'openMenu')}
-        data-label-open={t(lang, 'openMenu')}
-        data-label-close={t(lang, 'closeMenu')}
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        data-mobile-open
       >
-        <Icon name="bars-3" size={24} inline class="menu-toggle-icon-open" />
-        <Icon name="x-mark" size={24} inline class="menu-toggle-icon-close hidden" />
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg
+        >
       </button>
     </div>
   </div>
+
+  <div
+    id="mobile-menu"
+    class="mmenu"
+    role="dialog"
+    aria-modal="true"
+    aria-label={t(lang, 'menu')}
+    data-mobile-panel
+    hidden
+  >
+    <div class="mmenu__bar">
+      <a href={localizePath('/', lang)} class="hdr__brand">
+        <Logo variant="full" height={68} title={orgName} class="hdr__logo" />
+      </a>
+      <button type="button" class="hdr__burger" aria-label={t(lang, 'closeMenu')} data-mobile-close>
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg
+        >
+      </button>
+    </div>
+    <nav class="mmenu__body" aria-label={t(lang, 'navPrimaryLabel')}>
+      {
+        mobileNav.map((item) => (
+          <a
+            href={localizePath(item.path, lang)}
+            class="mmenu__link"
+            aria-current={isCurrent(item.path) ? 'page' : undefined}
+          >
+            {t(lang, item.key)}
+            <span aria-hidden="true">→</span>
+          </a>
+        ))
+      }
+      <div class="mmenu__actions">
+        <a href={localizePath('/contact', lang)} class="mega__pill mmenu__contact">
+          {t(lang, 'contactUs')}
+        </a>
+        <a href={localizePath('/contact?topic=volunteer', lang)} class="mega__pill">
+          {t(lang, 'navVolunteer')}
+        </a>
+      </div>
+    </nav>
+  </div>
 </header>
 
-{overlay && <div class="header-sentinel" aria-hidden="true" />}
-
-<!-- Mobile navigation panel -->
-<div
-  id="mobile-nav"
-  hidden
-  class="fixed inset-0 z-50 flex flex-col bg-white lg:hidden"
-  role="dialog"
-  aria-modal="true"
-  aria-label={t(lang, 'menu')}
->
-  <div
-    class="wrap flex h-[var(--header-h)] flex-none items-center border-b border-[color:var(--color-line-subtle)] pt-[var(--safe-top)]"
-  >
-    <span class="text-[14px] font-bold text-[color:var(--color-ink-900)]">{orgName}</span>
-    <button
-      type="button"
-      id="menu-close"
-      class="ml-auto grid h-11 w-11 place-items-center rounded-[var(--radius-md)] border border-[color:var(--color-line-strong)] bg-white text-[color:var(--color-ink-900)]"
-      aria-label={t(lang, 'closeMenu')}
-    >
-      <span class="menu-x" aria-hidden="true"><span></span><span></span></span>
-    </button>
-  </div>
-
-  <nav
-    class="wrap flex-1 overflow-y-auto pt-3 pb-[calc(0.75rem+var(--safe-bottom))]"
-    aria-label={t(lang, 'mainNavLabel')}
-  >
-    {
-      mobileNav.map((item) => (
-        <a
-          href={localizePath(item.path, lang)}
-          aria-current={isCurrent(item.path) ? 'page' : undefined}
-          class="flex items-center justify-between border-b border-[color:var(--color-line-subtle)] py-[15px] text-[17px] font-semibold text-[color:var(--color-ink-900)] no-underline"
-        >
-          {t(lang, item.key)}
-          <span class="text-[color:var(--color-blue-700)]" aria-hidden="true">
-            →
-          </span>
-        </a>
-      ))
-    }
-
-    <a href={localizePath('/contact', lang)} class="btn btn-primary btn-block mt-6 py-4">
-      {t(lang, 'contactUs')}
-    </a>
-    <a
-      href={localizePath('/contact?topic=volunteer', lang)}
-      class="btn btn-secondary btn-block mt-2.5 py-4"
-    >
-      {t(lang, 'navVolunteer')}
-    </a>
-
-    <div class="mt-7 border-t border-[color:var(--color-line)] pt-5 pb-8">
-      <span
-        class="mb-3 block font-mono text-[11px] font-semibold tracking-[0.1em] text-[color:var(--color-ink-400)] uppercase"
-        >{t(lang, 'language')}</span
-      >
-      <LanguageToggle lang={lang} pathname={pathname} full />
-    </div>
-  </nav>
-</div>
-
 <script>
-  /**
-   * Overlay header: transparent while the top of the hero is in view, solid
-   * once the page has scrolled past it. Watching a marker element rather than
-   * the scroll offset means the browser reports the crossing itself — two
-   * callbacks per visit instead of one per frame.
-   */
-  const overlayHeader = document.querySelector<HTMLElement>('.site-header[data-overlay]');
-  const sentinel = document.querySelector('.header-sentinel');
+  import { initDropdowns, initMenus } from '~/lib/menu';
+  import { initHeaderScroll } from '~/lib/header-scroll';
 
-  if (overlayHeader && sentinel) {
-    new IntersectionObserver(([entry]) => {
-      if (!entry) return;
-      overlayHeader.toggleAttribute('data-at-top', entry.isIntersecting);
-    }).observe(sentinel);
-  }
-
-  /**
-   * The header steps out of the way while the visitor reads downward and comes
-   * back on any upward scroll, keyboard focus, or near the top of the page.
-   *
-   * Distances are measured from the last turning point, not frame to frame, so
-   * a slow scroll still registers. Hiding takes a deliberate scroll; showing
-   * takes only a small one — the visitor reaching for the menu should not have
-   * to work for it. Rubber-band overscroll at either end is ignored, or the
-   * bounce at the bottom of a page on iOS would pull the header back in.
-   */
-  const header = document.querySelector<HTMLElement>('header.site-header');
-  const menuPanel = document.getElementById('mobile-nav');
-
-  if (header) {
-    const HIDE_AFTER = 24;
-    const SHOW_AFTER = 6;
-    let turnY = window.scrollY;
-    let ticking = false;
-
-    const setHidden = (hidden: boolean) => {
-      if (header.hasAttribute('data-hidden') !== hidden)
-        header.toggleAttribute('data-hidden', hidden);
-    };
-
-    const update = () => {
-      ticking = false;
-      const maxY = document.documentElement.scrollHeight - window.innerHeight;
-      const y = Math.min(Math.max(window.scrollY, 0), maxY);
-      const hidden = header.hasAttribute('data-hidden');
-      header.toggleAttribute('data-scrolled', y > header.offsetHeight);
-
-      const nearTop = y < header.offsetHeight * 2;
-      const menuOpen = menuPanel ? !menuPanel.hidden : false;
-      if (nearTop || menuOpen || header.contains(document.activeElement)) {
-        setHidden(false);
-        turnY = y;
-        return;
-      }
-
-      if (hidden ? y > turnY : y < turnY) turnY = y;
-      const travelled = y - turnY;
-      if (!hidden && travelled > HIDE_AFTER) {
-        setHidden(true);
-        turnY = y;
-      } else if (hidden && travelled < -SHOW_AFTER) {
-        setHidden(false);
-        turnY = y;
-      }
-    };
-
-    window.addEventListener(
-      'scroll',
-      () => {
-        if (ticking) return;
-        ticking = true;
-        requestAnimationFrame(update);
-      },
-      { passive: true },
-    );
-    header.addEventListener('focusin', () => header.removeAttribute('data-hidden'));
-  }
-
-  const toggle = document.getElementById('menu-toggle');
-  const closeButton = document.getElementById('menu-close');
-  const panel = document.getElementById('mobile-nav');
-  const openIcon = toggle?.querySelector('.menu-toggle-icon-open');
-  const closeIcon = toggle?.querySelector('.menu-toggle-icon-close');
-
-  if (toggle && panel && closeButton) {
-    const FOCUSABLE = 'a[href], button:not([disabled])';
-    let lastFocused: HTMLElement | null = null;
-
-    const open = () => {
-      lastFocused = document.activeElement as HTMLElement | null;
-      panel.hidden = false;
-      document.body.style.overflow = 'hidden';
-      toggle.setAttribute('aria-expanded', 'true');
-      toggle.setAttribute('aria-label', toggle.dataset.labelClose ?? 'Close menu');
-      openIcon?.classList.add('hidden');
-      closeIcon?.classList.remove('hidden');
-      panel.querySelector<HTMLElement>(FOCUSABLE)?.focus();
-    };
-
-    /**
-     * Closing plays an exit animation before the panel is hidden. `hidden`
-     * removes it instantly, so the element has to survive one animation first.
-     *
-     * Guarded three ways: reduced-motion skips it entirely, a missing
-     * animationend event still resolves via the timeout, and re-entry is
-     * blocked while an exit is already running — otherwise a double-tap on the
-     * close button leaves the panel stuck mid-animation.
-     */
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    const finishClose = () => {
-      panel.hidden = true;
-      panel.removeAttribute('data-closing');
-      document.body.style.overflow = '';
-      toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-label', toggle.dataset.labelOpen ?? 'Open menu');
-      openIcon?.classList.remove('hidden');
-      closeIcon?.classList.add('hidden');
-      lastFocused?.focus();
-    };
-
-    const close = () => {
-      if (panel.hidden || panel.hasAttribute('data-closing')) return;
-
-      if (prefersReducedMotion.matches) {
-        finishClose();
-        return;
-      }
-
-      panel.setAttribute('data-closing', '');
-      let done = false;
-      const settle = () => {
-        if (done) return;
-        done = true;
-        finishClose();
-      };
-      panel.addEventListener('animationend', settle, { once: true });
-      window.setTimeout(settle, 400);
-    };
-
-    toggle.addEventListener('click', open);
-    closeButton.addEventListener('click', close);
-
-    document.addEventListener('keydown', (event) => {
-      if (panel.hidden) return;
-      if (event.key === 'Escape') {
-        close();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-
-      // Keep focus inside the panel while it is open.
-      const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (!first || !last) return;
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    });
-  }
+  initMenus();
+  initDropdowns();
+  initHeaderScroll();
 </script>
+
+<style>
+  .hdr {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    box-sizing: border-box;
+    height: var(--header-h);
+    background: #fff;
+    border-bottom: 1px solid var(--color-line);
+    transition:
+      background-color 0.3s ease,
+      border-color 0.3s ease,
+      color 0.3s ease,
+      box-shadow 0.3s ease,
+      translate 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    padding: var(--safe-top) clamp(16px, 3vw, 24px) 0;
+    color: var(--color-ink-700);
+    font-family: var(--font-sans);
+  }
+  .hdr__bar {
+    max-width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(12px, 2vw, 24px);
+  }
+  .hdr__brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-shrink: 0;
+    text-decoration: none;
+  }
+  .hdr :global(.hdr__logo),
+  .mmenu :global(.hdr__logo) {
+    display: block;
+    height: 68px;
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .hdr__nav {
+    display: none;
+    align-items: center;
+    gap: 2px;
+    font-size: clamp(15px, 0.3vw + 11px, 16px);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .hdr__link::after {
+    transform-origin: center;
+  }
+  .hdr__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+  }
+  .hdr__chev {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 32px;
+    margin-inline-start: -10px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-ink-700);
+    cursor: pointer;
+  }
+  .hdr__chev svg {
+    transition: transform 360ms var(--ease-reveal, cubic-bezier(0.16, 1, 0.3, 1));
+  }
+  .hdr__chev[aria-expanded='true'] {
+    color: var(--color-blue-800);
+  }
+  .hdr__chev[aria-expanded='true'] svg {
+    transform: rotate(180deg);
+  }
+
+  /* Drop-down: the panel grows out of the header's bottom edge. Rows take
+     0fr → 1fr so the height animates without measuring, each row settles in a beat after the one above. */
+  .dd {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    z-index: 5;
+    min-width: 18rem;
+    max-width: 24rem;
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      grid-template-rows 420ms cubic-bezier(0.16, 1, 0.3, 1),
+      visibility 0s linear 420ms;
+  }
+  .dd__inner {
+    min-height: 0;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 18px 32px -16px rgb(15 23 42 / 0.28);
+  }
+  .dd__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .dd__list li {
+    border-bottom: 1px solid var(--color-line);
+    opacity: 0;
+    translate: 0 -8px;
+    transition:
+      opacity 200ms ease,
+      translate 200ms ease;
+  }
+  .dd__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 17px 20px;
+    color: var(--color-ink-900);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-decoration: none;
+    white-space: normal;
+    transition:
+      background-color var(--duration-fast) var(--ease-out-soft),
+      color var(--duration-fast) var(--ease-out-soft),
+      padding-inline-start 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .dd__link svg {
+    flex: none;
+    color: var(--color-blue-700);
+    transition: translate 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .dd__link:is(:hover, :focus-visible) {
+    background: var(--color-surface-subtle);
+    color: var(--color-blue-800);
+    padding-inline-start: 26px;
+  }
+  .dd__link:is(:hover, :focus-visible) svg {
+    translate: 4px 0;
+  }
+  .hdr__item[data-open] > .dd {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s, 0s;
+  }
+  .hdr__item[data-open] .dd__list li {
+    opacity: 1;
+    translate: 0 0;
+    transition-delay: calc(90ms + var(--i) * 45ms);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dd,
+    .dd__list li,
+    .hdr__chev svg {
+      transition-duration: 0s !important;
+      transition-delay: 0s !important;
+    }
+  }
+
+  .hdr__tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .hdr__toggle-desktop,
+  .hdr__pill {
+    display: none;
+  }
+  .hdr__pill {
+    background: var(--color-blue-700);
+    color: #fff;
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .hdr__burger {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--color-ink-900);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .mega__pill {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-ink-900);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+    border: 2px solid var(--color-ink-900);
+    border-radius: 999px;
+    padding: 12px 22px;
+  }
+  .mmenu a:hover {
+    color: var(--color-blue-700);
+  }
+  .mega__pill:hover {
+    border-color: var(--color-blue-700);
+  }
+
+  .mmenu {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    color: var(--color-ink-600);
+  }
+  .mmenu__bar {
+    flex: none;
+    box-sizing: border-box;
+    height: var(--header-h);
+    padding: var(--safe-top) 16px 0;
+    border-bottom: 1px solid var(--color-line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .mmenu__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 24px calc(48px + var(--safe-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .mmenu__link {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-ink-900);
+    font-size: 17px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .mmenu__link span {
+    color: var(--color-blue-700);
+  }
+  .mmenu__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  :global([data-menu-open]) {
+    overflow: hidden;
+  }
+  @media (min-width: 40rem) {
+    .hdr :global(.hdr__logo) {
+      height: 92px;
+    }
+    .hdr__pill {
+      display: inline-flex;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .hdr :global(.hdr__logo) {
+      height: 118px;
+    }
+    .hdr__toggle-phone,
+    .hdr__burger {
+      display: none;
+    }
+    .hdr__nav {
+      display: flex;
+      position: relative;
+    }
+    .hdr__toggle-desktop,
+    .hdr__pill {
+      display: inline-flex;
+    }
+    .hdr__tools {
+      gap: 10px;
+    }
+  }
+</style>

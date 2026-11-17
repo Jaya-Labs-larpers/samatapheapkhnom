@@ -2,7 +2,6 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { DirectorMessage } from '~/lib/content/types';
 import { pick } from '~/lib/i18n/utils';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 import RichText from './RichText.astro';
 
 interface Props {
@@ -16,11 +15,6 @@ const name = pick(director.name, lang);
 const title = pick(director.title, lang);
 const pullQuote = pick(director.pullQuote, lang);
 
-/**
- * The pull quote is set in Source Serif in English. In Khmer it drops the serif
- * and uses Kantumruy SemiBold at a larger size and looser leading — Khmer has no
- * serif tradition and a faked one looks wrong.
- */
 const quoteClass =
   lang === 'km'
     ? 'font-[family-name:var(--font-khmer)] text-[19px] sm:text-[27px] leading-[1.7] font-semibold'
@@ -28,24 +22,12 @@ const quoteClass =
 ---
 
 <div
-  class="reveal relative grid gap-11 overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--color-line)] bg-white p-7 sm:p-11 lg:grid-cols-[300px_1fr]"
+  class="reveal relative grid gap-11 overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--color-line)] bg-white p-7 sm:p-11"
 >
   <!-- 4px accent rule, top-left -->
   <span
     class="absolute top-0 left-0 h-1 w-[132px] bg-[color:var(--color-blue-700)]"
     aria-hidden="true"></span>
-
-  <div
-    class="max-h-[320px] overflow-hidden rounded-[var(--radius-lg)] lg:aspect-4/5 lg:max-h-none [&_img]:object-top"
-  >
-    <ResponsiveImage
-      image={director.photo}
-      lang={lang}
-      alt=""
-      aspect="4/5"
-      sizes="(min-width: 64rem) 300px, 100vw"
-    />
-  </div>
 
   <div class="relative pt-1.5">
     <span

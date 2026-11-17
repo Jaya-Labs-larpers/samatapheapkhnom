@@ -1,0 +1,205 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { UIKey } from '~/lib/i18n/strings';
+import { getSiteSettings } from '~/lib/content';
+import { langAttr, pick } from '~/lib/i18n/utils';
+import { stripInlineLinks } from '~/lib/inline-links';
+import { contactPageJsonLd, officeOpeningHours } from '~/lib/seo/page-schema';
+import { tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import ContactForm from '~/components/forms/ContactForm.astro';
+import InlineLinks from '~/components/content/InlineLinks.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const settings = await getSiteSettings();
+const address = pick(settings.address, lang);
+const hours = pick(settings.officeHours, lang);
+const safeguarding = pick(settings.safeguardingContact, lang);
+const heading = tStrict(lang, 'pageContact');
+const tel = (phone: string) => `tel:${phone.replace(/[^+\d]/g, '')}`;
+const nextSteps: UIKey[] = ['nextStep1', 'nextStep2', 'nextStep3'];
+const withContact = (value: string) =>
+  value.replace('{phone}', settings.phone ?? '').replace('{email}', settings.email ?? '');
+const intro = withContact(tStrict(lang, 'introContact'));
+const title = tStrict(lang, 'seoContact') || heading;
+const description = withContact(tStrict(lang, 'metaContact')) || stripInlineLinks(intro);
+const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: title, description });
+const safeguardingPolicy = tStrict(lang, 'contactSafeguardingPolicy');
+const nextFaq = tStrict(lang, 'nextFaq');
+---
+
+<BaseLayout
+  lang={lang}
+  title={title}
+  description={description}
+  noindex
+  jsonLd={contactPage}
+  orgJsonLd={{ openingHoursSpecification: officeOpeningHours }}
+>
+  <SkHero title={heading} intro={intro} actions={[]}>
+    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
+  </SkHero>
+
+  <SkSection>
+    <div class="sk-grid">
+      {
+        settings.phone && (
+          <div class="sk-card">
+            <h2 class="sk-h3">{tStrict(lang, 'contactCall')}</h2>
+            <a href={tel(settings.phone)} class="sk-link">
+              {settings.phone}
+            </a>
+            {hours.value && (
+              <p class="sk-small" lang={langAttr(hours)}>
+                {hours.value}
+              </p>
+            )}
+          </div>
+        )
+      }
+      {
+        settings.email && (
+          <div class="sk-card">
+            <h2 class="sk-h3">{tStrict(lang, 'contactEmail')}</h2>
+            <a href={`mailto:${settings.email}`} class="sk-link" style="overflow-wrap:anywhere">
+              {settings.email}
+            </a>
+            <p class="sk-small">{tStrict(lang, 'contactEmailAction')}</p>
+          </div>
+        )
+      }
+      {
+        address.value && (
+          <div class="sk-card">
+            <h2 class="sk-h3">{tStrict(lang, 'contactVisit')}</h2>
+            <p class="sk-text" style="white-space:pre-line" lang={langAttr(address)}>
+              {address.value}
+            </p>
+            {settings.mapUrl && (
+              <a href={settings.mapUrl} rel="noopener noreferrer" target="_blank" class="sk-link">
+                {tStrict(lang, 'viewOnGoogleMaps')}
+              </a>
+            )}
+          </div>
+        )
+      }
+    </div>
+  </SkSection>
+
+  <SkSection tone="tint">
+    <div class="contact-desk grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-10">
+      <div>
+        <ContactForm lang={lang} id="form-contact" />
+
+        <div
+          class="safeguarding-panel"
+          role="region"
+          aria-label={tStrict(lang, 'safeguardingPanelTitle')}
+        >
+          <h2 class="safeguarding-panel__title">{tStrict(lang, 'safeguardingPanelTitle')}</h2>
+          {
+            safeguarding.value && (
+              <p class="safeguarding-panel__body" lang={langAttr(safeguarding)}>
+                {safeguarding.value}
+              </p>
+            )
+          }
+          {
+            safeguardingPolicy && (
+              <p class="safeguarding-panel__body inline-links">
+                <InlineLinks text={safeguardingPolicy} />
+              </p>
+            )
+          }
+          <div class="sk-actions" style="margin-top:20px">
+            {
+              settings.phone && (
+                <a href={tel(settings.phone)} class="sk-btn">
+                  {settings.phone}
+                </a>
+              )
+            }
+            {
+              settings.safeguardingEmail && (
+                <a
+                  href={`mailto:${settings.safeguardingEmail}`}
+                  class="sk-btn sk-btn--outline"
+                  style="overflow-wrap:anywhere"
+                >
+                  {settings.safeguardingEmail}
+                </a>
+              )
+            }
+          </div>
+        </div>
+      </div>
+
+      <aside class="contact-next">
+        <h2 class="contact-next__title">{tStrict(lang, 'nextTitle')}</h2>
+        <ol class="contact-next__steps">
+          {nextSteps.map((step) => <li>{tStrict(lang, step)}</li>)}
+        </ol>
+        {
+          nextFaq && (
+            <p class="contact-next__block inline-links">
+              <InlineLinks text={nextFaq} />
+            </p>
+          )
+        }
+        {
+          hours.value && (
+            <div class="contact-next__block">
+              <b>{tStrict(lang, 'nextHours')}</b>
+              <span lang={langAttr(hours)}>{hours.value}</span>
+            </div>
+          )
+        }
+        <p class="contact-next__block contact-next__privacy">{tStrict(lang, 'nextPrivacy')}</p>
+      </aside>
+    </div>
+  </SkSection>
+</BaseLayout>
+
+<script>
+  const ENTER_MS = 2000;
+  const STAGGER_MS = 180;
+  const boxes = Array.from(document.querySelectorAll<HTMLElement>('.contact-enter'));
+
+  const show = (box: HTMLElement, index: number) => {
+    const delay = index * STAGGER_MS;
+    box.style.setProperty('--enter-delay', `${delay}ms`);
+    box.dataset.enter = 'shown';
+    setTimeout(
+      () => {
+        box.dataset.enter = 'done';
+        box.style.removeProperty('--enter-delay');
+      },
+      delay + ENTER_MS + 900,
+    );
+  };
+
+  if (typeof IntersectionObserver !== 'function') {
+    boxes.forEach(show);
+  } else {
+    const arrival = new IntersectionObserver(
+      (entries) => {
+        entries
+          .filter((entry) => entry.isIntersecting)
+          .forEach((entry, index) => {
+            arrival.unobserve(entry.target);
+            show(entry.target as HTMLElement, index);
+          });
+      },
+      { threshold: 0.05 },
+    );
+    boxes.forEach((box) => arrival.observe(box));
+  }
+</script>

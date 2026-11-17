@@ -1,0 +1,112 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getSiteSettings, getTeam } from '~/lib/content';
+import { ctaActions, tStrict } from '~/lib/skeleton-content';
+import { text } from '~/lib/i18n/utils';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkTeam from '~/components/skeleton/SkTeam.astro';
+import SkCta from '~/components/skeleton/SkCta.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const [settings, team] = await Promise.all([getSiteSettings(), getTeam()]);
+const photo = settings.homeHero?.[0] ?? null;
+const heading = tStrict(lang, 'ourTeam');
+const description = `${heading} — ${text(settings.orgName, lang)}`;
+---
+
+<BaseLayout lang={lang} title={heading} description={description} noindex>
+  <section class="team-hero">
+    {
+      photo && (
+        <figure class="team-hero__photo">
+          <ResponsiveImage image={photo} lang={lang} keep eager sizes="100vw" aspect="3/2" />
+        </figure>
+      )
+    }
+    <div class="team-hero__shade" aria-hidden="true"></div>
+    <div class="team-hero__text">
+      <Breadcrumbs lang={lang} trail={[{ label: heading }]} />
+      <h1 class="sk-h1">{heading}</h1>
+    </div>
+  </section>
+
+  {
+    team.length > 0 && (
+      <section class="team-structure" id="structure">
+        <div class="sk-wrap">
+          <h2 class="sk-h2">{tStrict(lang, 'orgStructure')}</h2>
+          <SkTeam lang={lang} team={team} />
+        </div>
+      </section>
+    )
+  }
+
+  <SkCta
+    heading={tStrict(lang, 'ctaAboutTitle')}
+    body={tStrict(lang, 'ctaAboutBody')}
+    actions={ctaActions(lang)}
+  />
+</BaseLayout>
+
+<style>
+  .team-hero {
+    position: relative;
+    isolation: isolate;
+    min-height: clamp(480px, 82vh, 840px);
+    background: var(--color-blue-900);
+    overflow: hidden;
+  }
+  .team-hero__photo {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    margin: 0;
+  }
+  .team-hero__photo :global(img) {
+    object-position: 50% 90%;
+  }
+  .team-hero__shade {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to bottom, rgb(11 27 48 / 0.82), rgb(11 27 48 / 0) 42%),
+      linear-gradient(to bottom, rgb(11 27 48 / 0) 62%, var(--color-blue-900) 100%);
+  }
+  .team-hero__text {
+    box-sizing: border-box;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: clamp(28px, 4vw, 56px) 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .team-hero__text :global(nav),
+  .team-hero__text :global(nav a) {
+    color: rgb(255 255 255 / 0.85);
+  }
+  .team-hero__text :global(nav a:hover) {
+    color: #fff;
+  }
+  .team-hero__text :global(.sk-h1) {
+    color: #fff;
+  }
+
+  .team-structure {
+    background: var(--color-blue-900);
+    color: #fff;
+    padding: clamp(24px, 4vw, 56px) 20px clamp(64px, 8vw, 112px);
+  }
+  .team-structure :global(.sk-h2) {
+    color: #fff;
+    margin-bottom: 12px;
+  }
+</style>

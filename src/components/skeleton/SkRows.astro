@@ -1,0 +1,64 @@
+---
+import type { SkAction, SkRowItem } from '~/lib/skeleton-content';
+import SkSection from './SkSection.astro';
+import SkLines from './SkLines.astro';
+
+interface Props {
+  heading: string;
+  rows?: string[];
+  tone?: 'default' | 'tint' | 'dark';
+  items?: SkRowItem[];
+  more?: SkAction | null;
+  id?: string;
+}
+
+const {
+  heading,
+  rows = ['Item one', 'Item two', 'Item three', 'Item four'],
+  tone = 'default',
+  items,
+  more,
+  id,
+} = Astro.props;
+---
+
+<SkSection tone={tone} id={id}>
+  <h2 class="sk-h2">{heading}</h2>
+  <div>
+    {
+      items
+        ? items.map((item) => (
+            <div class="sk-row sk-row--item">
+              <h3 class="sk-h3" lang={item.titleLang}>
+                {item.index && <span class="sk-row__index">{item.index}</span>}
+                {item.href ? (
+                  <a href={item.href} class="sk-stretch">
+                    {item.title}
+                  </a>
+                ) : (
+                  item.title
+                )}
+              </h3>
+              {item.body && (
+                <p class="sk-text" lang={item.bodyLang}>
+                  {item.body}
+                </p>
+              )}
+            </div>
+          ))
+        : rows.map((row) => (
+            <div class="sk-row">
+              <h3 class="sk-h3">{row}</h3>
+              <SkLines n={2} />
+            </div>
+          ))
+    }
+  </div>
+  {
+    more && (
+      <a href={more.href} class="sk-link">
+        {more.label} →
+      </a>
+    )
+  }
+</SkSection>

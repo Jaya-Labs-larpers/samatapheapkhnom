@@ -8,7 +8,6 @@ import { gtmId, hasSanity } from '~/lib/config';
 import type { CmsImage } from '~/lib/content/types';
 import Header from '~/components/layout/Header.astro';
 import Footer from '~/components/layout/Footer.astro';
-import ButterflyCursor from '~/components/media/ButterflyCursor.astro';
 import PageLoader from '~/components/layout/PageLoader.astro';
 import SeoHead from '~/components/seo/SeoHead.astro';
 
@@ -24,12 +23,6 @@ interface Props {
   jsonLd?: Record<string, unknown> | null;
   /** Extra properties for the Organization node. */
   orgJsonLd?: Record<string, unknown> | null;
-  /**
-   * Float the header over the page's own opening art instead of giving it a
-   * white band. Only for pages whose first element is a full-bleed hero that
-   * reaches the top of the window.
-   */
-  headerOverlay?: boolean;
   /** Play the intro (PageLoader) when a visit starts on this page. */
   intro?: boolean;
 }
@@ -44,7 +37,6 @@ const {
   publishedAt,
   jsonLd,
   orgJsonLd,
-  headerOverlay,
   intro,
 } = Astro.props;
 
@@ -61,8 +53,7 @@ const gtmLoader = gtmId
 const gtmSnippet =
   gtmLoader &&
   `(function(){var go=function(){${gtmLoader}};var idle=function(){(window.requestIdleCallback||function(f){setTimeout(f,1)})(go,{timeout:4000})};if(document.readyState==='complete')idle();else addEventListener('load',idle);})();`;
-const preloadFonts =
-  lang === 'km' ? ['kantumruy-pro-khmer', 'inter-latin'] : ['inter-latin', 'source-serif-4-latin'];
+const preloadFonts = lang === 'km' ? ['noto-sans-khmer', 'noto-sans-latin'] : ['noto-sans-latin'];
 ---
 
 <!doctype html>
@@ -91,8 +82,7 @@ const preloadFonts =
     {
       /*
       Preload what the first paint needs, and no more: the locale's body font and
-      the face its headline is set in (Source Serif 4 in English; Khmer headlines
-      stay on Kantumruy, with Inter for the Latin around them). The other script
+      its Latin face on Khmer pages. The other script
       still loads — the language toggle renders "ខ្មែរ" on English pages — but
       lazily, under font-display: swap, so it never blocks LCP for one word of
       chrome.
@@ -176,15 +166,13 @@ const preloadFonts =
       {t(lang, 'skipToContent')}
     </a>
 
-    <Header lang={lang} pathname={pathname} settings={settings} overlay={headerOverlay} />
+    <Header lang={lang} pathname={pathname} settings={settings} />
 
     <main id="main" tabindex="-1">
       <slot />
     </main>
 
     <Footer lang={lang} settings={settings} pathname={pathname} />
-
-    <ButterflyCursor />
 
     <script>
       import { revealOnEntry } from '~/lib/reveal';

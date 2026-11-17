@@ -1,0 +1,129 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Activity } from '~/lib/content/types';
+import { formatDate, langAttr, localizePath, pick } from '~/lib/i18n/utils';
+import { blocksToPlainText } from '~/lib/portable-text';
+import { resolveSeo } from '~/lib/seo';
+import { siteUrl } from '~/lib/config';
+import { hasImage, imageUrl } from '~/lib/sanity/image';
+import { categoryLabels, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import RichText from '~/components/content/RichText.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+
+interface Props {
+  lang: Locale;
+  activity: Activity;
+  previous?: Activity | null;
+  next?: Activity | null;
+}
+
+const { lang, activity, previous, next } = Astro.props;
+
+const title = pick(activity.title, lang);
+const excerpt = pick(activity.excerpt, lang);
+const heading = title.value ?? '';
+const seo = resolveSeo(activity.seo, lang, {
+  title: heading,
+  description: excerpt.value ?? blocksToPlainText(pick(activity.body, lang).value),
+  image: activity.coverImage,
+});
+
+const canonical = new URL(localizePath(`/activities/${activity.slug}`, lang), siteUrl).href;
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: heading,
+  ...(seo.description ? { description: seo.description } : {}),
+  ...(activity.publishedAt ? { datePublished: activity.publishedAt } : {}),
+  ...(activity.author ? { author: { '@type': 'Organization', name: activity.author } } : {}),
+  ...(activity.coverImage && hasImage(activity.coverImage)
+    ? { image: imageUrl(activity.coverImage, { width: 1200 }) }
+    : {}),
+  inLanguage: lang,
+  mainEntityOfPage: canonical,
+};
+
+const category = activity.category ? categoryLabels[activity.category]?.[lang] : null;
+const programTitle = pick(activity.program?.title, lang);
+---
+
+<BaseLayout
+  lang={lang}
+  title={seo.title}
+  description={seo.description}
+  ogImage={seo.ogImage}
+  noindex
+  publishedAt={activity.publishedAt}
+  jsonLd={articleJsonLd}
+>
+  <SkSection narrow>
+    <Breadcrumbs
+      lang={lang}
+      trail={[{ label: tStrict(lang, 'pageActivities'), path: '/activities' }, { label: heading }]}
+    />
+    <p class="sk-small">
+      {category && <span class="sk-pill">{category}</span>}
+      <time datetime={activity.publishedAt ?? undefined}>
+        {formatDate(activity.publishedAt, lang)}
+      </time>
+      {activity.author && <span> · {activity.author}</span>}
+      {
+        activity.program && programTitle.value && (
+          <span lang={langAttr(programTitle)}>
+            {' · '}
+            <a href={localizePath(`/programs/${activity.program.slug}`, lang)}>
+              {programTitle.value}
+            </a>
+          </span>
+        )
+      }
+    </p>
+    <h1 class="sk-h1" style="max-width:none" lang={langAttr(title)}>{heading}</h1>
+    <div class="sk-media" style="aspect-ratio:16/9">
+      <ResponsiveImage
+        image={activity.coverImage}
+        lang={lang}
+        alt=""
+        aspect="16/9"
+        eager
+        sizes="(min-width: 48rem) 760px, 100vw"
+      />
+    </div>
+    {
+      excerpt.value && (
+        <p class="sk-lead" lang={langAttr(excerpt)}>
+          {excerpt.value}
+        </p>
+      )
+    }
+  </SkSection>
+
+  <SkSection narrow>
+    <RichText blocks={activity.body} lang={lang} />
+    <nav
+      class="sk-actions"
+      style="justify-content:space-between"
+      aria-label={tStrict(lang, 'pageActivities')}
+    >
+      {
+        previous ? (
+          <a href={localizePath(`/activities/${previous.slug}`, lang)} class="sk-link" rel="prev">
+            ← {tStrict(lang, 'previous')}
+          </a>
+        ) : (
+          <span />
+        )
+      }
+      {
+        next && (
+          <a href={localizePath(`/activities/${next.slug}`, lang)} class="sk-link" rel="next">
+            {tStrict(lang, 'next')} →
+          </a>
+        )
+      }
+    </nav>
+  </SkSection>
+</BaseLayout>

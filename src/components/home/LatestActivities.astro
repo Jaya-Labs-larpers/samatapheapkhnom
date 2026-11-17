@@ -1,0 +1,150 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Activity } from '~/lib/content/types';
+import type { UIKey } from '~/lib/i18n/strings';
+import { formatDateShort, localizePath, pick, t, tLang } from '~/lib/i18n/utils';
+
+interface Props {
+  lang: Locale;
+  activities: Activity[];
+}
+
+const { lang, activities } = Astro.props;
+
+const typeLabel: Record<NonNullable<Activity['category']>, UIKey> = {
+  event: 'typeEvent',
+  announcement: 'typeAnnouncement',
+  story: 'typeStory',
+  news: 'typeNews',
+};
+---
+
+{
+  activities.length > 0 && (
+    <section class="d-section">
+      <div class="d-container">
+        <div class="d-head">
+          <div class="d-head__title">
+            <div class="d-rule" />
+            <h2 class="d-h2" lang={tLang(lang, 'latestActivities')}>
+              {t(lang, 'latestActivities')}
+            </h2>
+          </div>
+          <a href={localizePath('/activities', lang)} class="d-link">
+            <span lang={tLang(lang, 'allActivities')}>{t(lang, 'allActivities')}</span> →
+          </a>
+        </div>
+        <ul class="grid">
+          {activities.map((activity) => {
+            const title = pick(activity.title, lang);
+            const excerpt = pick(activity.excerpt, lang);
+            const key = activity.category ? typeLabel[activity.category] : null;
+            return (
+              <li>
+                <a href={localizePath(`/activities/${activity.slug}`, lang)} class="act">
+                  <div class="act__body">
+                    <div class="act__meta">
+                      {key && (
+                        <span
+                          class:list={[
+                            'act__type',
+                            activity.category === 'announcement' && 'is-announcement',
+                          ]}
+                          lang={tLang(lang, key)}
+                        >
+                          {t(lang, key)}
+                        </span>
+                      )}
+                      {activity.publishedAt && (
+                        <time datetime={activity.publishedAt.slice(0, 10)}>
+                          {formatDateShort(activity.publishedAt, lang)}
+                        </time>
+                      )}
+                    </div>
+                    <h3 class="act__title" lang={title.isFallback ? title.lang : undefined}>
+                      {title.value}
+                    </h3>
+                    {excerpt.value && (
+                      <div
+                        class="act__excerpt"
+                        lang={excerpt.isFallback ? excerpt.lang : undefined}
+                      >
+                        {excerpt.value}
+                      </div>
+                    )}
+                  </div>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr));
+    gap: 24px;
+  }
+  .act {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .act__body {
+    flex: 1 1 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .act__meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .act__type {
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--color-aqua-50);
+    border: 1px solid var(--color-aqua-200);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-blue-800);
+  }
+  .act__type.is-announcement {
+    background: var(--color-blue-50);
+    border-color: var(--color-blue-200);
+  }
+  .act__title {
+    margin: 0;
+    font-size: 19px;
+    color: var(--color-ink-900);
+    line-height: 1.35;
+  }
+  .act__excerpt {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .act:hover .act__title {
+    color: var(--color-blue-700);
+  }
+  :global(:lang(km)) .act__type {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  :global(:lang(km)) .act__title {
+    line-height: 1.6;
+  }
+</style>

@@ -1,0 +1,26 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Story } from '~/lib/content/types';
+import StoryQuote from '~/components/content/StoryQuote.astro';
+
+interface Props {
+  lang: Locale;
+  story: Story;
+}
+
+const { lang, story } = Astro.props;
+---
+
+<section class="story-band sk-story">
+  <div class="sk-wrap">
+    <StoryQuote lang={lang} story={story} inverse quoteOnly linkProgram />
+  </div>
+</section>
+
+<style>
+  .sk-story {
+    --text-quote: clamp(1.25rem, 0.85rem + 1.5vw, 2.125rem);
+    padding: clamp(48px, 6vw, 88px) 20px;
+    font-family: var(--font-sans);
+  }
+</style>

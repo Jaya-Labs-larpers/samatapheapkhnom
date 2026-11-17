@@ -2,17 +2,14 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { Activity } from '~/lib/content/types';
 import { formatDate, localizePath, pick, t } from '~/lib/i18n/utils';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 import Icon from '~/components/Icon.astro';
 
 interface Props {
   lang: Locale;
   activity: Activity;
-  /** Must match the grid the card sits in; see cardImageSizes. */
-  sizes?: string;
 }
 
-const { lang, activity, sizes } = Astro.props;
+const { lang, activity } = Astro.props;
 
 const title = pick(activity.title, lang);
 const excerpt = pick(activity.excerpt, lang);
@@ -27,10 +24,7 @@ const categoryLabels: Record<string, Record<Locale, string>> = {
 const category = activity.category ? categoryLabels[activity.category]?.[lang] : null;
 ---
 
-<article class="card reveal group relative" data-cursor-label={t(lang, 'readMore')}>
-  <div class="card-media">
-    <ResponsiveImage image={activity.coverImage} lang={lang} alt="" aspect="3/2" sizes={sizes} />
-  </div>
+<article class="card reveal group relative">
   <div class="flex flex-1 flex-col gap-2.5 p-5.5 pb-6">
     {
       category && (

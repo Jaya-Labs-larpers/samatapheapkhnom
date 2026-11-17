@@ -258,10 +258,10 @@ const html = `<!doctype html>
   * { box-sizing: border-box; }
   body {
     margin: 0; background: #eef1f8; color: var(--body);
-    font: 17px/1.65 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font: 17px/1.65 "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   }
   .km, [lang="km"] {
-    font-family: "Kantumruy Pro", "Noto Sans Khmer", "Khmer UI", "Leelawadee UI", sans-serif;
+    font-family: "Noto Sans Khmer", "Khmer UI", "Leelawadee UI", sans-serif;
     line-height: 1.9;
   }
   .page { max-width: 1080px; margin: 0 auto; padding: 0 20px 100px; }

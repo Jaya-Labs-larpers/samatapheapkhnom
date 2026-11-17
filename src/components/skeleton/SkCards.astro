@@ -1,0 +1,104 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { SkAction, SkCardItem } from '~/lib/skeleton-content';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkSection from './SkSection.astro';
+import SkLines from './SkLines.astro';
+
+interface Props {
+  heading: string;
+  /** Slots the design shows; real items fill the first ones, grey cards the rest. */
+  n?: number;
+  link?: string;
+  tone?: 'default' | 'tint' | 'dark';
+  lang?: Locale;
+  headingLang?: string;
+  items?: SkCardItem[];
+  more?: SkAction | null;
+}
+
+const {
+  heading,
+  n = 3,
+  link = 'Link label',
+  tone = 'default',
+  lang = 'en',
+  headingLang,
+  items = [],
+  more,
+} = Astro.props;
+const placeholders = Math.max(0, n - items.length);
+---
+
+<SkSection tone={tone}>
+  <h2 class="sk-h2" lang={headingLang}>{heading}</h2>
+  <div class="sk-grid">
+    {
+      items.map((item) => (
+        <article class="sk-card">
+          {item.image !== undefined && (
+            <div class="sk-media sk-card__media" style="aspect-ratio:3/2">
+              <ResponsiveImage
+                image={item.image}
+                lang={lang}
+                alt=""
+                aspect="3/2"
+                sizes="(min-width: 64rem) 380px, (min-width: 40rem) 50vw, 100vw"
+              />
+            </div>
+          )}
+          {item.title && (
+            <h3 class="sk-h3" lang={item.titleLang}>
+              {item.href ? (
+                <a href={item.href} class="sk-stretch">
+                  {item.title}
+                </a>
+              ) : (
+                item.title
+              )}
+            </h3>
+          )}
+          {item.quote && (
+            <figure class="sk-figure">
+              <blockquote class="sk-quote" lang={item.quoteLang}>
+                {item.quote}
+              </blockquote>
+              <figcaption class="sk-small">
+                — {item.cite}
+                {item.citeRole && (
+                  <span lang={item.citeRoleLang}>
+                    , {item.citeHref ? <a href={item.citeHref}>{item.citeRole}</a> : item.citeRole}
+                  </span>
+                )}
+              </figcaption>
+            </figure>
+          )}
+          {item.body && (
+            <p class="sk-text" lang={item.bodyLang}>
+              {item.body}
+            </p>
+          )}
+          {item.linkLabel && <span class="sk-link">{item.linkLabel} →</span>}
+        </article>
+      ))
+    }
+    {
+      Array.from({ length: placeholders }, (_, i) => (
+        <div class="sk-card">
+          <h3 class="sk-h3">Card title {items.length + i + 1}</h3>
+          <SkLines n={3} />
+          <a href="#" class="sk-link">
+            {link} →
+          </a>
+        </div>
+      ))
+    }
+  </div>
+  {
+    more && (
+      <a href={more.href} class="sk-link">
+        {more.label} →
+      </a>
+    )
+  }
+</SkSection>

@@ -17,17 +17,8 @@ interface Props {
 const { lang, title, intro, introLang, eyebrow, trail } = Astro.props;
 ---
 
-{
-  /*
-  Pulled up under the header, which stays transparent while the page is at the
-  top (headerOverlay on BaseLayout), so the band's colour runs to the top of the
-  window as the home hero's does. The padding pays the header's height back.
-  The same flock as the home hero's (ButterflyField) flies inside this band,
-  behind the text, and is clipped to it.
-*/
-}
 <section
-  class="hero-overlap relative border-b border-[color:var(--color-line-subtle)] bg-[color:var(--color-surface-subtle)] pt-[calc(var(--header-h)+3.5rem)] pb-13"
+  class="relative border-b border-[color:var(--color-line-subtle)] bg-[color:var(--color-surface-subtle)] py-12 sm:py-16"
 >
   <ButterflyField />
   <div class="wrap relative">

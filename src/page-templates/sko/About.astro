@@ -1,0 +1,124 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getDirectorMessage, getOrgChart, getPage } from '~/lib/content';
+import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
+import { resolveSeo } from '~/lib/seo';
+import { aboutPageJsonLd } from '~/lib/seo/page-schema';
+import { ctaActions, faqItems, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import RichText from '~/components/content/RichText.astro';
+import OrgChart from '~/components/content/OrgChart.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkBody from '~/components/skeleton/SkBody.astro';
+import SkSplit from '~/components/skeleton/SkSplit.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+import SkFaq from '~/components/skeleton/SkFaq.astro';
+import SkCta from '~/components/skeleton/SkCta.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const [page, director, chart] = await Promise.all([
+  getPage('about'),
+  getDirectorMessage(),
+  getOrgChart(),
+]);
+
+const hasOrgChart =
+  Boolean(chart.image?.asset) ||
+  Object.values(chart.textVersion ?? {}).some((value) => Array.isArray(value) && value.length > 0);
+
+const title = pick(page?.title, lang);
+const intro = pick(page?.intro, lang);
+const heading = title.value ?? tStrict(lang, 'pageAbout');
+const seo = resolveSeo(page?.seo, lang, {
+  title: heading,
+  description: intro.value,
+  image: page?.heroImage,
+});
+const aboutPage = aboutPageJsonLd({
+  pathname: Astro.url.pathname,
+  name: seo.title,
+  description: seo.description,
+});
+
+const quote = pick(director.pullQuote, lang);
+const name = pick(director.name, lang);
+const role = pick(director.title, lang);
+const faqs = faqItems(page?.faqs, lang);
+const faqMore = tStrict(lang, 'faqMore');
+---
+
+<BaseLayout
+  lang={lang}
+  title={seo.title}
+  description={seo.description}
+  ogImage={seo.ogImage}
+  noindex
+  jsonLd={aboutPage}
+>
+  <SkHero
+    title={heading}
+    titleLang={langAttr(title)}
+    intro={intro.value}
+    introLang={langAttr(intro)}
+    actions={[]}
+  >
+    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
+  </SkHero>
+
+  <SkBody lang={lang} body={page?.body} />
+
+  <SkSplit id="director" heading={tStrict(lang, 'directorMessage')} tone="tint">
+    <div class="sk-media" style="aspect-ratio:4/5;max-width:300px">
+      <ResponsiveImage image={director.photo} lang={lang} alt="" aspect="4/5" sizes="300px" />
+    </div>
+    {
+      quote.value && (
+        <blockquote class="sk-quote" lang={langAttr(quote)}>
+          {quote.value}
+        </blockquote>
+      )
+    }
+    <RichText blocks={director.message} lang={lang} />
+    <p class="sk-person">
+      <b lang={langAttr(name)}>{name.value}</b>
+      <span class="sk-small" lang={langAttr(role)}>{role.value}</span>
+    </p>
+  </SkSplit>
+
+  {
+    hasOrgChart && (
+      <SkSplit id="structure" heading={tStrict(lang, 'orgStructure')}>
+        <OrgChart lang={lang} chart={chart} />
+      </SkSplit>
+    )
+  }
+
+  <SkSection>
+    <h2 class="sk-h2">{tStrict(lang, 'ourTeam')}</h2>
+    <a href={localizePath('/team', lang)} class="sk-link">{tStrict(lang, 'orgStructure')} →</a>
+  </SkSection>
+
+  {
+    faqs.length > 0 && (
+      <SkFaq
+        id="faq"
+        heading={tStrict(lang, 'faqHeading')}
+        items={faqs}
+        more={faqMore ? { label: faqMore, href: localizePath('/faq', lang) } : null}
+      />
+    )
+  }
+
+  <SkCta
+    heading={tStrict(lang, 'ctaAboutTitle')}
+    body={tStrict(lang, 'ctaAboutBody')}
+    actions={ctaActions(lang)}
+  />
+</BaseLayout>

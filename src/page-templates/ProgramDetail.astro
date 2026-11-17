@@ -8,7 +8,6 @@ import { resolveSeo } from '~/lib/seo';
 import { serviceJsonLd } from '~/lib/seo/page-schema';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 import ProgramStats from '~/components/content/ProgramStats.astro';
 import SectionedBody from '~/components/content/SectionedBody.astro';
 import SectionHeading from '~/components/content/SectionHeading.astro';
@@ -83,7 +82,6 @@ const service = serviceJsonLd({
 ---
 
 <BaseLayout
-  headerOverlay
   lang={lang}
   title={seo.title}
   description={seo.description}
@@ -91,10 +89,7 @@ const service = serviceJsonLd({
   noindex={seo.noindex}
   jsonLd={service}
 >
-  <section class="hero-overlap program-hero border-b border-[color:var(--color-line-subtle)]">
-    <div class="program-hero__media [view-transition-name:card-media]" data-morph-hero>
-      <ResponsiveImage image={program.image} lang={lang} aspect="auto" eager sizes="100vw" />
-    </div>
+  <section class="program-hero border-b border-[color:var(--color-line-subtle)]">
     <div class="wrap program-hero__inner">
       <div class="program-hero__text">
         <Breadcrumbs

@@ -1,0 +1,181 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { LocaleBlocks, PortableBlock, Program } from '~/lib/content/types';
+import { getPartners, getPrograms, getStories } from '~/lib/content';
+import { ACTIVITY_LIMITS, blockText } from '~/lib/content/sections';
+import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
+import { resolveSeo } from '~/lib/seo';
+import { serviceJsonLd } from '~/lib/seo/page-schema';
+import { ctaActions, programRow, statItem, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import RichText from '~/components/content/RichText.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkStats from '~/components/skeleton/SkStats.astro';
+import SkBody from '~/components/skeleton/SkBody.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+import SkRows from '~/components/skeleton/SkRows.astro';
+import SkCta from '~/components/skeleton/SkCta.astro';
+
+interface Props {
+  lang: Locale;
+  program: Program;
+}
+
+const { lang, program } = Astro.props;
+
+const [programs, partners, stories] = await Promise.all([
+  getPrograms(),
+  getPartners(),
+  getStories(),
+]);
+
+const title = pick(program.title, lang);
+const summary = pick(program.summary, lang);
+const heading = title.value ?? '';
+const stats = program.impactStats ?? [];
+const position = programs.findIndex((entry) => entry.slug === program.slug) + 1;
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/* With a story, the body's "Impact" section is told once, in the story band. */
+const story = stories.find((entry) => entry.program?.slug === program.slug);
+const isImpactHeading = (block: PortableBlock) =>
+  block._type === 'block' && block.style === 'h2' && /impact|លទ្ធផល/i.test(blockText(block));
+
+let body: LocaleBlocks | null | undefined = program.body;
+const impact: LocaleBlocks = {};
+if (story && program.body) {
+  body = {};
+  for (const [locale, blocks] of Object.entries(program.body) as [
+    Locale,
+    PortableBlock[] | null,
+  ][]) {
+    const start = (blocks ?? []).findIndex(isImpactHeading);
+    if (!blocks || start < 0) {
+      body[locale] = blocks;
+      continue;
+    }
+    const next = blocks.findIndex(
+      (block, i) => i > start && block._type === 'block' && block.style === 'h2',
+    );
+    const end = next < 0 ? blocks.length : next;
+    body[locale] = [...blocks.slice(0, start), ...blocks.slice(end)];
+    impact[locale] = blocks.slice(start + 1, end);
+  }
+}
+const hasImpact = Object.values(impact).some((blocks) => blocks && blocks.length > 0);
+const quote = story ? pick(story.quote, lang) : null;
+const storyRole = story ? pick(story.personRole, lang) : null;
+
+const otherRows = programs
+  .map((entry, index) => programRow(entry, index, lang))
+  .filter((_, index) => programs[index]?.slug !== program.slug);
+const activitiesLink = tStrict(lang, 'activitiesFromProgram');
+
+const seo = resolveSeo(program.seo, lang, {
+  title: heading,
+  description: summary.value,
+  image: program.image,
+});
+const service = serviceJsonLd({
+  slug: program.slug,
+  pathname: Astro.url.pathname,
+  name: heading,
+  description: seo.description,
+});
+---
+
+<BaseLayout
+  lang={lang}
+  title={seo.title}
+  description={seo.description}
+  ogImage={seo.ogImage}
+  noindex
+  jsonLd={service}
+>
+  <SkHero
+    title={heading}
+    titleLang={langAttr(title)}
+    eyebrow={position > 0
+      ? `${tStrict(lang, 'programLabel')} ${pad(position)} / ${pad(programs.length)}`
+      : null}
+    intro={summary.value}
+    introLang={langAttr(summary)}
+    actions={[]}
+  >
+    <Breadcrumbs
+      slot="before"
+      lang={lang}
+      trail={[{ label: tStrict(lang, 'pagePrograms'), path: '/programs' }, { label: heading }]}
+    />
+    <div class="sk-media" style="aspect-ratio:16/9">
+      <ResponsiveImage
+        image={program.image}
+        lang={lang}
+        alt=""
+        aspect="16/9"
+        eager
+        sizes="(min-width: 75rem) 1160px, 100vw"
+      />
+    </div>
+  </SkHero>
+
+  {
+    stats.length > 0 && (
+      <SkStats
+        heading={tStrict(lang, 'resultsAtAGlance')}
+        tone="dark"
+        items={stats.map((stat) => statItem(stat, lang))}
+      />
+    )
+  }
+
+  <SkBody lang={lang} body={body} limits={ACTIVITY_LIMITS} partners={partners} />
+
+  {
+    story && (
+      <SkSection tone="tint">
+        <figure class="sk-figure">
+          {hasImpact ? (
+            <blockquote>
+              <RichText blocks={impact} lang={lang} />
+            </blockquote>
+          ) : (
+            quote?.value && (
+              <blockquote class="sk-quote" lang={quote ? langAttr(quote) : undefined}>
+                {quote.value}
+              </blockquote>
+            )
+          )}
+          <figcaption class="sk-small">
+            — {story.personName}
+            {storyRole?.value && <span lang={langAttr(storyRole)}>, {storyRole.value}</span>}
+          </figcaption>
+        </figure>
+      </SkSection>
+    )
+  }
+
+  {
+    otherRows.length > 0 && (
+      <SkRows
+        heading={tStrict(lang, 'otherPrograms')}
+        items={otherRows}
+        more={{ label: tStrict(lang, 'viewAll'), href: localizePath('/programs', lang) }}
+      />
+    )
+  }
+
+  <SkCta heading={tStrict(lang, 'ctaProgramTitle')} actions={ctaActions(lang)} />
+
+  {
+    activitiesLink && (
+      <SkSection>
+        <a href={localizePath('/activities', lang)} class="sk-link">
+          {activitiesLink} →
+        </a>
+      </SkSection>
+    )
+  }
+</BaseLayout>

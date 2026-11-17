@@ -1,0 +1,80 @@
+/* ============================================================================
+   Redesign primitives shared by several components. Values come from
+   the design-reference clean exports; component-specific rules live in each component.
+   ========================================================================= */
+@layer components {
+  .d-section {
+    box-sizing: border-box;
+    width: 100%;
+    padding: clamp(56px, 7vw, 88px) 20px;
+    background: #fff;
+    color: var(--color-ink-600);
+    font-family: var(--font-sans);
+  }
+  .d-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .d-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+  }
+  .d-head__title {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .d-rule {
+    width: 40px;
+    height: 3px;
+    background: var(--color-blue-700);
+  }
+  .d-h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(28px, 2.4vw + 12px, 40px);
+    color: var(--color-ink-900);
+  }
+  .d-link {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--color-blue-700);
+    text-decoration: underline;
+  }
+  .d-tag {
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--color-aqua-50);
+    border: 1px solid var(--color-aqua-200);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-blue-800);
+  }
+  .d-media {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    background: var(--color-surface-sunken);
+  }
+  .d-media :is(img, .blur-up, .media-placeholder) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .d-media .media-placeholder {
+    aspect-ratio: auto !important;
+    background: var(--color-surface-sunken);
+  }
+  :lang(km) .d-h2 {
+    line-height: 1.5;
+  }
+}

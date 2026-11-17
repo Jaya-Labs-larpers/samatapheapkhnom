@@ -1,0 +1,12 @@
+---
+import { skeletonPages } from '~/lib/skeleton-pages';
+import SkeletonPage from '~/page-templates/skeleton/SkeletonPage.astro';
+
+export function getStaticPaths() {
+  return skeletonPages.map((page) => ({ params: { slug: page.path.slice(1) }, props: { page } }));
+}
+
+const { page } = Astro.props;
+---
+
+<SkeletonPage lang="en" page={page} />

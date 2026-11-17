@@ -1,0 +1,129 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Program } from '~/lib/content/types';
+import { localizePath, pick, t, tLang } from '~/lib/i18n/utils';
+import { getHomeData } from '~/data';
+
+interface Props {
+  lang: Locale;
+  programs: Program[];
+}
+
+const { lang, programs } = Astro.props;
+const { data, fallback } = getHomeData(lang);
+
+const cards = programs.map((program) => {
+  const copy = data.programmes[program.slug];
+  const fallbackCopy = fallback.programmes[program.slug];
+  const summary = copy?.summary
+    ? { value: copy.summary, lang }
+    : { value: fallbackCopy?.summary, lang: 'en' as Locale };
+  // TODO(content): SKO to choose each programme's key number; its first published result stands in.
+  const stat = [...(program.impactStats ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0];
+  const keyLabel = copy?.keyLabel ?? (stat ? pick(stat.label, lang) : null);
+  return {
+    slug: program.slug,
+    title: pick(program.title, lang),
+    summary,
+    keyNumber: copy?.keyNumber ?? stat?.displayValue ?? null,
+    keyLabel:
+      typeof keyLabel === 'string' ? { value: keyLabel, lang, isFallback: false } : keyLabel,
+  };
+});
+---
+
+{
+  cards.length > 0 && (
+    <section class="d-section">
+      <div class="d-container">
+        <div class="d-head">
+          <div class="d-head__title">
+            <div class="d-rule" />
+            <h2 class="d-h2" lang={tLang(lang, 'whatWeDo')}>
+              {t(lang, 'whatWeDo')}
+            </h2>
+          </div>
+          <a href={localizePath('/programs', lang)} class="d-link">
+            <span lang={tLang(lang, 'allProgramsLink')}>{t(lang, 'allProgramsLink')}</span> →
+          </a>
+        </div>
+        <div class="grid">
+          {cards.map((card) => (
+            <a href={localizePath(`/programs/${card.slug}`, lang)} class="prog">
+              <div class="prog__body">
+                {card.keyNumber && <div class="prog__number">{card.keyNumber}</div>}
+                {card.keyLabel?.value && (
+                  <div
+                    class="prog__label"
+                    lang={card.keyLabel.isFallback ? card.keyLabel.lang : undefined}
+                  >
+                    {card.keyLabel.value}
+                  </div>
+                )}
+                <h3 class="prog__title" lang={card.title.isFallback ? card.title.lang : undefined}>
+                  {card.title.value}
+                </h3>
+                {card.summary.value && (
+                  <div
+                    class="prog__summary"
+                    lang={card.summary.lang !== lang ? card.summary.lang : undefined}
+                  >
+                    {card.summary.value}
+                  </div>
+                )}
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+    gap: 20px;
+  }
+  .prog {
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid var(--color-line);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .prog__body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .prog__number {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--color-blue-700);
+  }
+  .prog__label {
+    font-size: 13px;
+    color: var(--color-ink-400);
+  }
+  .prog__title {
+    margin: 8px 0 0;
+    font-size: 18px;
+    color: var(--color-ink-900);
+  }
+  .prog__summary {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .prog:hover .prog__title {
+    color: var(--color-blue-700);
+  }
+  :global(:lang(km)) .prog__title {
+    line-height: 1.5;
+  }
+</style>

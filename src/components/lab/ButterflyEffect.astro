@@ -1,0 +1,136 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { ImpactStat, LocaleString } from '~/lib/content/types';
+import { formatNumber, langAttr, pick } from '~/lib/i18n/utils';
+import { statItem } from '~/lib/skeleton-content';
+
+interface Fact {
+  stat: ImpactStat;
+  programme?: LocaleString | null;
+}
+
+interface Props {
+  lang: Locale;
+  families: ImpactStat;
+  facts: Fact[];
+  /** Families per butterfly. */
+  scale?: number;
+}
+
+const { lang, families, facts, scale = 10 } = Astro.props;
+
+const value = families.value ?? 0;
+const count = Math.round(value / scale);
+const prefix = pick(families.prefix, lang);
+const label = pick(families.label, lang);
+const headline = [prefix.value, formatNumber(value, lang)].filter(Boolean).join(' ');
+---
+
+<div class="bfx" data-bfx data-count={count} data-sprite="/images/butterfly.svg">
+  <div class="bfx__head">
+    <p class="sk-stat__num" lang={langAttr(prefix)}>{headline}</p>
+    <p class="sk-stat__label" lang={langAttr(label)}>{label.value}</p>
+    <p class="sk-small" lang="en">
+      Each butterfly is {scale} families. Tap one to see a result from SKO's work.
+    </p>
+  </div>
+
+  <canvas
+    class="bfx__canvas"
+    role="img"
+    aria-label={`${count} butterflies, each standing for ${scale} of the ${headline} families SKO supports`}
+  ></canvas>
+
+  <div class="sk-actions bfx__controls" lang="en">
+    <button type="button" class="sk-btn sk-btn--outline" data-next>Show a result</button>
+    <button
+      type="button"
+      class="sk-btn sk-btn--outline"
+      data-free
+      data-off="Set them free"
+      data-on="Bring them home"
+      aria-pressed="false">Set them free</button
+    >
+  </div>
+
+  <ul class="bfx__facts" aria-live="polite">
+    {
+      facts.map(({ stat, programme }, index) => {
+        const item = statItem(stat, lang);
+        const from = pick(programme, lang);
+        return (
+          <li data-fact class:list={['sk-stat', index === 0 && 'is-current']}>
+            <span class="sk-stat__num">
+              {item.prefix && <span style="font-size:.45em">{item.prefix} </span>}
+              {item.value}
+            </span>
+            <span class="sk-stat__label" lang={item.labelLang}>
+              {item.label}
+            </span>
+            {item.context && (
+              <span class="sk-small" lang={item.contextLang}>
+                {item.context}
+              </span>
+            )}
+            {from.value && (
+              <span class="sk-small" lang={langAttr(from)}>
+                {from.value}
+              </span>
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</div>
+
+<script>
+  import { initButterflyEffect } from '~/lib/lab/butterfly-effect';
+
+  document.querySelectorAll<HTMLElement>('[data-bfx]').forEach(initButterflyEffect);
+</script>
+
+<style>
+  .bfx {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .bfx__head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .bfx__canvas {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    border-radius: 12px;
+    background: #fff;
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  .bfx__facts {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .bfx:not([data-enhanced]) :is(.bfx__canvas, .bfx__controls) {
+    display: none;
+  }
+  .bfx[data-enhanced] .bfx__facts {
+    grid-template-columns: 1fr;
+    min-height: 150px;
+  }
+  .bfx[data-enhanced] [data-fact]:not(.is-current) {
+    display: none;
+  }
+  @media (max-width: 40rem) {
+    .bfx__canvas {
+      aspect-ratio: 1 / 1;
+    }
+  }
+</style>

@@ -1,0 +1,59 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getPrograms } from '~/lib/content';
+import { localizePath, pick } from '~/lib/i18n/utils';
+import { stripInlineLinks } from '~/lib/inline-links';
+import { canonicalUrl, collectionPageJsonLd } from '~/lib/seo/page-schema';
+import { ctaActions, programCard, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import EmptyState from '~/components/content/EmptyState.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+import SkCards from '~/components/skeleton/SkCards.astro';
+import SkCta from '~/components/skeleton/SkCta.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const programs = await getPrograms();
+const heading = tStrict(lang, 'pagePrograms');
+const title = tStrict(lang, 'seoPrograms') || heading;
+const description =
+  tStrict(lang, 'metaPrograms') || stripInlineLinks(tStrict(lang, 'introPrograms'));
+const sectionTitle = tStrict(lang, 'programsSectionTitle');
+const collection = collectionPageJsonLd({
+  pathname: Astro.url.pathname,
+  name: title,
+  description,
+  items: programs.map((program) => ({
+    name: pick(program.title, lang).value ?? '',
+    url: canonicalUrl(localizePath(`/programs/${program.slug}`, lang)),
+  })),
+});
+---
+
+<BaseLayout lang={lang} title={title} description={description} noindex jsonLd={collection}>
+  <SkHero title={heading} intro={tStrict(lang, 'introPrograms')} actions={[]}>
+    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
+  </SkHero>
+
+  {
+    programs.length === 0 ? (
+      <SkSection>
+        <EmptyState message={tStrict(lang, 'emptyGeneric')} />
+      </SkSection>
+    ) : (
+      <SkCards
+        heading={sectionTitle || heading}
+        n={programs.length}
+        lang={lang}
+        items={programs.map((program) => programCard(program, lang, tStrict(lang, 'learnMore')))}
+      />
+    )
+  }
+
+  <SkCta heading={tStrict(lang, 'ctaProgramsTitle')} actions={ctaActions(lang)} />
+</BaseLayout>

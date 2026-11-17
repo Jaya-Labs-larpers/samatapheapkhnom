@@ -1,0 +1,128 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { langAttr, localizePath, pick, text } from '~/lib/i18n/utils';
+import {
+  getDirectorMessage,
+  getFeaturedActivities,
+  getImpactStats,
+  getPartners,
+  getPrograms,
+  getSiteSettings,
+  getStories,
+} from '~/lib/content';
+import { ctaActions, postItem, programRow, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import ImpactStats from '~/components/content/ImpactStats.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkDirector from '~/components/skeleton/SkDirector.astro';
+import SkRows from '~/components/skeleton/SkRows.astro';
+import SkPosts from '~/components/skeleton/SkPosts.astro';
+import SkStory from '~/components/skeleton/SkStory.astro';
+import SkSplitCta from '~/components/skeleton/SkSplitCta.astro';
+import SkPartnerMarquee from '~/components/skeleton/SkPartnerMarquee.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const [settings, stats, director, programs, activities, partners, stories] = await Promise.all([
+  getSiteSettings(),
+  getImpactStats(),
+  getDirectorMessage(),
+  getPrograms(),
+  getFeaturedActivities(3),
+  getPartners(),
+  getStories(),
+]);
+
+const orgName = text(settings.orgName, lang);
+const tagline = pick(settings.tagline, lang);
+const registration = pick(settings.registration, lang);
+const brand = settings.orgShortName ?? 'SKO';
+const seoTitle = tStrict(lang, 'seoHome');
+const story = stories[0];
+const ctaImage = settings.homeHero?.[1] ?? programs.find((program) => program.image)?.image ?? null;
+---
+
+<BaseLayout
+  lang={lang}
+  title={seoTitle ? `${seoTitle} · ${brand}` : orgName}
+  plainTitle
+  description={tStrict(lang, 'metaHome') || tagline.value || undefined}
+  ogImage={settings.ogImage}
+  noindex
+>
+  <SkHero
+    home
+    lang={lang}
+    image={settings.homeHero?.[0] ?? null}
+    title={tagline.value ?? orgName}
+    titleLang={langAttr(tagline)}
+    eyebrow={tStrict(lang, 'homeEyebrow')}
+    intro={registration.value}
+    introLang={langAttr(registration)}
+    actions={[
+      { label: tStrict(lang, 'partnerWithUs'), href: localizePath('/contact?topic=partner', lang) },
+    ]}
+  />
+
+  <SkSection>
+    <h2 class="sk-h2">{tStrict(lang, 'navAbout')}</h2>
+    <p class="sk-lead">{tStrict(lang, 'homeHeroIntro')}</p>
+    <a href={localizePath('/about', lang)} class="sk-link">
+      {tStrict(lang, 'homeAboutLink') || tStrict(lang, 'learnMore')} →
+    </a>
+    <ImpactStats lang={lang} stats={stats} />
+  </SkSection>
+
+  <SkDirector
+    lang={lang}
+    director={director}
+    heading={tStrict(lang, 'directorMessage')}
+    link={{ label: tStrict(lang, 'readMore'), href: localizePath('/about#director', lang) }}
+  />
+
+  {
+    programs.length > 0 && (
+      <SkRows
+        heading={tStrict(lang, 'whatWeDo')}
+        items={programs.map((program, index) => programRow(program, index, lang))}
+        more={{
+          label: tStrict(lang, 'viewAllPrograms') || tStrict(lang, 'viewAll'),
+          href: localizePath('/programs', lang),
+        }}
+      />
+    )
+  }
+
+  {story && <SkStory lang={lang} story={story} />}
+
+  <SkPosts
+    heading={tStrict(lang, 'latestActivities')}
+    n={activities.length}
+    lang={lang}
+    readMore={tStrict(lang, 'readMore')}
+    items={activities.map((activity) => postItem(activity, lang))}
+    more={{ label: tStrict(lang, 'allActivities'), href: localizePath('/activities', lang) }}
+  />
+
+  {
+    partners.length > 0 && (
+      <SkSection>
+        <h2 class="sk-h2" style="text-align:center">{tStrict(lang, 'trustedBy')}</h2>
+        <SkPartnerMarquee lang={lang} partners={partners} />
+      </SkSection>
+    )
+  }
+
+  <SkSplitCta
+    lang={lang}
+    image={ctaImage}
+    heading={tStrict(lang, 'ctaHomeTitle')}
+    body={tStrict(lang, 'ctaHomeBody')}
+    actions={ctaActions(lang)}
+  />
+</BaseLayout>

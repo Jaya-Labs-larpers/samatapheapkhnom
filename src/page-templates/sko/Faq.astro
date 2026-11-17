@@ -1,0 +1,60 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getPage } from '~/lib/content';
+import { langAttr, pick } from '~/lib/i18n/utils';
+import { blocksToPlainText } from '~/lib/portable-text';
+import { resolveSeo } from '~/lib/seo';
+import { faqItems, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import RichText from '~/components/content/RichText.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+import SkFaq from '~/components/skeleton/SkFaq.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const page = await getPage('faq');
+const title = pick(page?.title, lang);
+const intro = pick(page?.intro, lang);
+const heading = title.value ?? tStrict(lang, 'pageFaq');
+const seo = resolveSeo(page?.seo, lang, {
+  title: heading,
+  description: intro.value ?? blocksToPlainText(pick(page?.body, lang).value),
+  image: page?.heroImage,
+});
+const faqs = faqItems(page?.faqs, lang);
+const hasBody = Boolean(pick(page?.body, lang).value?.length);
+---
+
+<BaseLayout
+  lang={lang}
+  title={seo.title}
+  description={seo.description}
+  ogImage={seo.ogImage}
+  noindex
+>
+  <SkHero
+    title={heading}
+    titleLang={langAttr(title)}
+    intro={intro.value}
+    introLang={langAttr(intro)}
+    actions={[]}
+  >
+    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
+  </SkHero>
+
+  {
+    hasBody && (
+      <SkSection narrow>
+        <RichText blocks={page?.body} lang={lang} />
+      </SkSection>
+    )
+  }
+
+  {faqs.length > 0 && <SkFaq heading={tStrict(lang, 'faqHeading')} items={faqs} />}
+</BaseLayout>

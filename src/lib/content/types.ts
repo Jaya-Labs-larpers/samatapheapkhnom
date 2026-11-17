@@ -208,6 +208,7 @@ export interface Activity {
 
 export interface Story {
   _id: string;
+  slug?: string | null;
   quote?: LocaleString | null;
   /** The story in full. When present it is shown instead of the pull quote. */
   body?: LocaleBlocks | null;

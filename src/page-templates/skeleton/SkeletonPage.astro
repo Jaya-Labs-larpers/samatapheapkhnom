@@ -1,0 +1,263 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { SkeletonPage } from '~/lib/skeleton-pages';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkDonate from '~/components/skeleton/SkDonate.astro';
+import SkLines from '~/components/skeleton/SkLines.astro';
+import SkButtons from '~/components/skeleton/SkButtons.astro';
+import SkStats from '~/components/skeleton/SkStats.astro';
+import SkCards from '~/components/skeleton/SkCards.astro';
+import SkSteps from '~/components/skeleton/SkSteps.astro';
+import SkRows from '~/components/skeleton/SkRows.astro';
+import SkSplit from '~/components/skeleton/SkSplit.astro';
+import SkPosts from '~/components/skeleton/SkPosts.astro';
+import SkFaq from '~/components/skeleton/SkFaq.astro';
+import SkCta from '~/components/skeleton/SkCta.astro';
+
+interface Props {
+  lang: Locale;
+  page: SkeletonPage;
+}
+
+const { lang, page } = Astro.props;
+const { title, type } = page;
+---
+
+<BaseLayout lang={lang} title={title} description="Structure-only placeholder page." noindex>
+  {
+    type === 'info' && (
+      <>
+        <SkHero title={title} />
+        <SkSplit heading="Section heading" />
+        <SkSplit heading="Section heading" tone="tint" />
+        <SkSplit heading="Section heading" button="Button label" />
+        <SkCta />
+      </>
+    )
+  }
+
+  {
+    type === 'focus' && (
+      <>
+        <SkHero title={title} />
+        <SkSplit heading="Statement about this focus area" />
+        <SkCards heading="How the money is used" n={3} tone="tint" />
+        <SkStats heading="Results over time" n={2} tone="dark" />
+        <SkStats heading="Share that reaches people" n={1} />
+        <SkSteps heading="How the process works" />
+        <SkCta heading="Join us" />
+        <SkFaq />
+      </>
+    )
+  }
+
+  {
+    type === 'country' && (
+      <>
+        <SkHero title={title} />
+        <SkSplit heading="Why this country" />
+        <SkRows heading="Active programs" />
+        <SkRows heading="Past programs" tone="tint" />
+        <SkSection>
+          <h2 class="sk-h2">Trusted partners</h2>
+          <div class="sk-chips">
+            {['Partner', 'Partner', 'Partner', 'Partner', 'Partner'].map((n) => (
+              <span class="sk-chip">{n}</span>
+            ))}
+          </div>
+        </SkSection>
+        <SkPosts heading="In the news" n={3} />
+        <SkStats heading="Poverty in this country" n={3} tone="tint" />
+        <SkSplit heading="Delivering cash securely" />
+        <SkCta heading="Partner with us in this country" />
+        <SkFaq n={4} />
+      </>
+    )
+  }
+
+  {
+    type === 'giving' && (
+      <>
+        <SkHero title={title} />
+        <SkCards heading="Ways to give" n={3} link="Learn more" />
+        <SkSplit heading="Why give this way" tone="tint" />
+        <SkSteps heading="How it works" n={3} />
+        <SkCta heading="Ready to give?" />
+        <SkFaq n={4} />
+      </>
+    )
+  }
+
+  {
+    type === 'campaign' && (
+      <>
+        <SkHero title={title} buttons={false}>
+          <SkDonate />
+        </SkHero>
+        <SkSplit heading="About this campaign" />
+        <SkStats heading="Campaign progress" n={3} tone="tint" />
+        <SkCta heading="Join the campaign" />
+      </>
+    )
+  }
+
+  {
+    type === 'blog' && (
+      <>
+        <SkHero title={title} buttons={false} />
+        <SkPosts heading="Latest posts" n={9} />
+        <SkSection>
+          <div class="sk-actions">
+            <span class="sk-btn sk-btn--outline">Previous</span>
+            <span class="sk-btn sk-btn--outline">Next</span>
+          </div>
+        </SkSection>
+      </>
+    )
+  }
+
+  {
+    type === 'post' && (
+      <>
+        <SkSection narrow>
+          <a href="/blog" class="sk-link">
+            ← Blog
+          </a>
+          <div class="sk-meta">
+            <div class="sk-bar" />
+            <div class="sk-bar" />
+          </div>
+          <h1 class="sk-h1" style="max-width:none">
+            {title}
+          </h1>
+          <SkLines n={2} />
+        </SkSection>
+        <SkSection narrow>
+          <SkLines n={6} />
+          <h2 class="sk-h2">Subheading</h2>
+          <SkLines n={6} />
+          <h2 class="sk-h2">Subheading</h2>
+          <SkLines n={5} />
+        </SkSection>
+        <SkPosts heading="Related posts" n={3} />
+        <SkCta />
+      </>
+    )
+  }
+
+  {
+    type === 'faq' && (
+      <>
+        <SkHero title={title} buttons={false} />
+        <SkFaq heading="Can I receive funds?" n={1} />
+        <SkFaq heading="How it works" n={6} />
+        <SkFaq heading="Where we work" n={5} />
+        <SkFaq heading="Donating" n={5} />
+        <SkCta heading="Still have questions?" />
+      </>
+    )
+  }
+
+  {
+    type === 'financials' && (
+      <>
+        <SkHero title={title} buttons={false} />
+        <SkStats heading="Where the budget goes" n={1} />
+        <SkStats heading="Share of each donation that reaches people" n={1} tone="tint" />
+        <SkStats heading="Return on fundraising" n={1} />
+        <SkRows
+          heading="Reports and filings"
+          tone="tint"
+          rows={['Annual report', 'Audited financials', 'Tax filing', 'Fiscal year summary']}
+        />
+        <SkCta heading="With more funding we could reach more people" />
+      </>
+    )
+  }
+
+  {
+    type === 'contact' && (
+      <>
+        <SkHero title={title} buttons={false} />
+        <SkSection>
+          <div class="sk-grid">
+            {['Recipients', 'Donors'].map((group) => (
+              <div class="sk-card">
+                <h2 class="sk-h3">{group}</h2>
+                <SkLines n={3} />
+                <a href="#" class="sk-link">
+                  Contact option →
+                </a>
+              </div>
+            ))}
+          </div>
+        </SkSection>
+        <SkSection tone="tint" narrow>
+          <h2 class="sk-h2">Send a message</h2>
+          {['Name', 'Email', 'Topic', 'Message'].map((field) => (
+            <div class="sk-lines">
+              <span>{field}</span>
+              <div
+                class="sk-bar"
+                style={`height:${field === 'Message' ? 96 : 40}px;border-radius:4px;background:#fff;border:1px solid var(--color-line-strong)`}
+              />
+            </div>
+          ))}
+          <SkButtons primary="Send" href="#" />
+        </SkSection>
+      </>
+    )
+  }
+
+  {
+    type === 'press' && (
+      <>
+        <SkHero title={title} buttons={false} />
+        <SkPosts heading="Top stories" n={3} />
+        <SkRows
+          heading="The latest"
+          tone="tint"
+          rows={[
+            'Outlet · Headline',
+            'Outlet · Headline',
+            'Outlet · Headline',
+            'Outlet · Headline',
+            'Outlet · Headline',
+          ]}
+        />
+        <SkSplit heading="Working on a story?" button="Contact the press team" />
+      </>
+    )
+  }
+
+  {
+    type === 'careers' && (
+      <>
+        <SkHero title={title} />
+        <SkSplit heading="Why work here" />
+        <SkCards heading="Benefits and perks" n={4} tone="tint" link="Details" />
+        <SkSteps heading="Hiring process" />
+        <SkCards heading="Hear from our team" n={3} tone="tint" link="Read more" />
+        <SkFaq heading="Common questions" n={4} />
+      </>
+    )
+  }
+
+  {
+    type === 'legal' && (
+      <>
+        <SkHero title={title} buttons={false} />
+        <SkSection narrow>
+          {[1, 2, 3, 4].map((n) => (
+            <>
+              <h2 class="sk-h2">{n}. Section</h2>
+              <SkLines n={6} />
+            </>
+          ))}
+        </SkSection>
+      </>
+    )
+  }
+</BaseLayout>

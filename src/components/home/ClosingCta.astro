@@ -1,0 +1,105 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { localizePath, t, tLang } from '~/lib/i18n/utils';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+---
+
+<section class="cta">
+  <svg class="cta__butterfly" width="72" height="45" viewBox="0 0 64 40" aria-hidden="true">
+    <path d="M32 14C24 2 6 2 6 12s14 12 26 6z"></path>
+    <path d="M32 14C40 2 58 2 58 12s-14 12-26 6z"></path>
+    <path d="M32 20C24 22 12 28 16 34s12-2 16-10z"></path>
+    <path d="M32 20c8 2 20 8 16 14s-12-2-16-10z"></path>
+    <path d="M32 8v26" fill="none"></path>
+  </svg>
+  <div class="cta__inner">
+    <h2 class="cta__title" lang={tLang(lang, 'ctaHomeTitle')}>{t(lang, 'ctaHomeTitle')}</h2>
+    <p class="cta__text" lang={tLang(lang, 'homeCtaBody')}>{t(lang, 'homeCtaBody')}</p>
+    <div class="cta__actions">
+      <a href={localizePath('/contact', lang)} class="cta__btn cta__btn--solid">
+        <span lang={tLang(lang, 'contactUs')}>{t(lang, 'contactUs')}</span>
+      </a>
+      <a href={localizePath('/reports', lang)} class="cta__btn cta__btn--outline">
+        <span lang={tLang(lang, 'seeReports')}>{t(lang, 'seeReports')}</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta {
+    box-sizing: border-box;
+    width: 100%;
+    padding: clamp(64px, 8vw, 96px) 20px;
+    background: var(--color-blue-50);
+    color: var(--color-ink-600);
+    font-family: var(--font-sans);
+    position: relative;
+    overflow: hidden;
+  }
+  .cta__butterfly {
+    position: absolute;
+    left: 10%;
+    top: 56px;
+    fill: var(--color-blue-200);
+    stroke: var(--color-ink-900);
+    stroke-width: 1.6;
+  }
+  .cta__inner {
+    position: relative;
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+  .cta__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(30px, 2.6vw + 12px, 44px);
+    color: var(--color-ink-900);
+    line-height: 1.15;
+  }
+  .cta__text {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  .cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+  }
+  .cta__btn {
+    text-decoration: none;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .cta__btn--solid {
+    background: var(--color-blue-700);
+    color: #fff;
+  }
+  .cta__btn--outline {
+    border: 1.5px solid var(--color-blue-700);
+    color: var(--color-blue-700);
+  }
+  .cta__btn:hover {
+    background: var(--color-blue-800);
+    border-color: var(--color-blue-800);
+    color: #fff;
+  }
+  :global(:lang(km)) .cta__title {
+    line-height: 1.5;
+  }
+</style>

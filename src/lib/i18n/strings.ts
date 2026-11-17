@@ -1,4 +1,5 @@
 import type { Locale } from './config';
+import { redesignEn, redesignKm } from './strings.redesign';
 
 /**
  * UI chrome strings. Page and article content comes from Sanity — this file is
@@ -80,6 +81,7 @@ const en = {
   pagePrivacy: 'Privacy',
   pageFaq: 'Common questions',
   navFaq: 'FAQ',
+  navShowSections: 'Show sections',
 
   // --- Footer ---------------------------------------------------------------
   footerOrganisation: 'Organisation',
@@ -251,10 +253,10 @@ const en = {
   publishedOn: 'Published',
 } as const;
 
-export type UIKey = keyof typeof en;
+export type UIKey = keyof typeof en | keyof typeof redesignEn;
 
 /** [KHMER REVIEW REQUIRED] — see note at the top of this file. */
-const km: Record<UIKey, string> = {
+const km: Record<keyof typeof en, string> = {
   navHome: 'ទំព័រដើម',
   navAbout: 'អំពីយើង',
   navWork: 'ការងាររបស់យើង',
@@ -321,6 +323,7 @@ const km: Record<UIKey, string> = {
   pagePrivacy: 'ឯកជនភាព',
   pageFaq: 'សំណួរដែលសួរញឹកញាប់',
   navFaq: 'សំណួរ​ចម្លើយ',
+  navShowSections: 'បង្ហាញផ្នែកក្នុងទំព័រ',
 
   footerOrganisation: 'អង្គការ',
   footerTransparency: 'តម្លាភាព',
@@ -471,4 +474,9 @@ const km: Record<UIKey, string> = {
   publishedOn: 'ចុះផ្សាយ',
 };
 
-export const ui: Record<Locale, Record<UIKey, string>> = { en, km };
+/** Keys missing in Khmer are empty or absent; `t()` falls back to English. */
+export const uiEn: Record<UIKey, string> = { ...en, ...redesignEn };
+export const ui: Record<Locale, Partial<Record<UIKey, string>>> = {
+  en: uiEn,
+  km: { ...km, ...redesignKm },
+};

@@ -1,0 +1,26 @@
+---
+import type { SkAction } from '~/lib/skeleton-content';
+import SkSection from './SkSection.astro';
+import SkLines from './SkLines.astro';
+import SkButtons from './SkButtons.astro';
+
+interface Props {
+  heading?: string;
+  body?: string | null;
+  actions?: SkAction[];
+}
+
+const { heading = 'Call-to-action heading', body, actions } = Astro.props;
+---
+
+<SkSection tone="tint" narrow>
+  <h2 class="sk-h2">{heading}</h2>
+  {actions ? body && <p class="sk-lead">{body}</p> : <SkLines n={2} />}
+  {
+    actions ? (
+      <SkButtons actions={actions} />
+    ) : (
+      <SkButtons primary="Contact us" secondary="Partner with us" />
+    )
+  }
+</SkSection>

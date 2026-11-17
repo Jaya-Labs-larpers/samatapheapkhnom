@@ -81,16 +81,13 @@
      TYPE FAMILIES
      Khmer is not a fallback. It leads its own stack.
      --------------------------------------------------------------------- */
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  /* Inter sits second on purpose. The Kantumruy Pro @font-face declares a
-     Khmer-only unicode-range, so the browser skips it for Latin glyphs and
-     walks on — and Khmer pages carry plenty of Latin (the organisation's Latin
-     name, "EN" in the toggle, Western numerals). Without Inter here all of that
-     rendered in whatever sans the device happened to have. The local Khmer
-     faces stay after it, as the fallback if Kantumruy fails to load. */
-  --font-khmer:
-    'Kantumruy Pro', 'Inter', 'Noto Sans Khmer', 'Khmer UI', 'Leelawadee UI', sans-serif;
-  --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Noto Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Noto Sans Khmer only covers the Khmer block, so Khmer pages fall through to
+     Noto Sans for the Latin they carry (the org's Latin name, numerals). */
+  --font-khmer: 'Noto Sans Khmer', 'Noto Sans', 'Khmer UI', 'Leelawadee UI', sans-serif;
+  --font-display: var(--font-sans);
+  /* The homepage headline keeps the old site's serif. */
+  --font-hero: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
 
   /* ---------------------------------------------------------------------
@@ -256,14 +253,10 @@
 
   html {
     -webkit-text-size-adjust: 100%;
-    scroll-behavior: smooth;
     /* The header is sticky, so an anchor target has to clear it. */
     scroll-padding-top: var(--header-h);
   }
   @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
     *,
     *::before,
     *::after {
@@ -277,8 +270,8 @@
     background: var(--color-canvas);
     color: var(--color-ink-600);
     font-family: var(--font-sans);
-    font-size: var(--text-body);
-    line-height: var(--text-body--line-height);
+    font-size: 1rem;
+    line-height: normal;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -289,13 +282,9 @@
     color: var(--color-ink-900);
     font-weight: 700;
   }
-  /* The page's one h1 gets the display serif — the only heading role that
-     carries voice. Source Serif 4 self-hosts a single static weight (600), so
-     the rule pins that exact weight rather than requesting 700 and forcing
-     the browser to synthesise a faux bold. */
   h1 {
     color: var(--color-ink-900);
-    font-weight: 600;
+    font-weight: 700;
     font-family: var(--font-display);
   }
 
@@ -324,9 +313,6 @@
     line-height: 1.5;
     letter-spacing: normal;
   }
-  /* Kantumruy Pro has no serif companion, so Khmer h1 stays on the Khmer sans
-     stack at its full variable weight rather than inheriting the serif rule
-     above (which fires before the language cascade widens the family here). */
   :lang(km) h1 {
     font-weight: 700;
   }
@@ -373,19 +359,19 @@
    Khmer file beyond the language-toggle label, which loads lazily.
    ========================================================================= */
 @font-face {
-  font-family: 'Inter';
-  src: url('/fonts/inter-latin-ext.woff2') format('woff2');
+  font-family: 'Noto Sans';
+  src: url('/fonts/noto-sans-latin-ext.woff2') format('woff2');
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
   unicode-range:
     U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F,
     U+A720-A7FF;
 }
 @font-face {
-  font-family: 'Inter';
-  src: url('/fonts/inter-latin.woff2') format('woff2');
+  font-family: 'Noto Sans';
+  src: url('/fonts/noto-sans-latin.woff2') format('woff2');
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
@@ -394,12 +380,13 @@
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Kantumruy Pro';
-  src: url('/fonts/kantumruy-pro-khmer.woff2') format('woff2');
+  font-family: 'Noto Sans Khmer';
+  src: url('/fonts/noto-sans-khmer.woff2') format('woff2');
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
+  unicode-range:
+    U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
 }
 @font-face {
   font-family: 'Source Serif 4';

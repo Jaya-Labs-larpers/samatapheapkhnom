@@ -1,0 +1,19 @@
+---
+interface Props {
+  tone?: 'default' | 'tint' | 'dark';
+  narrow?: boolean;
+  id?: string;
+  class?: string;
+}
+
+const { tone = 'default', narrow = false, id, class: className } = Astro.props;
+---
+
+<section
+  class:list={['sk-section', tone !== 'default' && `sk-section--${tone}`, className]}
+  id={id}
+>
+  <div class:list={['sk-wrap', narrow && 'sk-wrap--narrow']}>
+    <slot />
+  </div>
+</section>

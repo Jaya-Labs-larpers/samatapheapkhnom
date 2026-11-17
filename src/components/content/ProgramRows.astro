@@ -1,15 +1,13 @@
 ---
 /**
  * The programs as a numbered list of ruled rows rather than a row of identical
- * cards: index, title and summary, and a small photo at the end of the row.
+ * cards: index, title and summary, and an arrow at the end of the row.
  * Each row is one stretched link, so the whole row is clickable and there is
- * only ever one interactive element per program. The photo carries
- * .card-media so card-morph grows it into the program's hero.
+ * only ever one interactive element per program.
  */
 import type { Locale } from '~/lib/i18n/config';
 import type { Program } from '~/lib/content/types';
-import { localizePath, pick, t } from '~/lib/i18n/utils';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import { localizePath, pick } from '~/lib/i18n/utils';
 
 interface Props {
   lang: Locale;
@@ -28,7 +26,7 @@ const { lang, programs, exclude } = Astro.props;
       const title = pick(program.title, lang);
       const summary = pick(program.summary, lang);
       return (
-        <li class="program-row group" data-cursor-label={t(lang, 'learnMore')}>
+        <li class="program-row group">
           <span class="program-row__index" aria-hidden="true">
             {String(index + 1).padStart(2, '0')}
           </span>
@@ -46,15 +44,6 @@ const { lang, programs, exclude } = Astro.props;
                 {summary.value}
               </p>
             )}
-          </div>
-          <div class="program-row__media card-media">
-            <ResponsiveImage
-              image={program.cardImage ?? program.image}
-              lang={lang}
-              alt=""
-              aspect="4/3"
-              sizes="(min-width: 64rem) 256px, 0px"
-            />
           </div>
           <span class="program-row__arrow" aria-hidden="true">
             →

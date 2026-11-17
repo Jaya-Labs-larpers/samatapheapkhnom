@@ -1,0 +1,89 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { SkAction, SkPostItem } from '~/lib/skeleton-content';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkSection from './SkSection.astro';
+import SkLines from './SkLines.astro';
+
+interface Props {
+  heading: string;
+  /** Slots the design shows; real posts fill the first ones, grey cards the rest. */
+  n?: number;
+  link?: string;
+  lang?: Locale;
+  readMore?: string;
+  items?: SkPostItem[];
+  more?: SkAction | null;
+}
+
+const { heading, n = 3, link, lang = 'en', readMore, items = [], more } = Astro.props;
+const placeholders = Math.max(0, n - items.length);
+---
+
+<SkSection>
+  <h2 class="sk-h2">{heading}</h2>
+  <div class:list={['sk-grid', items.length >= 3 && 'sk-grid--mosaic']}>
+    {
+      items.map((item) => (
+        <article class="sk-card">
+          {item.image !== undefined && (
+            <div class="sk-media sk-card__media" style="aspect-ratio:3/2">
+              <ResponsiveImage
+                image={item.image}
+                lang={lang}
+                alt=""
+                aspect="3/2"
+                sizes="(min-width: 64rem) 380px, (min-width: 40rem) 50vw, 100vw"
+              />
+            </div>
+          )}
+          <p class="sk-small">
+            {item.category && <span class="sk-pill">{item.category}</span>}
+            <time datetime={item.datetime}>{item.date}</time>
+            {item.author && <span> · {item.author}</span>}
+          </p>
+          <h3 class="sk-h3" lang={item.titleLang}>
+            <a href={item.href} class="sk-stretch">
+              {item.title}
+            </a>
+          </h3>
+          {item.excerpt && (
+            <p class="sk-text sk-clamp" lang={item.excerptLang}>
+              {item.excerpt}
+            </p>
+          )}
+          {readMore && <span class="sk-link">{readMore} →</span>}
+        </article>
+      ))
+    }
+    {
+      Array.from({ length: placeholders }, (_, i) => (
+        <a
+          href={`/blog/post-${((items.length + i) % 6) + 1}`}
+          class="sk-card"
+          style="text-decoration:none"
+        >
+          <div class="sk-meta">
+            <div class="sk-bar" />
+            <div class="sk-bar" />
+          </div>
+          <h3 class="sk-h3">Post title {items.length + i + 1}</h3>
+          <SkLines n={3} />
+        </a>
+      ))
+    }
+  </div>
+  {
+    more ? (
+      <a href={more.href} class="sk-link">
+        {more.label} →
+      </a>
+    ) : (
+      link && (
+        <a href="/blog" class="sk-link">
+          {link} →
+        </a>
+      )
+    )
+  }
+</SkSection>

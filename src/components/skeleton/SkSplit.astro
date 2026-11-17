@@ -1,0 +1,38 @@
+---
+import SkSection from './SkSection.astro';
+import SkLines from './SkLines.astro';
+
+interface Props {
+  heading: string;
+  tone?: 'default' | 'tint' | 'dark';
+  button?: string;
+  id?: string;
+  headingLang?: string;
+}
+
+const { heading, tone = 'default', button, id, headingLang } = Astro.props;
+const filled = Astro.slots.has('default');
+---
+
+<SkSection tone={tone} id={id}>
+  <div class="sk-split">
+    <h2 class="sk-h2" lang={headingLang}>{heading}</h2>
+    <div>
+      {
+        filled ? (
+          <slot />
+        ) : (
+          <>
+            <SkLines n={5} />
+            <SkLines n={4} />
+            {button && (
+              <a href="#" class="sk-btn sk-btn--outline" style="align-self:flex-start">
+                {button}
+              </a>
+            )}
+          </>
+        )
+      }
+    </div>
+  </div>
+</SkSection>
