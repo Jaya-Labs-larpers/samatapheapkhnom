@@ -24,8 +24,12 @@ export const BUDGETS = {
   cssGzipBytes: 16_000,
   /** Render-blocking stylesheets per page: the site's, plus a page's own. */
   stylesheetsPerPage: 2,
-  /** All first-party JavaScript in /_astro, gzipped: butterflies, intro, reveals, count-up. */
-  jsGzipBytes: 8_000,
+  /**
+   * All first-party JavaScript in /_astro, gzipped: butterflies, intro, reveals, count-up,
+   * and smooth scrolling (Lenis, ~5.4 KB, its own lazily loaded chunk) with the scroll-driven
+   * text, scrub and step scripts.
+   */
+  jsGzipBytes: 12_000,
   /** Fonts preloaded per page: more starves the LCP image of bandwidth. */
   fontPreloads: 3,
 };

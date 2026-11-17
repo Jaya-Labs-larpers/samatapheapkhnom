@@ -1,0 +1,15 @@
+---
+import About from '~/page-templates/sko/About.astro';
+import { availableAboutGroups } from '~/lib/about-groups';
+
+export async function getStaticPaths() {
+  const groups = await availableAboutGroups('en');
+  return groups
+    .filter((group) => group.slug)
+    .map((group) => ({ params: { group: group.slug }, props: { group } }));
+}
+
+const { group } = Astro.props;
+---
+
+<About lang="en" group={group} />

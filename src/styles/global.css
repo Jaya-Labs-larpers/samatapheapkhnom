@@ -74,9 +74,7 @@ header.site-header {
   transition:
     background-color var(--duration-base) var(--ease-out-soft),
     border-color var(--duration-base) var(--ease-out-soft),
-    box-shadow var(--duration-base) var(--ease-out-soft),
-    translate 300ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: translate;
+    box-shadow var(--duration-base) var(--ease-out-soft);
 }
 
 /* Down the page, a returning header needs a lift to separate it from the text
@@ -85,32 +83,10 @@ header.site-header[data-scrolled] {
   box-shadow: var(--shadow-md);
 }
 
-/* Scrolled away while reading down; any upward scroll brings it straight back
-   (the script in Header.astro). Leaving is a touch slower and eases in, so it
-   slides off rather than snapping; returning is quick, because the visitor
-   asked for it. */
-header.site-header[data-hidden] {
-  translate: 0 -100%;
-  box-shadow: none;
-  transition-timing-function:
-    var(--ease-out-soft), var(--ease-out-soft), var(--ease-out-soft), cubic-bezier(0.4, 0, 1, 1);
-  transition-duration: var(--duration-base), var(--duration-base), var(--duration-base), 360ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  header.site-header,
-  header.site-header[data-hidden] {
-    transition-duration: 0s;
-  }
-}
-
 /* How much of the top of the window the header covers right now: sticky
    columns sit this far down, and close the gap when the header scrolls away. */
 :root {
   --header-offset: var(--header-h);
-}
-:root:has(header.site-header[data-hidden]) {
-  --header-offset: 0px;
 }
 
 /*
@@ -124,10 +100,16 @@ header.site-header[data-hidden] {
  * Header.astro, so a page loaded at the top paints transparent immediately
  * instead of flashing white.
  */
-header.site-header[data-overlay][data-at-top] {
+:root:has(main > [data-hero-dark]:first-child) header.site-header {
+  margin-bottom: calc(var(--header-h) * -1);
+}
+:root:has(main > [data-hero-dark]:first-child) header.site-header:not([data-scrolled]) {
   background: transparent;
   border-bottom-color: transparent;
   box-shadow: none;
+}
+main > .sk-hero--home[data-hero-dark] {
+  min-height: 100svh;
 }
 
 /*
@@ -245,6 +227,36 @@ main {
 }
 .reveal-cascade--slow[data-reveal='shown'] > li > :last-child {
   transition-delay: calc(var(--reveal-delay, 0ms) + 320ms + min(var(--i, 0), 10) * 160ms);
+}
+
+/* --- Scroll motion ----------------------------------------------------------
+ * Smooth scrolling (~/lib/smooth-scroll) needs these four rules, and text
+ * written out on scroll (~/lib/scroll-text) maps its progress to colour here.
+ * Without the scripts none of it applies and the text keeps its own colour. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+.scroll-text__word {
+  display: inline-block;
+  white-space: nowrap;
+}
+.scroll-text__u {
+  --t: clamp(0, (var(--p, 1) * var(--n) - var(--i) * 2) / 10, 1);
+  color: color-mix(
+    in oklab,
+    var(--color-ink-400),
+    var(--color-ink-900) calc(var(--t) * (2 - var(--t)) * 100%)
+  );
 }
 
 /* --- Page arrival -----------------------------------------------------------
@@ -1154,6 +1166,11 @@ details[open] > summary > .disclosure-icon {
   .prose {
     max-width: var(--measure);
     color: var(--color-ink-600);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+  .prose:lang(km) {
+    line-height: 1.9;
   }
   .prose > * + * {
     margin-top: 1.0625rem;

@@ -1,12 +1,11 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
-import { localizePath, t } from '~/lib/i18n/utils';
-import { footerColumns, legalLinks } from '~/lib/nav';
+import { localizePath, t, text } from '~/lib/i18n/utils';
+import { footerColumns } from '~/lib/nav';
 import LanguageToggle from './LanguageToggle.astro';
 import FacebookIcon from '~/components/design/FacebookIcon.astro';
 import Logo from '~/components/Logo.astro';
-import { text } from '~/lib/i18n/utils';
 
 interface Props {
   lang: Locale;
@@ -19,43 +18,81 @@ const { lang, settings, pathname } = Astro.props;
 const facebook = settings.socials?.find((social) => social.platform.toLowerCase() === 'facebook');
 const year = new Date().getFullYear();
 const orgName = text(settings.orgName, lang);
+const address = text(settings.address, lang);
+const { email, phone } = settings;
 ---
 
 <footer class="ftr">
   <div class="ftr__inner">
-    <div class="ftr__grid">
-      {
-        footerColumns.map((column) => (
-          <nav class="ftr__col" aria-label={column.heading}>
-            <h2 class="ftr__heading">{column.heading}</h2>
-            {column.links.map((link) => (
-              <a href={localizePath(link.path, lang)} class="ftr__link">
-                {link.label}
-              </a>
-            ))}
-            {column.id === 'connected' && facebook && (
-              <div class="ftr__social">
+    <div class="ftr__top">
+      <div class="ftr__brand">
+        <a href={localizePath('/', lang)} class="ftr__logo">
+          <Logo variant="reversed" width={200} title={orgName} lazy />
+        </a>
+      </div>
+
+      <nav class="ftr__nav" aria-label={t(lang, 'footerNavLabel')}>
+        {
+          footerColumns.map((column) => (
+            <div class="ftr__col">
+              <h2 class="ftr__heading">{t(lang, column.headingKey)}</h2>
+              <ul class="ftr__list">
+                {column.links.map((link) => (
+                  <li>
+                    <a href={localizePath(link.path, lang)} class="ftr__link">
+                      {t(lang, link.key)}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+
+        <div class="ftr__col">
+          <h2 class="ftr__heading">{t(lang, 'footerContactHeading')}</h2>
+          <address class="ftr__contact">
+            {address && <p class="ftr__address">{address}</p>}
+            {
+              email && (
+                <a href={`mailto:${email}`} class="ftr__link">
+                  {email}
+                </a>
+              )
+            }
+            {
+              phone && (
+                <a href={`tel:${phone.replace(/\s+/g, '')}`} class="ftr__link">
+                  {phone}
+                </a>
+              )
+            }
+          </address>
+          <div class="ftr__actions">
+            <a href={localizePath('/contact', lang)} class="ftr__more">{t(lang, 'navContact')} →</a>
+            {
+              facebook && (
                 <a
                   href={facebook.url}
-                  class="ftr__social-link"
+                  class="ftr__social"
                   aria-label={t(lang, 'menuFacebookLabel')}
                   rel="noopener"
                 >
-                  <FacebookIcon size={22} />
+                  <FacebookIcon size={18} />
                 </a>
-              </div>
-            )}
-          </nav>
-        ))
-      }
+              )
+            }
+          </div>
+        </div>
+      </nav>
     </div>
+
     <div class="ftr__legal">
-      <LanguageToggle lang={lang} pathname={pathname} variant="footer" />
-      {legalLinks.map((link) => <a href={localizePath(link.path, lang)} class="ftr__legal-link">{link.label}</a>)}
-      <span>© {year} Organization name</span>
-      <a href={localizePath('/', lang)} class="ftr__logo">
-        <Logo variant="reversed" width={220} title={orgName} lazy />
-      </a>
+      <span>© {year} {orgName}</span>
+      <a href={localizePath('/privacy', lang)} class="ftr__legal-link">{t(lang, 'navPrivacy')}</a>
+      <span class="ftr__lang">
+        <LanguageToggle lang={lang} pathname={pathname} variant="footer" />
+      </span>
     </div>
   </div>
 </footer>
@@ -66,7 +103,7 @@ const orgName = text(settings.orgName, lang);
     width: 100%;
     background: var(--color-blue-900);
     color: rgb(255 255 255 / 0.72);
-    padding: clamp(56px, 6vw, 80px) 20px 32px;
+    padding: clamp(36px, 4vw, 52px) 20px 20px;
     font-family: var(--font-sans);
   }
   .ftr__inner {
@@ -74,81 +111,120 @@ const orgName = text(settings.orgName, lang);
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 64px;
+    gap: 32px;
   }
-  .ftr__grid {
+  .ftr__top {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
-    gap: 40px 32px;
+    gap: 32px;
+    grid-template-columns: 1fr;
+  }
+  .ftr__logo {
+    display: inline-block;
+  }
+  .ftr__logo :global(img) {
+    display: block;
+    width: clamp(150px, 16vw, 200px);
+    height: auto;
+  }
+  .ftr__nav {
+    display: grid;
+    gap: 28px 32px;
+    grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
   }
   .ftr__col {
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 12px;
+    min-width: 0;
   }
   .ftr__heading {
-    margin: 0 0 6px;
+    margin: 0;
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     line-height: normal;
     color: #fff;
   }
+  .ftr__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
   .ftr__link {
     color: rgb(255 255 255 / 0.72);
     text-decoration: none;
-    font-size: 18px;
+    font-size: 16px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
   }
-  .ftr__link:hover {
+  .ftr__link:hover,
+  .ftr__more:hover {
     color: #fff;
   }
-  .ftr__social {
+  .ftr__contact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-style: normal;
+  }
+  .ftr__address {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    white-space: pre-line;
+  }
+  .ftr__actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
   }
-  .ftr__social-link {
+  .ftr__more {
+    color: var(--color-sky-400);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .ftr__social {
     display: inline-flex;
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     border: 1.5px solid var(--color-sky-400);
     color: var(--color-sky-400);
     align-items: center;
     justify-content: center;
   }
-  .ftr__address {
-    font-style: normal;
-    font-size: 16px;
-    line-height: 1.6;
-  }
   .ftr__legal {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 16px 28px;
+    gap: 10px 24px;
     border-top: 1px solid rgb(255 255 255 / 0.15);
-    padding-top: 28px;
-    font-size: 15px;
+    padding-top: 18px;
+    font-size: 14px;
     color: rgb(255 255 255 / 0.6);
-  }
-  .ftr__logo {
-    display: block;
-    margin-left: auto;
-  }
-  .ftr__logo :global(img) {
-    display: block;
-    width: clamp(180px, 18vw, 220px);
-    height: auto;
   }
   .ftr__legal-link {
     color: inherit;
     text-decoration: underline;
   }
+  .ftr__lang {
+    margin-left: auto;
+  }
   :global(:lang(km)) .ftr__heading {
     letter-spacing: normal;
     text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    .ftr__top {
+      grid-template-columns: minmax(180px, 0.7fr) 3fr;
+      align-items: start;
+      gap: 56px;
+    }
   }
 </style>

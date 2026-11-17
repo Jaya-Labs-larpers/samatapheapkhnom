@@ -12,12 +12,16 @@ import SkBody from '~/components/skeleton/SkBody.astro';
 import SkRows from '~/components/skeleton/SkRows.astro';
 import SkSection from '~/components/skeleton/SkSection.astro';
 import SkCta from '~/components/skeleton/SkCta.astro';
+import SkSubnav from '~/components/skeleton/SkSubnav.astro';
+import { impactProjectsAvailable, impactProjectsPath } from '~/lib/impact-pages';
 
 interface Props {
   lang: Locale;
+  projects?: boolean;
 }
 
-const { lang } = Astro.props;
+const { lang, projects = false } = Astro.props;
+const hasProjects = await impactProjectsAvailable(lang);
 const [stats, page, programs, stories] = await Promise.all([
   getImpactStats(),
   getPage('impact'),
@@ -27,12 +31,13 @@ const [stats, page, programs, stories] = await Promise.all([
 
 const title = pick(page?.title, lang);
 const intro = pick(page?.intro, lang);
-const heading = title.value ?? tStrict(lang, 'pageImpact');
+const impactTitle = title.value ?? tStrict(lang, 'pageImpact');
+const heading = projects ? tStrict(lang, 'impactProjects') : impactTitle;
 const introText = intro.value ?? tStrict(lang, 'introImpact');
 const story = stories[0] ? storyCard(stories[0], lang) : null;
-const seo = resolveSeo(page?.seo, lang, {
+const seo = resolveSeo(projects ? null : page?.seo, lang, {
   title: heading,
-  description: introText,
+  description: projects ? null : introText,
   image: page?.heroImage,
 });
 ---
@@ -46,16 +51,36 @@ const seo = resolveSeo(page?.seo, lang, {
 >
   <SkHero
     title={heading}
-    titleLang={langAttr(title)}
-    intro={introText}
-    introLang={langAttr(intro)}
+    titleLang={projects ? undefined : langAttr(title)}
+    intro={projects ? null : introText}
+    introLang={projects ? undefined : langAttr(intro)}
     actions={[]}
   >
-    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
+    <Breadcrumbs
+      slot="before"
+      lang={lang}
+      trail={projects
+        ? [{ label: impactTitle, path: '/impact' }, { label: heading }]
+        : [{ label: heading }]}
+    />
   </SkHero>
 
   {
-    stats.length > 0 && (
+    hasProjects && (
+      <SkSubnav
+        lang={lang}
+        pathname={Astro.url.pathname}
+        items={[
+          { key: 'navImpact', path: '/impact' },
+          { key: 'impactProjects', path: impactProjectsPath },
+          { key: 'ourPrograms', path: '/programs' },
+        ]}
+      />
+    )
+  }
+
+  {
+    !projects && stats.length > 0 && (
       <SkStats
         id="results"
         heading={tStrict(lang, 'resultsAtAGlance')}
@@ -65,10 +90,18 @@ const seo = resolveSeo(page?.seo, lang, {
     )
   }
 
-  <SkBody lang={lang} body={page?.body} />
+  {
+    projects ? (
+      <SkBody lang={lang} body={page?.body} showLead={false} />
+    ) : hasProjects ? (
+      <SkBody lang={lang} body={page?.body} only={[]} showLead />
+    ) : (
+      <SkBody lang={lang} body={page?.body} />
+    )
+  }
 
   {
-    programs.length > 0 && (
+    !projects && programs.length > 0 && (
       <SkRows
         id="programs"
         heading={tStrict(lang, 'ourPrograms')}
@@ -79,7 +112,7 @@ const seo = resolveSeo(page?.seo, lang, {
   }
 
   {
-    story && (
+    !projects && story && (
       <SkSection tone="tint">
         <figure class="sk-figure">
           {story.quote && (

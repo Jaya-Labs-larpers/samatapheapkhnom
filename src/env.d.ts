@@ -4,6 +4,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_DEPLOYMENT_ENV?: string;
   readonly PUBLIC_CONTENT_SOURCE?: string;
   readonly PUBLIC_CONTACT_ENABLED?: string;
+  /** "false" turns smooth scrolling off site-wide. */
+  readonly PUBLIC_SMOOTH_SCROLL?: string;
   /** Sanity project id. Blank means "build from local fixtures". */
   readonly PUBLIC_SANITY_PROJECT_ID?: string;
   readonly PUBLIC_SANITY_DATASET?: string;

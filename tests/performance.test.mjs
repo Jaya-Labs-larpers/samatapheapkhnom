@@ -20,7 +20,7 @@ test('every font the layout preloads is declared in the theme', () => {
   const preloaded = [...layout.matchAll(/'((?:[a-z0-9]+-)+(?:latin|khmer))'/g)].map(
     (m) => `${m[1]}.woff2`,
   );
-  assert.ok(preloaded.length >= 3);
+  assert.ok(preloaded.length >= 2);
   for (const file of preloaded)
     assert.ok(declared.includes(file), `${file} is preloaded but not declared`);
 });

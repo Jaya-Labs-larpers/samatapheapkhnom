@@ -1,0 +1,113 @@
+---
+
+---
+
+<div class="sm">
+  <p class="sm__statement" data-scroll-text lang="en">
+    Every child deserves a family, a school and a safe place to grow up, and every community can
+    give them one when it is supported to.
+  </p>
+  <p class="sm__statement" data-scroll-text lang="km">ការអប់រំគឺជាមូលដ្ឋានគ្រឹះនៃអនាគតរបស់កុមារ</p>
+
+  <div class="sm__band" data-scrub>
+    <div class="sm__band-art"></div>
+  </div>
+
+  <p class="sm__figure" data-scrub data-scrub-start="top 90%" data-scrub-end="bottom 40%">
+    <span class="sm__figure-n"></span> families supported
+  </p>
+
+  <div class="sm__steps" data-scroll-steps>
+    <div class="sm__panel" aria-hidden="true">
+      <div data-panel="0">Step one: reach the family</div>
+      <div data-panel="1">Step two: keep the child in school</div>
+      <div data-panel="2">Step three: the community takes over</div>
+    </div>
+    <div class="sm__list">
+      <section data-step>
+        <h3 class="sk-h3">Reach the family</h3><p>A social worker visits and listens first.</p>
+      </section>
+      <section data-step>
+        <h3 class="sk-h3">Keep the child in school</h3><p>
+          School costs and learning support are covered.
+        </p>
+      </section>
+      <section data-step>
+        <h3 class="sk-h3">The community takes over</h3><p>
+          Local groups carry the work on without us.
+        </p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<style>
+  .sm {
+    display: grid;
+    gap: 3rem;
+  }
+  .sm__statement {
+    margin: 0;
+    max-width: 38ch;
+    font-size: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    line-height: 1.25;
+  }
+  .sm__band {
+    height: 18rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    background: var(--color-blue-50);
+  }
+  .sm__band-art {
+    height: 140%;
+    background: linear-gradient(160deg, var(--color-blue-700), var(--color-blue-50));
+    transform: translateY(calc(var(--p, 1) * -28%));
+  }
+  .sm__figure {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+  .sm__figure-n {
+    counter-reset: n calc(var(--p, 1) * 1250);
+    font-size: 3rem;
+    font-weight: 700;
+  }
+  .sm__figure-n::before {
+    content: counter(n);
+  }
+  .sm__steps {
+    display: grid;
+    gap: 2rem;
+  }
+  .sm__list section {
+    min-height: 60vh;
+  }
+  .sm__panel {
+    position: sticky;
+    top: calc(var(--header-h) + 1rem);
+    align-self: start;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    background: var(--color-blue-50);
+    font-weight: 600;
+  }
+  .sm__panel [data-panel] {
+    display: none;
+  }
+  .sm__panel [data-panel='0'] {
+    display: block;
+  }
+  .sm__steps[data-active-step] [data-panel] {
+    display: none;
+  }
+  .sm__steps[data-active-step='0'] [data-panel='0'],
+  .sm__steps[data-active-step='1'] [data-panel='1'],
+  .sm__steps[data-active-step='2'] [data-panel='2'] {
+    display: block;
+  }
+  @media (width >= 64rem) {
+    .sm__steps {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

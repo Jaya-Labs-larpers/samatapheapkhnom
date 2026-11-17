@@ -21,6 +21,7 @@ import SkPosts from '~/components/skeleton/SkPosts.astro';
 import SkStory from '~/components/skeleton/SkStory.astro';
 import SkSplitCta from '~/components/skeleton/SkSplitCta.astro';
 import SkPartnerMarquee from '~/components/skeleton/SkPartnerMarquee.astro';
+import SkQuickLinks from '~/components/skeleton/SkQuickLinks.astro';
 
 interface Props {
   lang: Locale;
@@ -40,7 +41,6 @@ const [settings, stats, director, programs, activities, partners, stories] = awa
 
 const orgName = text(settings.orgName, lang);
 const tagline = pick(settings.tagline, lang);
-const registration = pick(settings.registration, lang);
 const brand = settings.orgShortName ?? 'SKO';
 const seoTitle = tStrict(lang, 'seoHome');
 const story = stories[0];
@@ -62,19 +62,32 @@ const ctaImage = settings.homeHero?.[1] ?? programs.find((program) => program.im
     title={tagline.value ?? orgName}
     titleLang={langAttr(tagline)}
     eyebrow={tStrict(lang, 'homeEyebrow')}
-    intro={registration.value}
-    introLang={langAttr(registration)}
-    actions={[
-      { label: tStrict(lang, 'partnerWithUs'), href: localizePath('/contact?topic=partner', lang) },
-    ]}
   />
 
-  <SkSection>
+  <SkQuickLinks
+    items={[
+      { label: tStrict(lang, 'navWork'), href: localizePath('/programs', lang), icon: 'programs' },
+      {
+        label: tStrict(lang, 'partnerWithUs'),
+        href: localizePath('/contact?topic=partner', lang),
+        icon: 'partner',
+      },
+      {
+        label: tStrict(lang, 'navVolunteer'),
+        href: localizePath('/contact?topic=volunteer', lang),
+        icon: 'volunteer',
+      },
+      { label: tStrict(lang, 'contactUs'), href: localizePath('/contact', lang), icon: 'contact' },
+    ]}
+  >
     <h2 class="sk-h2">{tStrict(lang, 'navAbout')}</h2>
     <p class="sk-lead">{tStrict(lang, 'homeHeroIntro')}</p>
     <a href={localizePath('/about', lang)} class="sk-link">
       {tStrict(lang, 'homeAboutLink') || tStrict(lang, 'learnMore')} →
     </a>
+  </SkQuickLinks>
+
+  <SkSection>
     <ImpactStats lang={lang} stats={stats} />
   </SkSection>
 
@@ -112,7 +125,9 @@ const ctaImage = settings.homeHero?.[1] ?? programs.find((program) => program.im
   {
     partners.length > 0 && (
       <SkSection>
-        <h2 class="sk-h2" style="text-align:center">{tStrict(lang, 'trustedBy')}</h2>
+        <h2 class="sk-h2" style="text-align:center">
+          {tStrict(lang, 'trustedBy')}
+        </h2>
         <SkPartnerMarquee lang={lang} partners={partners} />
       </SkSection>
     )

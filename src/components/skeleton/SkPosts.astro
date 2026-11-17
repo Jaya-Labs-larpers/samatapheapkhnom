@@ -75,9 +75,11 @@ const placeholders = Math.max(0, n - items.length);
   </div>
   {
     more ? (
-      <a href={more.href} class="sk-link">
-        {more.label} →
-      </a>
+      <div class="posts-more">
+        <a href={more.href} class="posts-more__btn">
+          {more.label}
+        </a>
+      </div>
     ) : (
       link && (
         <a href="/blog" class="sk-link">
@@ -87,3 +89,33 @@ const placeholders = Math.max(0, n - items.length);
     )
   }
 </SkSection>
+
+<style>
+  .posts-more {
+    display: flex;
+    align-items: center;
+    gap: clamp(16px, 3vw, 32px);
+    margin-top: clamp(28px, 4vw, 44px);
+  }
+  .posts-more::before,
+  .posts-more::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: var(--color-blue-700);
+    opacity: 0.35;
+  }
+  .posts-more__btn {
+    flex: none;
+    padding: 12px 26px;
+    border-radius: 999px;
+    background: var(--color-blue-700);
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.25s ease;
+  }
+  .posts-more__btn:is(:hover, :focus-visible) {
+    background: var(--color-blue-800);
+  }
+</style>

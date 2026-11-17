@@ -21,6 +21,7 @@ import SkStat from '~/components/skeleton/SkStat.astro';
 import ButterflyEffect from '~/components/lab/ButterflyEffect.astro';
 import KhanExplorer from '~/components/lab/KhanExplorer.astro';
 import FamiliesQuiz from '~/components/lab/FamiliesQuiz.astro';
+import ScrollMotion from '~/components/lab/ScrollMotion.astro';
 
 interface Props {
   lang: Locale;
@@ -127,6 +128,11 @@ const sources = [
       </SkSection>
     )
   }
+
+  <SkSection id="scroll-motion">
+    <h2 class="sk-h2" lang="en">Scroll motion</h2>
+    <ScrollMotion />
+  </SkSection>
 
   <SkSection tone="tint" id="khans">
     <h2 class="sk-h2" lang="en">Where we work, khan by khan</h2>

@@ -13,6 +13,7 @@
 const env = import.meta.env;
 export const isProductionDeployment = env.PUBLIC_DEPLOYMENT_ENV === 'production';
 export const isPreviewDeployment = env.PUBLIC_DEPLOYMENT_ENV === 'preview';
+export const smoothScrollEnabled = env.PUBLIC_SMOOTH_SCROLL !== 'false';
 export const contactEnabled =
   env.PUBLIC_CONTACT_ENABLED === 'true' ||
   (!isPreviewDeployment && env.PUBLIC_CONTACT_ENABLED !== 'false');

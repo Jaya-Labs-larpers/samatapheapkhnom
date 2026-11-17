@@ -4,7 +4,8 @@ import { getDirectorMessage, getOrgChart, getPage } from '~/lib/content';
 import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
 import { resolveSeo } from '~/lib/seo';
 import { aboutPageJsonLd } from '~/lib/seo/page-schema';
-import { ctaActions, faqItems, tStrict } from '~/lib/skeleton-content';
+import { ctaActions, tStrict } from '~/lib/skeleton-content';
+import { availableAboutGroups, type AboutGroup } from '~/lib/about-groups';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
 import RichText from '~/components/content/RichText.astro';
@@ -14,14 +15,19 @@ import SkHero from '~/components/skeleton/SkHero.astro';
 import SkBody from '~/components/skeleton/SkBody.astro';
 import SkSplit from '~/components/skeleton/SkSplit.astro';
 import SkSection from '~/components/skeleton/SkSection.astro';
-import SkFaq from '~/components/skeleton/SkFaq.astro';
+import SkSubnav from '~/components/skeleton/SkSubnav.astro';
 import SkCta from '~/components/skeleton/SkCta.astro';
 
 interface Props {
   lang: Locale;
+  group?: AboutGroup;
 }
 
-const { lang } = Astro.props;
+const { lang, group: requested } = Astro.props;
+const groups = await availableAboutGroups(lang);
+const group = groups.find((item) => item.slug === (requested?.slug ?? '')) ?? groups[0]!;
+const isOverview = group.slug === '';
+const isLeadership = group.slug === 'leadership';
 
 const [page, director, chart] = await Promise.all([
   getPage('about'),
@@ -35,10 +41,11 @@ const hasOrgChart =
 
 const title = pick(page?.title, lang);
 const intro = pick(page?.intro, lang);
-const heading = title.value ?? tStrict(lang, 'pageAbout');
-const seo = resolveSeo(page?.seo, lang, {
+const aboutTitle = title.value ?? tStrict(lang, 'pageAbout');
+const heading = isOverview ? aboutTitle : tStrict(lang, group.key);
+const seo = resolveSeo(isOverview ? page?.seo : null, lang, {
   title: heading,
-  description: intro.value,
+  description: isOverview ? intro.value : null,
   image: page?.heroImage,
 });
 const aboutPage = aboutPageJsonLd({
@@ -50,8 +57,11 @@ const aboutPage = aboutPageJsonLd({
 const quote = pick(director.pullQuote, lang);
 const name = pick(director.name, lang);
 const role = pick(director.title, lang);
-const faqs = faqItems(page?.faqs, lang);
-const faqMore = tStrict(lang, 'faqMore');
+const subnav = [
+  ...groups.map(({ key, path }) => ({ key, path })),
+  { key: 'ourTeam' as const, path: '/team' },
+  { key: 'navFaq' as const, path: '/faq' },
+];
 ---
 
 <BaseLayout
@@ -64,55 +74,62 @@ const faqMore = tStrict(lang, 'faqMore');
 >
   <SkHero
     title={heading}
-    titleLang={langAttr(title)}
-    intro={intro.value}
-    introLang={langAttr(intro)}
+    titleLang={isOverview ? langAttr(title) : undefined}
+    intro={isOverview ? intro.value : null}
+    introLang={isOverview ? langAttr(intro) : undefined}
     actions={[]}
   >
-    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
+    <Breadcrumbs
+      slot="before"
+      lang={lang}
+      trail={isOverview
+        ? [{ label: heading }]
+        : [{ label: aboutTitle, path: '/about' }, { label: heading }]}
+    />
   </SkHero>
 
-  <SkBody lang={lang} body={page?.body} />
+  <SkSubnav lang={lang} pathname={Astro.url.pathname} items={subnav} />
 
-  <SkSplit id="director" heading={tStrict(lang, 'directorMessage')} tone="tint">
-    <div class="sk-media" style="aspect-ratio:4/5;max-width:300px">
-      <ResponsiveImage image={director.photo} lang={lang} alt="" aspect="4/5" sizes="300px" />
-    </div>
-    {
-      quote.value && (
-        <blockquote class="sk-quote" lang={langAttr(quote)}>
-          {quote.value}
-        </blockquote>
-      )
-    }
-    <RichText blocks={director.message} lang={lang} />
-    <p class="sk-person">
-      <b lang={langAttr(name)}>{name.value}</b>
-      <span class="sk-small" lang={langAttr(role)}>{role.value}</span>
-    </p>
-  </SkSplit>
+  <SkBody lang={lang} body={page?.body} only={group.sections} />
 
   {
-    hasOrgChart && (
+    isLeadership && (
+      <SkSplit id="director" heading={tStrict(lang, 'directorMessage')} tone="tint">
+        <div class="sk-media" style="aspect-ratio:4/5;max-width:300px">
+          <ResponsiveImage image={director.photo} lang={lang} alt="" aspect="4/5" sizes="300px" />
+        </div>
+        {quote.value && (
+          <blockquote class="sk-quote" lang={langAttr(quote)}>
+            {quote.value}
+          </blockquote>
+        )}
+        <RichText blocks={director.message} lang={lang} />
+        <p class="sk-person">
+          <b lang={langAttr(name)}>{name.value}</b>
+          <span class="sk-small" lang={langAttr(role)}>
+            {role.value}
+          </span>
+        </p>
+      </SkSplit>
+    )
+  }
+
+  {
+    isLeadership && hasOrgChart && (
       <SkSplit id="structure" heading={tStrict(lang, 'orgStructure')}>
         <OrgChart lang={lang} chart={chart} />
       </SkSplit>
     )
   }
 
-  <SkSection>
-    <h2 class="sk-h2">{tStrict(lang, 'ourTeam')}</h2>
-    <a href={localizePath('/team', lang)} class="sk-link">{tStrict(lang, 'orgStructure')} →</a>
-  </SkSection>
-
   {
-    faqs.length > 0 && (
-      <SkFaq
-        id="faq"
-        heading={tStrict(lang, 'faqHeading')}
-        items={faqs}
-        more={faqMore ? { label: faqMore, href: localizePath('/faq', lang) } : null}
-      />
+    isLeadership && (
+      <SkSection>
+        <h2 class="sk-h2">{tStrict(lang, 'ourTeam')}</h2>
+        <a href={localizePath('/team', lang)} class="sk-link">
+          {tStrict(lang, 'orgStructure')} →
+        </a>
+      </SkSection>
     )
   }
 

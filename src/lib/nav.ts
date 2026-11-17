@@ -26,9 +26,11 @@ export const mainNav: NavItem[] = [
     key: 'navAbout',
     path: '/about',
     sections: [
-      { id: 'director', key: 'directorMessage' },
+      { path: '/about/approach', key: 'aboutApproach' },
+      { path: '/about/partnerships', key: 'aboutPartnerships' },
+      { path: '/about/leadership', key: 'aboutLeadership' },
       { path: '/team', key: 'ourTeam' },
-      { id: 'faq', key: 'faqHeading' },
+      { path: '/faq', key: 'navFaq' },
     ],
   },
   { key: 'navWork', path: '/programs', programs: true },
@@ -36,8 +38,8 @@ export const mainNav: NavItem[] = [
     key: 'navImpact',
     path: '/impact',
     sections: [
-      { id: 'results', key: 'resultsAtAGlance' },
-      { id: 'programs', key: 'ourPrograms' },
+      { path: '/impact/projects', key: 'impactProjects' },
+      { path: '/programs', key: 'ourPrograms' },
     ],
   },
   { key: 'navActivities', path: '/activities' },
@@ -46,6 +48,9 @@ export const mainNav: NavItem[] = [
 
 export const mobileNav: NavItem[] = [
   { key: 'navAbout', path: '/about' },
+  { key: 'aboutApproach', path: '/about/approach' },
+  { key: 'aboutPartnerships', path: '/about/partnerships' },
+  { key: 'aboutLeadership', path: '/about/leadership' },
   { key: 'ourTeam', path: '/team' },
   { key: 'navWork', path: '/programs' },
   { key: 'navImpact', path: '/impact' },
@@ -59,76 +64,31 @@ export const mobileNav: NavItem[] = [
 
 export interface FooterColumn {
   id: string;
-  heading: string;
-  links: NavLink[];
+  headingKey: UIKey;
+  links: NavItem[];
 }
 
+/** Only pages that exist on the site. */
 export const footerColumns: FooterColumn[] = [
   {
-    id: 'action',
-    heading: 'Take action',
-    links: [
-      { label: 'Donate', path: '/donate' },
-      { label: 'Make a major gift', path: '/majorgifts' },
-      { label: 'Legacy gifts', path: '/legacy-giving' },
-      { label: 'Ways to give', path: '/ways-to-give' },
-      { label: 'Edit monthly donation', path: '/donor-sign-in' },
-      { label: 'Download receipts', path: '/donor-sign-in' },
-      { label: 'Employer match', path: '/employer-matching' },
-      { label: 'Fundraise', path: '/fundraise' },
-      { label: 'Start a corporate partnership', path: '/corporate-partnerships' },
-      { label: 'Organize a workplace talk', path: '/workplace-talk' },
-    ],
-  },
-  {
-    id: 'focus',
-    heading: 'Focus areas',
-    links: [
-      { label: 'Poverty relief', path: '/poverty-relief' },
-      { label: 'Emergency cash', path: '/relief' },
-      { label: 'Climate survival', path: '/climate' },
-      { label: 'Basic income', path: '/ubi' },
-      { label: 'Refugees', path: '/refugees' },
-      { label: 'United States', path: '/united-states' },
-      { label: 'Sadaqah', path: '/sadaqah' },
-    ],
-  },
-  {
     id: 'organisation',
-    heading: 'Organization',
+    headingKey: 'footerOrganisation',
     links: [
-      { label: 'About', path: '/about' },
-      { label: 'Values', path: '/values' },
-      { label: 'People', path: '/team' },
-      { label: 'Risks', path: '/risks' },
+      { key: 'navAbout', path: '/about' },
+      { key: 'ourTeam', path: '/team' },
+      { key: 'navPartners', path: '/partners' },
+      { key: 'navSafeguarding', path: '/safeguarding' },
+      { key: 'navFaq', path: '/faq' },
     ],
   },
   {
-    id: 'resources',
-    heading: 'Resources',
+    id: 'work',
+    headingKey: 'navWork',
     links: [
-      { label: 'Policy & advocacy', path: '/policy-and-advocacy' },
-      { label: 'Financials', path: '/financials' },
-      { label: 'FAQ', path: '/faq' },
-      { label: 'Blog', path: '/blog' },
-      { label: 'Careers', path: '/careers' },
-      { label: 'RFPs & RFQs', path: '/rfp' },
-      { label: 'Press', path: '/press' },
+      { key: 'navPrograms', path: '/programs' },
+      { key: 'navImpact', path: '/impact' },
+      { key: 'navActivities', path: '/activities' },
+      { key: 'navReports', path: '/reports' },
     ],
   },
-  {
-    id: 'connected',
-    heading: 'Stay connected',
-    links: [
-      { label: 'Newsletter', path: '/email-sign-up' },
-      { label: 'Contact us', path: '/contact' },
-      { label: 'Press inquiries', path: '/press' },
-    ],
-  },
-];
-
-export const legalLinks: NavLink[] = [
-  { label: 'Privacy policy', path: '/privacy-policy' },
-  { label: 'Terms of use', path: '/terms-of-use' },
-  { label: 'Charity disclosure', path: '/charity-disclosure' },
 ];

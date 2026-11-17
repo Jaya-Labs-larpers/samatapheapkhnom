@@ -1,0 +1,166 @@
+---
+import SkSection from './SkSection.astro';
+
+type Icon = 'programs' | 'partner' | 'volunteer' | 'contact';
+
+interface Props {
+  items: { label: string; href: string; icon: Icon }[];
+}
+
+const { items } = Astro.props;
+
+const paths: Record<Icon, string> = {
+  programs: 'M4 5h7v7H4zM13 5h7v7h-7zM4 14h7v5H4zM13 14h7v5h-7z',
+  partner: 'M4 12a5 5 0 1 0 10 0 5 5 0 1 0-10 0M10 12a5 5 0 1 0 10 0 5 5 0 1 0-10 0',
+  volunteer: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z',
+  contact: 'M4 6h16v12H4zM4 7l8 6 8-6',
+};
+---
+
+<SkSection class="sk-quick">
+  <div class="intro">
+    <div class="intro__panel">
+      <slot />
+    </div>
+    <ul class="quick">
+      {
+        items.map((item) => (
+          <li>
+            <a href={item.href} class="quick__tile">
+              <span class="quick__icon" aria-hidden="true">
+                <svg
+                  width="26"
+                  height="26"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d={paths[item.icon]} />
+                </svg>
+              </span>
+              <span class="quick__label">{item.label}</span>
+              <svg
+                class="quick__arrow"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</SkSection>
+
+<style>
+  .intro {
+    display: grid;
+    gap: 16px;
+  }
+  .intro__panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+    box-sizing: border-box;
+    padding: clamp(28px, 4vw, 64px);
+    border-radius: 28px;
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-line);
+  }
+  .intro__panel :global(.sk-h2),
+  .intro__panel :global(.sk-lead) {
+    margin: 0;
+  }
+  .quick {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .quick__tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 150px;
+    padding: 22px 20px;
+    border-radius: 20px;
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-line);
+    color: var(--color-ink-900);
+    text-decoration: none;
+    transition:
+      transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .quick__icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    color: var(--color-blue-800);
+  }
+  .quick__label {
+    margin-top: auto;
+    padding-inline-end: 28px;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .quick__arrow {
+    position: absolute;
+    inset-inline-end: 20px;
+    bottom: 24px;
+    color: var(--color-blue-700);
+    transition: translate 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .quick__tile:is(:hover, :focus-visible) {
+    transform: translateY(-4px);
+    background: var(--color-blue-50);
+    border-color: var(--color-blue-700);
+  }
+  .quick__tile:is(:hover, :focus-visible) .quick__arrow {
+    translate: 4px 0;
+  }
+  @media (min-width: 64rem) {
+    .intro {
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+      gap: 24px;
+    }
+    .quick {
+      gap: 16px;
+    }
+    .quick__tile {
+      min-height: 210px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .quick__tile,
+    .quick__arrow {
+      transition: none;
+    }
+    .quick__tile:is(:hover, :focus-visible) {
+      transform: none;
+    }
+  }
+</style>

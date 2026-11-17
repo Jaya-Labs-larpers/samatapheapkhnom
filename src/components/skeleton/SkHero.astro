@@ -40,14 +40,16 @@ const {
 
 {
   home ? (
-    <section class="sk-hero--home" data-home-hero>
+    <section class="sk-hero--home" data-home-hero data-hero-dark>
       <div class="sk-hero__media">
         {image && <ResponsiveImage image={image} lang={lang} eager sizes="100vw" />}
       </div>
       <ButterflyField />
       <div class="sk-wrap sk-hero__text" data-butterfly-shelter>
         {eyebrow && <p class="sk-eyebrow">{eyebrow}</p>}
-        <h1 class="sk-h1" lang={titleLang}>{title}</h1>
+        <h1 class="sk-h1" lang={titleLang}>
+          {title}
+        </h1>
         {intro && (
           <p class="sk-lead inline-links" lang={introLang}>
             <InlineLinks text={intro} />
@@ -62,7 +64,9 @@ const {
       <div class="sk-hero__text">
         <slot name="before" />
         {eyebrow && <p class="sk-eyebrow">{eyebrow}</p>}
-        <h1 class="sk-h1" lang={titleLang}>{title}</h1>
+        <h1 class="sk-h1" lang={titleLang}>
+          {title}
+        </h1>
         {intro === undefined ? (
           <SkLines n={2} />
         ) : (
