@@ -10,12 +10,13 @@ interface Props {
   body?: string | null;
   actions: SkAction[];
   image?: CmsImage | null;
+  card?: boolean;
 }
 
-const { lang, heading, body, actions, image } = Astro.props;
+const { lang, heading, body, actions, image, card = false } = Astro.props;
 ---
 
-<section class="sk-cta-split">
+<section class:list={['sk-cta-split', card && 'sk-cta-split--card']}>
   {
     image && (
       <div class="sk-cta-split__media">
@@ -48,3 +49,37 @@ const { lang, heading, body, actions, image } = Astro.props;
     }
   </div>
 </section>
+
+<style is:global>
+  .sk-cta-split--card {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    box-sizing: border-box;
+    width: min(100% - 40px, 1281px);
+    min-height: 0;
+    margin: clamp(32px, 5vw, 72px) auto;
+    border-radius: 24px;
+    overflow: hidden;
+    background: var(--color-ink-900);
+  }
+  .sk-cta-split--card .sk-cta-split__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    min-height: 0;
+  }
+  .sk-cta-split--card .sk-cta-split__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgb(14 21 51 / 0.55);
+  }
+  .sk-cta-split--card .sk-cta-split__panel {
+    align-items: flex-start;
+    padding: clamp(40px, 6vw, 80px) clamp(24px, 5vw, 72px);
+  }
+  .sk-cta-split--card .sk-h2 {
+    max-width: 22ch;
+  }
+</style>

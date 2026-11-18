@@ -90,7 +90,7 @@
 
 ## Wireframe notes per page
 
-**Home** — Hero (image + mission line + Donate / Partner CTAs) → mission statement + registration line (credibility above the fold-ish) → ImpactStatStrip → three ProgramCards → latest 3 ActivityCards → one StoryQuote → PartnerLogoWall → CtaBand.
+**Home** — structure follows the radiatinghope reference (spec: `docs/superpowers/specs/2026-11-18-home-restructure-design.md`): SkHero → SkStoryText (scrubbed mission text) → SkMapProof (lead stat over `public/maps/cambodia-phnom-penh.svg`, remaining stats below) → SkPhotoCards (programs) → SkEvents (event/announcement activities, tabs when both exist) → SkStorySlider → SkFeatureBanner (first program with a photo) → SkPosts → SkDirector → partner marquee → SkSplitCta `card`. Each section renders nothing without data. Header centre nav is a glass pill over the hero and light grey elsewhere; footer is light.
 
 **About** — Page hero → mission & vision (two columns) → history timeline since 2007 (vertical list, year + event) → values (icon grid) → **DirectorMessageCard** → **OrgChartViewer** → TeamGrid → CtaBand.
 

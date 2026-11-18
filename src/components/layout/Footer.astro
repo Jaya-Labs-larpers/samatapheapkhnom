@@ -4,7 +4,7 @@ import type { SiteSettings } from '~/lib/content/types';
 import { localizePath, t, text } from '~/lib/i18n/utils';
 import { footerColumns } from '~/lib/nav';
 import LanguageToggle from './LanguageToggle.astro';
-import FacebookIcon from '~/components/design/FacebookIcon.astro';
+import SocialIcon, { type SocialPlatform } from '~/components/design/SocialIcon.astro';
 import Logo from '~/components/Logo.astro';
 
 interface Props {
@@ -15,7 +15,18 @@ interface Props {
 
 const { lang, settings, pathname } = Astro.props;
 
-const facebook = settings.socials?.find((social) => social.platform.toLowerCase() === 'facebook');
+const socialLabels = {
+  facebook: 'menuFacebookLabel',
+  telegram: 'menuTelegramLabel',
+  instagram: 'menuInstagramLabel',
+  youtube: 'menuYoutubeLabel',
+} as const;
+// Placeholder '#' until SKO adds the real accounts to Site settings in Sanity.
+const socials = (Object.keys(socialLabels) as SocialPlatform[]).map((platform) => ({
+  platform,
+  label: t(lang, socialLabels[platform]),
+  url: settings.socials?.find((social) => social.platform.toLowerCase() === platform)?.url ?? '#',
+}));
 const year = new Date().getFullYear();
 const orgName = text(settings.orgName, lang);
 const address = text(settings.address, lang);
@@ -27,7 +38,7 @@ const { email, phone } = settings;
     <div class="ftr__top">
       <div class="ftr__brand">
         <a href={localizePath('/', lang)} class="ftr__logo">
-          <Logo variant="reversed" width={200} title={orgName} lazy />
+          <Logo variant="full" width={200} title={orgName} lazy />
         </a>
       </div>
 
@@ -68,21 +79,18 @@ const { email, phone } = settings;
               )
             }
           </address>
-          <div class="ftr__actions">
-            <a href={localizePath('/contact', lang)} class="ftr__more">{t(lang, 'navContact')} →</a>
+          <a href={localizePath('/contact', lang)} class="ftr__btn">{t(lang, 'navContact')}</a>
+          <ul class="ftr__socials">
             {
-              facebook && (
-                <a
-                  href={facebook.url}
-                  class="ftr__social"
-                  aria-label={t(lang, 'menuFacebookLabel')}
-                  rel="noopener"
-                >
-                  <FacebookIcon size={18} />
-                </a>
-              )
+              socials.map((social) => (
+                <li>
+                  <a href={social.url} class="ftr__social" aria-label={social.label} rel="noopener">
+                    <SocialIcon platform={social.platform} />
+                  </a>
+                </li>
+              ))
             }
-          </div>
+          </ul>
         </div>
       </nav>
     </div>
@@ -101,8 +109,9 @@ const { email, phone } = settings;
   .ftr {
     box-sizing: border-box;
     width: 100%;
-    background: var(--color-blue-900);
-    color: rgb(255 255 255 / 0.72);
+    background: #fff;
+    border-top: 1px solid var(--color-line-strong);
+    color: var(--color-ink-600);
     padding: clamp(36px, 4vw, 52px) 20px 20px;
     font-family: var(--font-sans);
   }
@@ -145,7 +154,7 @@ const { email, phone } = settings;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     line-height: normal;
-    color: #fff;
+    color: var(--color-ink-900);
   }
   .ftr__list {
     display: flex;
@@ -156,15 +165,14 @@ const { email, phone } = settings;
     list-style: none;
   }
   .ftr__link {
-    color: rgb(255 255 255 / 0.72);
+    color: var(--color-ink-600);
     text-decoration: none;
     font-size: 16px;
     line-height: 1.4;
     overflow-wrap: anywhere;
   }
-  .ftr__link:hover,
-  .ftr__more:hover {
-    color: #fff;
+  .ftr__link:hover {
+    color: var(--color-ink-900);
   }
   .ftr__contact {
     display: flex;
@@ -178,36 +186,50 @@ const { email, phone } = settings;
     line-height: 1.55;
     white-space: pre-line;
   }
-  .ftr__actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .ftr__more {
-    color: var(--color-sky-400);
+  .ftr__btn {
+    align-self: flex-start;
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: var(--color-blue-700);
+    color: #fff;
     font-size: 15px;
     font-weight: 600;
     text-decoration: none;
+  }
+  .ftr__btn:hover {
+    background: var(--color-ink-900);
+  }
+  .ftr__socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
   .ftr__social {
     display: inline-flex;
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    border: 1.5px solid var(--color-sky-400);
-    color: var(--color-sky-400);
+    border: 1.5px solid var(--color-blue-700);
+    color: var(--color-blue-700);
     align-items: center;
     justify-content: center;
+  }
+  .ftr__social:hover {
+    background: var(--color-blue-700);
+    color: #fff;
   }
   .ftr__legal {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 10px 24px;
-    border-top: 1px solid rgb(255 255 255 / 0.15);
+    border-top: 1px solid var(--color-line-strong);
     padding-top: 18px;
     font-size: 14px;
-    color: rgb(255 255 255 / 0.6);
+    color: var(--color-ink-600);
   }
   .ftr__legal-link {
     color: inherit;

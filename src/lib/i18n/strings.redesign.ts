@@ -25,11 +25,15 @@ export const redesignEn = {
   menuExplore: 'Explore',
   menuConnect: 'Connect with us',
   menuFacebookLabel: 'SKO on Facebook',
+  menuTelegramLabel: 'SKO on Telegram',
+  menuInstagramLabel: 'SKO on Instagram',
+  menuYoutubeLabel: 'SKO on YouTube',
 
   // --- Homepage hero --------------------------------------------------------
   heroSubtitle:
     "Since 2007, we've supported vulnerable families in Phnom Penh to build safer, healthier homes for their children.",
   heroVolunteer: 'Volunteer with SKO',
+  donate: 'Donate',
   heroRegistered: 'Registered NGO · Permit No. 457',
   heroAnnualReports: 'Annual reports',
 
@@ -54,6 +58,25 @@ export const redesignEn = {
   getInvolvedLabel: 'Get involved',
   getInvolvedAnnualReports: 'Annual reports',
 
+  // --- Donate page (draft copy, awaiting SKO approval) ----------------------
+  donateTitle: 'Help a child grow up safe, in their own family',
+  donateIntro:
+    "Your gift supports SKO's social work with families in Phnom Penh's urban poor communities. Scan a KHQR code with any Cambodian banking app, or transfer to the account below.",
+  donateBack: 'Back to the website',
+  donateScanHeading: 'Scan to give',
+  donateStep1: 'Open your banking app',
+  donateStep2: 'Scan the KHQR code',
+  donateStep3: 'Enter an amount and confirm',
+  donateSample: 'Sample, not payable',
+  donateBankHeading: 'Bank transfer',
+  donateBankName: 'Bank',
+  donateAccountName: 'Account name',
+  donateAccountNumber: 'Account number',
+  donateSupportsHeading: 'What your gift supports',
+  donateReceipt: 'Need a receipt? Email {email} with your transfer reference and date.',
+  donateThanks: 'Thank you. Every gift, whatever its size, helps a family stay together.',
+  donateNoCards: 'SKO never asks for card details on this website.',
+
   // --- Footer ---------------------------------------------------------------
   footerGetInvolvedHeading: 'Get involved',
   footerOurWorkHeading: 'Our work',
@@ -73,4 +96,5 @@ export const redesignEn = {
 
 export const redesignKm: Partial<Record<keyof typeof redesignEn, string>> = {
   // TODO(km): every redesign string above needs a Khmer value from SKO staff.
+  donate: 'បរិច្ចាគ',
 };

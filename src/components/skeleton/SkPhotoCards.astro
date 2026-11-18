@@ -1,0 +1,145 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { SkAction, SkCardItem } from '~/lib/skeleton-content';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkSection from './SkSection.astro';
+
+interface Props {
+  lang: Locale;
+  heading: string;
+  items: SkCardItem[];
+  more?: SkAction | null;
+}
+
+const { lang, heading, items, more } = Astro.props;
+---
+
+{
+  items.length > 0 && (
+    <SkSection>
+      <div class="cards__head">
+        <h2 class="sk-h2">{heading}</h2>
+        {more && (
+          <a href={more.href} class="sk-link">
+            {more.label} →
+          </a>
+        )}
+      </div>
+      <ul class="cards__grid">
+        {items.map((item) => (
+          <li class="cards__item">
+            <a href={item.href} class="cards__card">
+              <div class="cards__media sk-media">
+                {item.image && (
+                  <ResponsiveImage
+                    image={item.image}
+                    lang={lang}
+                    alt=""
+                    aspect="4/5"
+                    sizes="(min-width: 64rem) 25vw, (min-width: 40rem) 50vw, 80vw"
+                  />
+                )}
+              </div>
+              <h3 class="cards__title" lang={item.titleLang}>
+                {item.title}
+              </h3>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </SkSection>
+  )
+}
+
+<style>
+  .cards__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px 32px;
+  }
+  .cards__grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(78vw, 320px);
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .cards__grid::-webkit-scrollbar {
+    display: none;
+  }
+  .cards__item {
+    scroll-snap-align: start;
+  }
+  .cards__card {
+    position: relative;
+    display: block;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    color: #fff;
+    text-decoration: none;
+    isolation: isolate;
+  }
+  .cards__media {
+    aspect-ratio: 4 / 5;
+    height: 100%;
+    border-radius: 0;
+  }
+  .cards__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .cards__card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgb(0 0 0 / 0.8), rgb(0 0 0 / 0) 55%);
+    pointer-events: none;
+  }
+  .cards__title {
+    position: absolute;
+    inset: 20px 20px auto;
+    z-index: 1;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 1rem + 0.8vw, 1.75rem);
+    font-weight: 600;
+    line-height: 1.15;
+    color: #fff;
+    text-wrap: balance;
+  }
+  .cards__card:focus-visible {
+    outline: 3px solid var(--color-blue-700);
+    outline-offset: 3px;
+  }
+  @media (min-width: 40rem) {
+    .cards__grid {
+      grid-auto-flow: row;
+      grid-auto-columns: auto;
+      grid-template-columns: repeat(2, 1fr);
+      overflow: visible;
+    }
+  }
+  @media (min-width: 64rem) {
+    .cards__grid {
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+      grid-auto-flow: column;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cards__media :global(img) {
+      transition: transform 0.5s ease;
+    }
+    .cards__card:is(:hover, :focus-visible) .cards__media :global(img) {
+      transform: scale(1.05);
+    }
+  }
+</style>

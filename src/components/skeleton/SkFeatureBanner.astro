@@ -1,0 +1,100 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { CmsImage } from '~/lib/content/types';
+import type { SkAction } from '~/lib/skeleton-content';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+
+interface Props {
+  lang: Locale;
+  image?: CmsImage | null;
+  title: string;
+  titleLang?: string;
+  action: SkAction;
+}
+
+const { lang, image, title, titleLang, action } = Astro.props;
+---
+
+{
+  image && title && (
+    <section class="banner">
+      <div class="banner__media">
+        <ResponsiveImage image={image} lang={lang} alt="" sizes="100vw" />
+      </div>
+      <div class="banner__text">
+        <h2 class="banner__title" lang={titleLang}>
+          {title}
+        </h2>
+        <a href={action.href} class="banner__btn">
+          {action.label}
+        </a>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .banner {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    min-height: min(731px, 80svh);
+    padding: clamp(64px, 10vw, 120px) 20px;
+    border-radius: 0 0 clamp(20px, 3vw, 32px) clamp(20px, 3vw, 32px);
+    overflow: hidden;
+    background: var(--color-ink-900);
+  }
+  .banner__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+  .banner__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgb(14 21 51 / 0.5);
+  }
+  .banner__media :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .banner__text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    max-width: 18ch;
+    text-align: center;
+  }
+  .banner__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.25rem, 1rem + 5vw, 5.75rem);
+    font-weight: 500;
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    color: #fff;
+    text-wrap: balance;
+  }
+  :global(:lang(km)) .banner__title {
+    letter-spacing: normal;
+    line-height: 1.4;
+  }
+  .banner__btn {
+    padding: 14px 28px;
+    border-radius: 999px;
+    background: var(--color-blue-700);
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none;
+    transition: background-color 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .banner__btn:is(:hover, :focus-visible) {
+    background: var(--color-blue-800);
+  }
+</style>

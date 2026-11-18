@@ -1,0 +1,12 @@
+---
+import { donatePageLive } from '~/config/donation';
+import Donate from '~/page-templates/sko/Donate.astro';
+
+// A dynamic route so a production build can leave the page out while the
+// donation details are still placeholders (see src/config/donation.ts).
+export function getStaticPaths() {
+  return donatePageLive ? [{ params: { donate: 'donate' } }] : [];
+}
+---
+
+<Donate lang="km" />

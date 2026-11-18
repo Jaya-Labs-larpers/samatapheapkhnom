@@ -102,12 +102,12 @@
     min-width: 0;
   }
   .sk-hero--home .sk-h1 {
-    max-width: 18ch;
+    max-width: 16ch;
     color: #fff;
     font-family: var(--font-hero);
     font-weight: 600;
-    font-size: min(var(--text-display), 9svh);
-    line-height: var(--text-display--line-height);
+    font-size: clamp(2.75rem, 1rem + 7vw, 6.5rem);
+    line-height: 1.02;
     letter-spacing: var(--text-display--letter-spacing);
   }
   .sk-hero--home .sk-eyebrow {
@@ -175,13 +175,13 @@
     max-width: 18ch;
   }
   .sk-cta-split .sk-btn--light {
-    border-color: #fff;
-    background: #fff;
-    color: var(--color-blue-800);
+    border-color: var(--color-blue-700);
+    background: var(--color-blue-700);
+    color: #fff;
   }
   .sk-cta-split .sk-btn--light:hover {
-    border-color: var(--color-sky-50);
-    background: var(--color-sky-50);
+    border-color: var(--color-blue-800);
+    background: var(--color-blue-800);
   }
   .sk-cta-split .sk-btn--ghost:hover {
     border-color: #fff;
@@ -530,5 +530,245 @@
   }
   :lang(km) :is(.sk-eyebrow, .sk-btn) {
     letter-spacing: normal;
+  }
+}
+
+/* Editorial restyle: oversized light type, pill buttons, generous space, rounded media. */
+@layer components {
+  .sk-section {
+    padding: clamp(64px, 9vw, 140px) clamp(20px, 5.5vw, 80px);
+  }
+  .sk-section--tint {
+    background: var(--color-surface-subtle);
+  }
+  .sk-wrap {
+    max-width: 1280px;
+    gap: clamp(28px, 3.5vw, 56px);
+  }
+  .sk-h1,
+  .sk-h2,
+  .sk-h3 {
+    font-weight: 400;
+  }
+  .sk-h1 {
+    max-width: 20ch;
+    font-size: clamp(2.5rem, 1.2rem + 5.2vw, 5.5rem);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+  }
+  .sk-h2 {
+    font-size: clamp(2rem, 1rem + 3.4vw, 3.75rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  .sk-h3 {
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  /* The first screen holds the whole hero, buttons included: the headline
+     scales with the window's height as well as its width, so a short laptop
+     or a phone with its toolbar showing never pushes the buttons below the fold. */
+  .sk-hero--home {
+    align-items: flex-end;
+    padding-bottom: calc(clamp(32px, 7svh, 80px) + var(--safe-bottom));
+  }
+  .sk-hero--home .sk-hero__text {
+    gap: clamp(16px, 2.6svh, 28px);
+  }
+  .sk-hero--home .sk-h1 {
+    max-width: 16ch;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.5rem, min(1rem + 6vw, 10svh), 6rem);
+    line-height: 1.04;
+    letter-spacing: -0.035em;
+  }
+  .sk-hero--home .sk-btn {
+    background: #fff;
+    color: var(--color-ink-900);
+  }
+  .sk-hero--home .sk-btn:hover {
+    background: var(--color-blue-50);
+  }
+  .sk-hero--home .sk-btn--outline {
+    background: transparent;
+    color: #fff;
+    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.85);
+  }
+  .sk-hero--home .sk-btn--outline:hover {
+    background: #fff;
+    color: var(--color-ink-900);
+  }
+  .sk-hero--home .sk-eyebrow {
+    color: rgb(255 255 255 / 0.8);
+  }
+  .sk-lead {
+    font-size: clamp(1.125rem, 1rem + 0.55vw, 1.5rem);
+    letter-spacing: -0.01em;
+  }
+  .sk-eyebrow {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--color-ink-600);
+  }
+  .sk-btn {
+    min-height: 50px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-ink-900);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-transform: none;
+  }
+  .sk-btn::after {
+    content: '→';
+    font-size: 15px;
+  }
+  .sk-btn:hover {
+    border: 0;
+    background: var(--color-blue-700);
+  }
+  .sk-btn--outline {
+    background: transparent;
+    color: var(--color-ink-900);
+    box-shadow: inset 0 0 0 1.5px var(--color-ink-900);
+  }
+  .sk-btn--outline:hover {
+    background: var(--color-ink-900);
+    color: #fff;
+  }
+  .sk-section--dark .sk-btn--outline {
+    box-shadow: inset 0 0 0 1.5px #fff;
+    color: #fff;
+  }
+  .sk-cta-split .sk-btn--light {
+    background: var(--color-blue-700);
+    color: #fff;
+  }
+  .sk-cta-split .sk-btn--light:hover {
+    background: var(--color-blue-800);
+  }
+  .sk-cta-split .sk-btn--ghost {
+    background: transparent;
+    color: #fff;
+    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.85);
+  }
+  .sk-link {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--color-ink-900);
+    text-decoration: none;
+    box-shadow: inset 0 -1px 0 var(--color-ink-900);
+  }
+  .sk-link:hover {
+    color: var(--color-blue-700);
+    box-shadow: inset 0 -1px 0 var(--color-blue-700);
+  }
+  .sk-grid {
+    gap: clamp(16px, 1.6vw, 24px);
+  }
+  .sk-card {
+    gap: 16px;
+    padding: clamp(24px, 2.2vw, 32px);
+    border: 0;
+    border-radius: 16px;
+    background: var(--color-surface-subtle);
+  }
+  .sk-section--tint .sk-card {
+    background: #fff;
+  }
+  .sk-card__media {
+    margin: calc(-1 * clamp(24px, 2.2vw, 32px)) calc(-1 * clamp(24px, 2.2vw, 32px)) 0;
+    border-radius: 16px 16px 0 0;
+  }
+  .sk-media {
+    border-radius: 16px;
+  }
+  .sk-director__photo {
+    border-radius: 16px;
+  }
+  .sk-director__quote {
+    font-size: clamp(1.5rem, 1rem + 2vw, 2.75rem);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    font-weight: 400;
+  }
+  .sk-quote {
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+  }
+  .sk-stat {
+    padding-top: 24px;
+    border-top: 1px solid var(--color-ink-900);
+  }
+  .sk-stat__num {
+    font-size: clamp(3rem, 1rem + 6vw, 6.5rem);
+    font-weight: 400;
+    letter-spacing: -0.04em;
+    color: var(--color-ink-900);
+  }
+  .sk-section--dark .sk-stat__num {
+    color: #fff;
+  }
+  .sk-section--dark .sk-stat {
+    border-color: rgb(255 255 255 / 0.4);
+  }
+  .sk-row {
+    padding: clamp(20px, 2.4vw, 32px) 0;
+    border-top: 1px solid var(--color-ink-900);
+  }
+  .sk-donate {
+    border: 0;
+    border-radius: 24px;
+    box-shadow: none;
+    background: var(--color-surface-subtle);
+  }
+  .sk-seg > span {
+    border: 0;
+    border-radius: 999px;
+    background: #fff;
+  }
+  .sk-seg > .is-on {
+    background: var(--color-blue-50);
+    box-shadow: inset 0 0 0 1.5px var(--color-blue-700);
+  }
+  .sk-chip,
+  .sk-pill {
+    border-radius: 999px;
+  }
+  .sk-faq summary {
+    font-weight: 500;
+    font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  }
+  .sk-cta-split {
+    background: var(--color-ink-900);
+  }
+  .sk-cta-split .sk-h2 {
+    max-width: 14ch;
+    font-size: clamp(2.25rem, 1rem + 4.2vw, 4.75rem);
+    letter-spacing: -0.035em;
+  }
+  .sk-cta-split__panel {
+    padding: clamp(56px, 8vw, 120px) clamp(20px, 5.5vw, 80px);
+  }
+  :lang(km) :is(.sk-h1, .sk-h2, .sk-h3, .sk-quote, .sk-director__quote, .sk-stat__num) {
+    letter-spacing: normal;
+    line-height: 1.45;
+  }
+  :lang(km) .sk-hero--home .sk-h1 {
+    letter-spacing: normal;
+    line-height: 1.35;
+    font-size: clamp(2rem, min(1rem + 5vw, 8svh), 5rem);
+  }
+  :lang(km) .sk-stat__num {
+    line-height: 1.1;
   }
 }

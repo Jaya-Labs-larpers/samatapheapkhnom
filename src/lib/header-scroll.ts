@@ -1,21 +1,41 @@
+function isDarkColor(color: string): boolean | null {
+  const [r, g, b, a = 1] = color.match(/[\d.]+/g)?.map(Number) ?? [];
+  if (r === undefined || g === undefined || b === undefined) return null;
+  if (a < 0.5) return null;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 140;
+}
+
+/** Whether the page content under the given point is dark, skipping the header itself. */
+function contentIsDark(header: HTMLElement, x: number, y: number): boolean {
+  const below = document.elementsFromPoint(x, y).find((el) => !header.contains(el));
+  for (let el: Element | null = below ?? null; el; el = el.parentElement) {
+    const dark = isDarkColor(getComputedStyle(el).backgroundColor);
+    if (dark !== null) return dark;
+  }
+  return false;
+}
+
 export function initHeaderScroll(): void {
   const header = document.querySelector<HTMLElement>('header.site-header');
   if (!header) return;
+  const probe = header.querySelector<HTMLElement>('.hdr__tools') ?? header;
 
   let ticking = false;
   const update = () => {
     ticking = false;
     header.toggleAttribute('data-scrolled', window.scrollY > header.offsetHeight);
+    const box = probe.getBoundingClientRect();
+    const dark = contentIsDark(header, box.left + box.width / 2, box.top + box.height / 2);
+    header.dataset.tone = dark ? 'dark' : 'light';
+  };
+
+  const schedule = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
   };
 
   update();
-  window.addEventListener(
-    'scroll',
-    () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    },
-    { passive: true },
-  );
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', schedule, { passive: true });
 }

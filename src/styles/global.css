@@ -69,18 +69,8 @@
 header.site-header {
   view-transition-name: site-header;
   height: var(--header-h);
-  background: var(--color-canvas);
-  border-bottom: 1px solid var(--color-line-subtle);
-  transition:
-    background-color var(--duration-base) var(--ease-out-soft),
-    border-color var(--duration-base) var(--ease-out-soft),
-    box-shadow var(--duration-base) var(--ease-out-soft);
-}
-
-/* Down the page, a returning header needs a lift to separate it from the text
-   it now sits over. */
-header.site-header[data-scrolled] {
-  box-shadow: var(--shadow-md);
+  background: transparent;
+  border-bottom: 0;
 }
 
 /* How much of the top of the window the header covers right now: sticky
@@ -92,21 +82,10 @@ header.site-header[data-scrolled] {
 /*
  * Overlay mode, for pages that open on a full-bleed hero: the header keeps its
  * place but gives up its surface, so the art runs to the top of the window
- * instead of starting under a white band. It takes the paper back as soon as
- * the page scrolls — past that point the nav would sit on running text, and no
- * amount of contrast juggling makes that legible.
- *
- * `data-at-top` is rendered server-side and only corrected by the observer in
- * Header.astro, so a page loaded at the top paints transparent immediately
- * instead of flashing white.
+ * instead of starting under a white band.
  */
 :root:has(main > [data-hero-dark]:first-child) header.site-header {
   margin-bottom: calc(var(--header-h) * -1);
-}
-:root:has(main > [data-hero-dark]:first-child) header.site-header:not([data-scrolled]) {
-  background: transparent;
-  border-bottom-color: transparent;
-  box-shadow: none;
 }
 main > .sk-hero--home[data-hero-dark] {
   min-height: 100svh;

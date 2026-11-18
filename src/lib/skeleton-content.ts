@@ -1,4 +1,5 @@
 import { defaultLocale, type Locale } from './i18n/config';
+import { donatePageLive } from '~/config/donation';
 import type { Activity, CmsImage, FaqItem, ImpactStat, Program, Story } from './content/types';
 import { ui, type UIKey } from './i18n/strings';
 import { formatDate, formatNumber, langAttr, localizePath, pick, t } from './i18n/utils';
@@ -73,6 +74,21 @@ export interface SkFaqItem {
   questionLang?: string;
   answer: string;
   answerLang?: string;
+}
+
+export function donateHref(lang: Locale): string {
+  return localizePath(donatePageLive ? '/donate' : '/contact?topic=donate', lang);
+}
+
+export function heroActions(lang: Locale): SkAction[] {
+  return [
+    { label: t(lang, 'donate'), href: donateHref(lang) },
+    {
+      label: t(lang, 'partnerWithUs'),
+      href: localizePath('/contact?topic=partner', lang),
+      outline: true,
+    },
+  ];
 }
 
 export function ctaActions(lang: Locale): SkAction[] {

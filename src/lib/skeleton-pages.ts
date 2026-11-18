@@ -62,7 +62,6 @@ export const skeletonPages: SkeletonPage[] = [
     ['/philippines', 'Philippines'],
   ]),
   ...pages('giving', [
-    ['/donate', 'Donate'],
     ['/ways-to-give', 'Ways to give'],
     ['/majorgifts', 'Major gifts'],
     ['/legacy-giving', 'Legacy gifts'],

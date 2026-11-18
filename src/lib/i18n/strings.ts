@@ -174,7 +174,7 @@ const en = {
   // can edit them; the keys stay as the fallback.
   homeEyebrow: 'Phnom Penh, Cambodia · Since 2007',
   homeHeroIntro:
-    "Samatapheap Khnom Organization (SKO) is a Cambodian local NGO supporting vulnerable families, children and communities in Phnom Penh's urban poor and migrant communities since 2007. SKO is recognized as Cambodia's leading expert in family care and social work.",
+    "Samatapheap Khnom Organization is a Cambodian local NGO supporting vulnerable families, children and communities in Phnom Penh's urban poor and migrant communities since 2007.",
   introPrograms:
     "SKO runs four family support programs in Phnom Penh's urban poor communities, all delivered through one approach, the Family Development Program: social work services so that a child grows up safe, in a family, in their own community.",
   introActivities:
@@ -403,7 +403,7 @@ const km: Record<keyof typeof en, string> = {
 
   homeEyebrow: 'ភ្នំពេញ កម្ពុជា · តាំងពីឆ្នាំ ២០០៧',
   homeHeroIntro:
-    'អង្គការសមត្ថភាពខ្ញុំ (SKO) ជាអង្គការក្រៅរដ្ឋាភិបាលក្នុងស្រុករបស់កម្ពុជា ដែលធ្វើការគាំទ្រកុមារ គ្រួសារ និងសហគមន៍ងាយរងគ្រោះ ជាពិសេសនៅសហគមន៍ក្រីក្រទីក្រុង និងសហគមន៍ចំណាកស្រុក។ SKO ត្រូវបានទទួលស្គាល់ថាជាអ្នកជំនាញឈានមុខគេនៅកម្ពុជា ក្នុងវិស័យថែទាំគ្រួសារ និងសង្គមកិច្ច។',
+    'អង្គការសមត្ថភាពខ្ញុំ ជាអង្គការក្រៅរដ្ឋាភិបាលក្នុងស្រុករបស់កម្ពុជា ដែលធ្វើការគាំទ្រកុមារ គ្រួសារ និងសហគមន៍ងាយរងគ្រោះ ជាពិសេសនៅសហគមន៍ក្រីក្រទីក្រុង និងសហគមន៍ចំណាកស្រុក។',
   introPrograms:
     'គម្រោងបួន វិធីសាស្ត្រតែមួយ៖ កុមារធំធាត់ដោយសុវត្ថិភាព ក្នុងគ្រួសារ និងក្នុងសហគមន៍ខ្លួនឯង។',
   introActivities: 'អ្វីដែលក្រុមការងាររបស់យើងកំពុងធ្វើ ពីខែមួយទៅខែមួយ។',

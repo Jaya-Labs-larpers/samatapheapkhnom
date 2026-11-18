@@ -1,0 +1,206 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { categoryLabels } from '~/lib/skeleton-content';
+import { eventTabs, type SkEventRow } from '~/lib/events';
+import SkSection from './SkSection.astro';
+
+interface Props {
+  lang: Locale;
+  heading: string;
+  readMore: string;
+  rows: SkEventRow[];
+}
+
+const { lang, heading, readMore, rows } = Astro.props;
+const tabs = eventTabs(rows);
+const tabbed = tabs.length > 1;
+---
+
+{
+  tabs.length > 0 && (
+    <SkSection>
+      <h2 class="sk-h2">{heading}</h2>
+      <div class="events" data-events>
+        {tabbed && (
+          <div class="events__tabs" role="tablist" data-events-tabs hidden>
+            {tabs.map((tab, index) => (
+              <button
+                type="button"
+                role="tab"
+                class="events__tab"
+                id={`events-tab-${tab.category}`}
+                aria-controls={`events-panel-${tab.category}`}
+                aria-selected={index === 0 ? 'true' : 'false'}
+                tabindex={index === 0 ? 0 : -1}
+              >
+                {categoryLabels[tab.category]?.[lang]}
+              </button>
+            ))}
+          </div>
+        )}
+        {tabs.map((tab) => (
+          <div
+            class="events__panel"
+            id={`events-panel-${tab.category}`}
+            role={tabbed ? 'tabpanel' : undefined}
+            aria-labelledby={tabbed ? `events-tab-${tab.category}` : undefined}
+          >
+            {tabbed && <h3 class="sr-only">{categoryLabels[tab.category]?.[lang]}</h3>}
+            <ul class="events__list">
+              {tab.rows.map((row) => (
+                <li class="events__row">
+                  <time class="events__day" datetime={row.datetime} aria-hidden="true">
+                    <b>{row.day}</b>
+                    <span>{row.month}</span>
+                  </time>
+                  <div class="events__text">
+                    <h3 class="events__title" lang={row.titleLang}>
+                      <a href={row.href} class="sk-stretch">
+                        {row.title}
+                      </a>
+                    </h3>
+                    <p class="events__date">{row.date}</p>
+                  </div>
+                  <span class="events__go">{readMore}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </SkSection>
+  )
+}
+
+<style>
+  .events__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .events__tab {
+    padding: 8px 18px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    font: inherit;
+    font-weight: 500;
+    color: var(--color-ink-600);
+    cursor: pointer;
+  }
+  .events__tab[aria-selected='true'] {
+    border-color: var(--color-ink-900);
+    color: var(--color-ink-900);
+  }
+  .events__tab:focus-visible {
+    outline: 3px solid var(--color-blue-700);
+    outline-offset: 2px;
+  }
+  .events__panel[hidden] {
+    display: none;
+  }
+  .events__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .events__row {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 16px 24px;
+    padding: 20px 0;
+    border-top: 1px solid var(--color-line-strong);
+  }
+  .events__row:last-child {
+    border-bottom: 1px solid var(--color-line-strong);
+  }
+  .events__day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--color-blue-50);
+    color: var(--color-ink-900);
+    line-height: 1.1;
+  }
+  .events__day b {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 600;
+  }
+  .events__day span {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+  }
+  .events__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.125rem, 1rem + 0.5vw, 1.5rem);
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--color-ink-900);
+  }
+  .events__title a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .events__date {
+    margin: 4px 0 0;
+    font-size: 0.9375rem;
+    color: var(--color-ink-600);
+  }
+  .events__go {
+    grid-column: 2;
+    justify-self: start;
+    padding: 8px 18px;
+    border: 1px solid var(--color-ink-900);
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--color-ink-900);
+  }
+  @media (min-width: 40rem) {
+    .events__row {
+      grid-template-columns: auto 1fr auto;
+    }
+    .events__go {
+      grid-column: auto;
+    }
+  }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-events]')) {
+    const bar = root.querySelector<HTMLElement>('[data-events-tabs]');
+    if (!bar) continue;
+    const tabs = [...bar.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('.events__panel')];
+
+    const select = (index: number, focus = false) => {
+      tabs.forEach((tab, i) => {
+        tab.setAttribute('aria-selected', String(i === index));
+        tab.tabIndex = i === index ? 0 : -1;
+      });
+      panels.forEach((panel, i) => (panel.hidden = i !== index));
+      if (focus) tabs[index]?.focus();
+    };
+
+    bar.hidden = false;
+    select(0);
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => select(index));
+      tab.addEventListener('keydown', (event) => {
+        const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+        if (!step) return;
+        event.preventDefault();
+        select((index + step + tabs.length) % tabs.length, true);
+      });
+    });
+  }
+</script>

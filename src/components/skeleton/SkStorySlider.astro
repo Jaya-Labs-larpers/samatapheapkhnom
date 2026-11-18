@@ -1,0 +1,249 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Story } from '~/lib/content/types';
+import { langAttr, localizePath, pick, t, tLang } from '~/lib/i18n/utils';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkSection from './SkSection.astro';
+
+interface Props {
+  lang: Locale;
+  heading: string;
+  stories: Story[];
+}
+
+const { lang, heading, stories } = Astro.props;
+const cards = stories.map((story) => {
+  const quote = pick(story.quote, lang);
+  const role = pick(story.personRole, lang);
+  return {
+    href: localizePath(`/stories/${story.slug ?? story._id}`, lang),
+    name: story.personName ?? '',
+    role: role.value,
+    roleLang: langAttr(role),
+    quote: quote.value,
+    quoteLang: langAttr(quote),
+    photo: story.useSilhouette ? null : (story.photo ?? null),
+  };
+});
+const slider = cards.length > 1;
+const single = cards.length === 1;
+---
+
+{
+  cards.length > 0 && (
+    <SkSection tone="tint">
+      <div data-carousel class="slider">
+        <div class="slider__head">
+          <h2 class="sk-h2" lang={tLang(lang, 'storiesHeading')}>
+            {heading}
+          </h2>
+          {slider && (
+            <div class="slider__buttons">
+              <button
+                type="button"
+                class="slider__btn"
+                aria-label={t(lang, 'storiesPrevious')}
+                data-carousel-prev
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                class="slider__btn"
+                aria-label={t(lang, 'storiesNext')}
+                data-carousel-next
+              >
+                →
+              </button>
+            </div>
+          )}
+        </div>
+        <ul class:list={['slider__track', single && 'slider__track--single']} data-carousel-track>
+          {cards.map((card) => (
+            <li class="slider__item">
+              <a href={card.href} class="slider__card">
+                {card.photo && (
+                  <ResponsiveImage
+                    image={card.photo}
+                    lang={lang}
+                    alt=""
+                    aspect="360/457"
+                    sizes={
+                      single ? '(min-width: 80rem) 1240px, 100vw' : '(min-width: 40rem) 360px, 80vw'
+                    }
+                  />
+                )}
+                <div class="slider__top">
+                  {card.name && <b>{card.name}</b>}
+                  {card.role && <span lang={card.roleLang}>{card.role}</span>}
+                </div>
+                <div class="slider__bottom">
+                  {card.quote && (
+                    <p class="slider__quote" lang={card.quoteLang}>
+                      {card.quote}
+                    </p>
+                  )}
+                  {single && <span class="slider__more">{t(lang, 'readTheStory')} →</span>}
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </SkSection>
+  )
+}
+
+<script>
+  import { initCarousels } from '~/lib/carousel';
+
+  initCarousels();
+</script>
+
+<style>
+  .slider {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .slider__head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .slider__buttons {
+    display: flex;
+    gap: 8px;
+  }
+  .slider__btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 50%;
+    background: #fff;
+    font-size: 18px;
+    color: var(--color-ink-900);
+    cursor: pointer;
+  }
+  .slider__btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .slider__track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(80vw, 360px);
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .slider__track::-webkit-scrollbar {
+    display: none;
+  }
+  .slider__item {
+    scroll-snap-align: start;
+  }
+  .slider__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 457px;
+    padding: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--color-ink-900);
+    color: #fff;
+    text-decoration: none;
+  }
+  .slider__card :global(img) {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .slider__card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.7),
+      rgb(0 0 0 / 0) 40%,
+      rgb(0 0 0 / 0) 55%,
+      rgb(0 0 0 / 0.75)
+    );
+  }
+  .slider__top {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .slider__top b {
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+  .slider__top span {
+    font-size: 0.9375rem;
+    opacity: 0.9;
+  }
+  .slider__quote {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+  .slider__bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .slider__more {
+    font-weight: 600;
+  }
+  .slider__track--single {
+    grid-auto-columns: 100%;
+    overflow: visible;
+  }
+  .slider__track--single .slider__card {
+    min-height: min(80vh, 720px);
+    padding: clamp(24px, 5vw, 64px);
+    border-radius: 16px;
+  }
+  .slider__track--single .slider__top b {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+  }
+  .slider__track--single .slider__top span {
+    font-size: 1.0625rem;
+  }
+  .slider__track--single .slider__quote {
+    max-width: 46rem;
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+    line-height: 1.4;
+  }
+  .slider__card:focus-visible {
+    outline: 3px solid var(--color-blue-700);
+    outline-offset: 3px;
+  }
+</style>

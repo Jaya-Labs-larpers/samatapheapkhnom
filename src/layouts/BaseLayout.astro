@@ -8,6 +8,7 @@ import { gtmId, hasSanity, smoothScrollEnabled } from '~/lib/config';
 import type { CmsImage } from '~/lib/content/types';
 import Header from '~/components/layout/Header.astro';
 import Footer from '~/components/layout/Footer.astro';
+import MinimalHeader from '~/components/layout/MinimalHeader.astro';
 import PageLoader from '~/components/layout/PageLoader.astro';
 import SeoHead from '~/components/seo/SeoHead.astro';
 
@@ -25,6 +26,8 @@ interface Props {
   orgJsonLd?: Record<string, unknown> | null;
   /** Play the intro (PageLoader) when a visit starts on this page. */
   intro?: boolean;
+  /** A focused page (Donate): slim header, no footer, no third-party scripts. */
+  minimal?: boolean;
 }
 
 const {
@@ -38,6 +41,7 @@ const {
   jsonLd,
   orgJsonLd,
   intro,
+  minimal = false,
 } = Astro.props;
 
 const settings = await getSiteSettings();
@@ -47,9 +51,10 @@ const pathname = Astro.url.pathname;
   and parse never compete with the first paint. Page views are still counted:
   GTM fires its own page-view from the dataLayer once it starts.
 */
-const gtmLoader = gtmId
-  ? `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`
-  : '';
+const gtmLoader =
+  gtmId && !minimal
+    ? `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`
+    : '';
 const gtmSnippet =
   gtmLoader &&
   `(function(){var go=function(){${gtmLoader}};var idle=function(){(window.requestIdleCallback||function(f){setTimeout(f,1)})(go,{timeout:4000})};if(document.readyState==='complete')idle();else addEventListener('load',idle);})();`;
@@ -116,6 +121,7 @@ const preloadFonts =
       publishedAt={publishedAt}
       jsonLd={jsonLd}
       orgJsonLd={orgJsonLd}
+      noAnalytics={minimal}
     />
 
     {
@@ -149,7 +155,7 @@ const preloadFonts =
   </head>
   <body class="bg-white">
     {
-      gtmId && (
+      gtmId && !minimal && (
         <noscript>
           <iframe
             src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
@@ -169,13 +175,19 @@ const preloadFonts =
       {t(lang, 'skipToContent')}
     </a>
 
-    <Header lang={lang} pathname={pathname} settings={settings} />
+    {
+      minimal ? (
+        <MinimalHeader lang={lang} pathname={pathname} settings={settings} />
+      ) : (
+        <Header lang={lang} pathname={pathname} settings={settings} />
+      )
+    }
 
     <main id="main" tabindex="-1">
       <slot />
     </main>
 
-    <Footer lang={lang} settings={settings} pathname={pathname} />
+    {!minimal && <Footer lang={lang} settings={settings} pathname={pathname} />}
 
     <script>
       import { revealOnEntry } from '~/lib/reveal';

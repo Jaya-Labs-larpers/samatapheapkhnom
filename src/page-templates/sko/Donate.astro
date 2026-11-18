@@ -1,0 +1,327 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { UIKey } from '~/lib/i18n/strings';
+import { donation } from '~/config/donation';
+import { getPrograms, getSiteSettings } from '~/lib/content';
+import { langAttr, localizePath, pick, t, tLang } from '~/lib/i18n/utils';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import SkSection from '~/components/skeleton/SkSection.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const [settings, programs] = await Promise.all([getSiteSettings(), getPrograms()]);
+const steps: UIKey[] = ['donateStep1', 'donateStep2', 'donateStep3'];
+const supported = programs.flatMap((program) => {
+  const title = pick(program.title, lang);
+  const summary = pick(program.summary, lang);
+  return title.value
+    ? [
+        {
+          title: title.value,
+          titleLang: langAttr(title),
+          summary: summary.value,
+          summaryLang: langAttr(summary),
+          href: localizePath(`/programs/${program.slug}`, lang),
+        },
+      ]
+    : [];
+});
+const receipt = settings.email ? t(lang, 'donateReceipt').split('{email}') : null;
+---
+
+<BaseLayout
+  lang={lang}
+  title={t(lang, 'donate')}
+  description={t(lang, 'donateIntro')}
+  noindex
+  minimal
+>
+  <SkSection tone="tint">
+    <div class="donate__intro">
+      <p class="sk-eyebrow">{t(lang, 'donate')}</p>
+      <h1 class="sk-h1" lang={tLang(lang, 'donateTitle')}>{t(lang, 'donateTitle')}</h1>
+      <p class="sk-lead" lang={tLang(lang, 'donateIntro')}>{t(lang, 'donateIntro')}</p>
+    </div>
+  </SkSection>
+
+  <SkSection>
+    <div class="donate__grid">
+      <div class="donate__panel">
+        <h2 class="sk-h3" lang={tLang(lang, 'donateScanHeading')}>
+          {t(lang, 'donateScanHeading')}
+        </h2>
+        <ul class="donate__codes">
+          {
+            donation.accounts.map((account) => (
+              <li class="donate__code">
+                {account.qrImage ? (
+                  <img
+                    src={account.qrImage}
+                    alt={`KHQR ${account.currency}`}
+                    width="240"
+                    height="240"
+                    class="donate__qr"
+                  />
+                ) : (
+                  <div
+                    class="donate__qr donate__qr--sample"
+                    role="img"
+                    aria-label={t(lang, 'donateSample')}
+                  >
+                    <svg
+                      width="40"
+                      height="40"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="3" width="7" height="7" rx="1" />
+                      <rect x="14" y="3" width="7" height="7" rx="1" />
+                      <rect x="3" y="14" width="7" height="7" rx="1" />
+                      <path d="M14 14h3v3h-3zM18 18h3v3h-3z" />
+                    </svg>
+                    <span lang={tLang(lang, 'donateSample')}>{t(lang, 'donateSample')}</span>
+                  </div>
+                )}
+                <b class="donate__currency">{account.currency}</b>
+              </li>
+            ))
+          }
+        </ul>
+        <ol class="donate__steps">
+          {steps.map((key) => <li lang={tLang(lang, key)}>{t(lang, key)}</li>)}
+        </ol>
+      </div>
+
+      <div class="donate__panel">
+        <h2 class="sk-h3" lang={tLang(lang, 'donateBankHeading')}>
+          {t(lang, 'donateBankHeading')}
+        </h2>
+        {
+          donation.accounts.map((account) => (
+            <dl class="donate__account">
+              <div class="donate__account-head">
+                <b class="donate__currency">{account.currency}</b>
+                {donation.placeholder && (
+                  <span class="donate__flag" lang={tLang(lang, 'donateSample')}>
+                    {t(lang, 'donateSample')}
+                  </span>
+                )}
+              </div>
+              <div>
+                <dt lang={tLang(lang, 'donateBankName')}>{t(lang, 'donateBankName')}</dt>
+                <dd>{account.bankName}</dd>
+              </div>
+              <div>
+                <dt lang={tLang(lang, 'donateAccountName')}>{t(lang, 'donateAccountName')}</dt>
+                <dd>{account.accountName}</dd>
+              </div>
+              <div>
+                <dt lang={tLang(lang, 'donateAccountNumber')}>{t(lang, 'donateAccountNumber')}</dt>
+                <dd class="donate__number">{account.accountNumber}</dd>
+              </div>
+            </dl>
+          ))
+        }
+        {
+          receipt && (
+            <p class="sk-small" lang={tLang(lang, 'donateReceipt')}>
+              {receipt[0]}
+              <a href={`mailto:${settings.email}`} class="sk-link">
+                {settings.email}
+              </a>
+              {receipt[1]}
+            </p>
+          )
+        }
+        <p class="sk-small" lang={tLang(lang, 'donateNoCards')}>{t(lang, 'donateNoCards')}</p>
+      </div>
+    </div>
+  </SkSection>
+
+  {
+    supported.length > 0 && (
+      <SkSection tone="tint">
+        <h2 class="sk-h2" lang={tLang(lang, 'donateSupportsHeading')}>
+          {t(lang, 'donateSupportsHeading')}
+        </h2>
+        <ul class="donate__programs">
+          {supported.map((program) => (
+            <li>
+              <a href={program.href} class="donate__program">
+                <span class="sk-h3" lang={program.titleLang}>
+                  {program.title}
+                </span>
+                {program.summary && (
+                  <span class="sk-small" lang={program.summaryLang}>
+                    {program.summary}
+                  </span>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p class="donate__thanks" lang={tLang(lang, 'donateThanks')}>
+          {t(lang, 'donateThanks')}
+        </p>
+      </SkSection>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .donate__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 52rem;
+  }
+  .donate__grid {
+    display: grid;
+    gap: clamp(32px, 5vw, 64px);
+  }
+  .donate__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+  }
+  .donate__codes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .donate__code {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+  }
+  .donate__qr {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .donate__qr--sample {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-sizing: border-box;
+    padding: 16px;
+    border: 1.5px dashed var(--color-line-strong);
+    border-radius: 12px;
+    background: var(--color-surface-subtle);
+    color: var(--color-ink-600);
+    font-size: 14px;
+    text-align: center;
+  }
+  .donate__currency {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-900);
+  }
+  .donate__steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding-inline-start: 1.25em;
+    list-style: decimal;
+    color: var(--color-ink-700);
+  }
+  .donate__account {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 20px;
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+  }
+  .donate__account-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .donate__flag {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--color-surface-subtle);
+    color: var(--color-ink-600);
+    font-size: 13px;
+  }
+  .donate__account dt {
+    color: var(--color-ink-600);
+    font-size: 14px;
+  }
+  .donate__account dd {
+    margin: 2px 0 0;
+    color: var(--color-ink-900);
+    font-size: 17px;
+  }
+  .donate__number {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+  .donate__programs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .donate__program {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 24px;
+    border-radius: 16px;
+    background: #fff;
+    color: inherit;
+    text-decoration: none;
+    transition: box-shadow 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .donate__program .sk-small {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+  }
+  .donate__program:hover {
+    box-shadow: 0 0 0 1.5px var(--color-blue-700);
+  }
+  .donate__thanks {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.625rem);
+    color: var(--color-ink-900);
+  }
+  @media (min-width: 64rem) {
+    .donate__grid {
+      grid-template-columns: 1.2fr 1fr;
+      align-items: start;
+    }
+  }
+</style>
