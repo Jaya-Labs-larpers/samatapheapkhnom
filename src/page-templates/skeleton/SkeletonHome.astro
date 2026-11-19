@@ -10,6 +10,7 @@ import {
   getSiteSettings,
   getStories,
 } from '~/lib/content';
+import { localCmsImage } from '~/lib/sanity/image';
 import { ctaActions, heroActions, postItem, programCard, tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import SkSection from '~/components/skeleton/SkSection.astro';
@@ -44,9 +45,14 @@ const orgName = text(settings.orgName, lang);
 const tagline = pick(settings.tagline, lang);
 const brand = settings.orgShortName ?? 'SKO';
 const seoTitle = tStrict(lang, 'seoHome');
-const ctaImage = settings.homeHero?.[1] ?? programs.find((program) => program.image)?.image ?? null;
 const bannerProgram = programs.find((program) => program.image && pick(program.title, lang).value);
 const bannerTitle = bannerProgram ? pick(bannerProgram.title, lang) : null;
+const heroImage = {
+  ...localCmsImage('home-hero-family', {
+    en: 'A mother and her young child at home in a tin-walled house in Phnom Penh, talking with an SKO caseworker',
+  }),
+  hotspot: { x: 0.3, y: 0.4 },
+};
 ---
 
 <BaseLayout
@@ -59,8 +65,9 @@ const bannerTitle = bannerProgram ? pick(bannerProgram.title, lang) : null;
 >
   <SkHero
     home
+    keep
     lang={lang}
-    image={settings.homeHero?.[0] ?? null}
+    image={heroImage}
     title={tagline.value ?? orgName}
     titleLang={langAttr(tagline)}
     eyebrow={tStrict(lang, 'homeEyebrow')}
@@ -81,6 +88,7 @@ const bannerTitle = bannerProgram ? pick(bannerProgram.title, lang) : null;
 
   <SkPhotoCards
     lang={lang}
+    keep
     heading={tStrict(lang, 'whatWeDo')}
     items={programs.map((program) =>
       programCard(program, lang, tStrict(lang, 'viewAllPrograms') || tStrict(lang, 'viewAll')),
@@ -116,6 +124,7 @@ const bannerTitle = bannerProgram ? pick(bannerProgram.title, lang) : null;
       <SkFeatureBanner
         lang={lang}
         image={bannerProgram.image}
+        keep
         title={bannerTitle.value}
         titleLang={langAttr(bannerTitle)}
         action={{
@@ -128,6 +137,7 @@ const bannerTitle = bannerProgram ? pick(bannerProgram.title, lang) : null;
 
   <SkPosts
     heading={tStrict(lang, 'latestActivities')}
+    keep
     n={featured.length}
     lang={lang}
     readMore={tStrict(lang, 'readMore')}
@@ -138,7 +148,7 @@ const bannerTitle = bannerProgram ? pick(bannerProgram.title, lang) : null;
   <SkSplitCta
     lang={lang}
     card
-    image={ctaImage}
+    keep
     heading={tStrict(lang, 'ctaHomeTitle')}
     body={tStrict(lang, 'ctaHomeBody')}
     actions={ctaActions(lang)}

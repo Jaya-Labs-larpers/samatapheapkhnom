@@ -10,16 +10,17 @@ interface Props {
   title: string;
   titleLang?: string;
   action: SkAction;
+  keep?: boolean;
 }
 
-const { lang, image, title, titleLang, action } = Astro.props;
+const { lang, image, title, titleLang, action, keep = false } = Astro.props;
 ---
 
 {
   image && title && (
     <section class="banner">
       <div class="banner__media">
-        <ResponsiveImage image={image} lang={lang} alt="" sizes="100vw" />
+        <ResponsiveImage image={image} lang={lang} alt="" sizes="100vw" keep={keep} />
       </div>
       <div class="banner__text">
         <h2 class="banner__title" lang={titleLang}>
@@ -42,7 +43,6 @@ const { lang, image, title, titleLang, action } = Astro.props;
     box-sizing: border-box;
     min-height: min(731px, 80svh);
     padding: clamp(64px, 10vw, 120px) 20px;
-    border-radius: 0 0 clamp(20px, 3vw, 32px) clamp(20px, 3vw, 32px);
     overflow: hidden;
     background: var(--color-ink-900);
   }

@@ -14,9 +14,10 @@ interface Props {
   readMore?: string;
   items?: SkPostItem[];
   more?: SkAction | null;
+  keep?: boolean;
 }
 
-const { heading, n = 3, link, lang = 'en', readMore, items = [], more } = Astro.props;
+const { heading, n = 3, link, lang = 'en', readMore, items = [], more, keep = false } = Astro.props;
 const placeholders = Math.max(0, n - items.length);
 ---
 
@@ -26,13 +27,14 @@ const placeholders = Math.max(0, n - items.length);
     {
       items.map((item) => (
         <article class="sk-card">
-          {item.image !== undefined && (
+          {(keep ? Boolean(item.image) : item.image !== undefined) && (
             <div class="sk-media sk-card__media" style="aspect-ratio:3/2">
               <ResponsiveImage
                 image={item.image}
                 lang={lang}
                 alt=""
                 aspect="3/2"
+                keep={keep}
                 sizes="(min-width: 64rem) 380px, (min-width: 40rem) 50vw, 100vw"
               />
             </div>
@@ -93,24 +95,15 @@ const placeholders = Math.max(0, n - items.length);
 <style>
   .posts-more {
     display: flex;
-    align-items: center;
-    gap: clamp(16px, 3vw, 32px);
+    justify-content: center;
     margin-top: clamp(28px, 4vw, 44px);
   }
-  .posts-more::before,
-  .posts-more::after {
-    content: '';
-    flex: 1;
-    height: 2px;
-    background: var(--color-blue-700);
-    opacity: 0.35;
-  }
   .posts-more__btn {
-    flex: none;
-    padding: 12px 26px;
+    padding: clamp(16px, 2.4vw, 24px) clamp(36px, 5vw, 52px);
     border-radius: 999px;
     background: var(--color-blue-700);
     color: #fff;
+    font-size: clamp(1.25rem, 0.9rem + 1.6vw, 2rem);
     font-weight: 600;
     text-decoration: none;
     transition: background-color 0.25s ease;

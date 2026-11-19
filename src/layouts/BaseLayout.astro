@@ -138,17 +138,42 @@ const preloadFonts =
       (function () {
         var root = document.documentElement;
         var settled = 0;
+        var switchKey = 'sko-lang-switch';
+        var langSwitch = false;
+        try {
+          langSwitch = sessionStorage.getItem(switchKey) === '1';
+          if (langSwitch) sessionStorage.removeItem(switchKey);
+        } catch (error) {}
+        if (langSwitch) {
+          root.setAttribute('data-lang-switch', '');
+          setTimeout(function () {
+            root.removeAttribute('data-lang-switch');
+          }, 1500);
+        }
         addEventListener('pagereveal', function (event) {
           if (!event.viewTransition) return;
+          /* A language switch is the same page in another script. The content
+             crossfade is enough; the full arrival rise makes it read as slow. */
+          if (langSwitch) return;
           root.setAttribute('data-arriving', '');
           clearTimeout(settled);
           settled = setTimeout(function () {
             root.removeAttribute('data-arriving');
           }, 1500);
         });
-        addEventListener('pageswap', function () {
+        addEventListener('pageswap', function (event) {
           clearTimeout(settled);
           root.removeAttribute('data-arriving');
+          var entry = event.activation && event.activation.entry;
+          if (!entry || !entry.url) return;
+          var isKhmer = function (path) {
+            return path === '/km' || path.indexOf('/km/') === 0;
+          };
+          try {
+            if (isKhmer(location.pathname) !== isKhmer(new URL(entry.url).pathname)) {
+              sessionStorage.setItem(switchKey, '1');
+            }
+          } catch (error) {}
         });
       })();
     </script>

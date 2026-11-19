@@ -44,7 +44,7 @@ export const redesignEn = {
   storiesPrevious: 'Previous story',
   storiesNext: 'Next story',
   readHerStory: 'Read her story',
-  readTheStory: 'Read the story',
+  readTheStory: 'Read the full story',
   impactHeadline: 'Nearly 2,000 families supported across Phnom Penh',
   explainersHeading: 'Understand the issues',
   typeExplainer: 'Explainer',
@@ -97,4 +97,5 @@ export const redesignEn = {
 export const redesignKm: Partial<Record<keyof typeof redesignEn, string>> = {
   // TODO(km): every redesign string above needs a Khmer value from SKO staff.
   donate: 'បរិច្ចាគ',
+  readTheStory: 'អានរឿងទាំងស្រុង',
 };

@@ -9,9 +9,10 @@ interface Props {
   heading: string;
   items: SkCardItem[];
   more?: SkAction | null;
+  keep?: boolean;
 }
 
-const { lang, heading, items, more } = Astro.props;
+const { lang, heading, items, more, keep = false } = Astro.props;
 ---
 
 {
@@ -36,6 +37,7 @@ const { lang, heading, items, more } = Astro.props;
                     lang={lang}
                     alt=""
                     aspect="4/5"
+                    keep={keep}
                     sizes="(min-width: 64rem) 25vw, (min-width: 40rem) 50vw, 80vw"
                   />
                 )}

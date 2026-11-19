@@ -1,6 +1,6 @@
 /** Full-screen phone menu: Esc closes, focus is trapped inside and restored on close. */
 const FOCUSABLE = 'a[href], button:not([disabled])';
-const DESKTOP = '(min-width: 64rem)';
+const DESKTOP = '(min-width: 75rem)';
 
 export function initDropdowns(): void {
   const items = Array.from(document.querySelectorAll<HTMLElement>('[data-nav-item]')).filter(

@@ -11,9 +11,10 @@ interface Props {
   actions: SkAction[];
   image?: CmsImage | null;
   card?: boolean;
+  keep?: boolean;
 }
 
-const { lang, heading, body, actions, image, card = false } = Astro.props;
+const { lang, heading, body, actions, image, card = false, keep = false } = Astro.props;
 ---
 
 <section class:list={['sk-cta-split', card && 'sk-cta-split--card']}>
@@ -25,6 +26,7 @@ const { lang, heading, body, actions, image, card = false } = Astro.props;
           lang={lang}
           alt=""
           aspect="4/3"
+          keep={keep}
           sizes="(min-width: 64rem) 50vw, 100vw"
         />
       </div>

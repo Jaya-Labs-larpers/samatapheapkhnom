@@ -27,6 +27,7 @@ const label = (locale: Locale) =>
           lang={htmlLang[locale]}
           aria-current={current ? 'true' : undefined}
           aria-label={current ? undefined : label(locale)}
+          data-lang-link={current ? undefined : ''}
           class:list={['lang-toggle__link', current && 'is-current']}
         >
           {localeShort[locale]}
@@ -46,6 +47,13 @@ const label = (locale: Locale) =>
     flex-shrink: 0;
   }
   .lang-toggle__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* "EN" and "ខ្មែរ" are near enough in width that one fixed slot keeps the
+       toggle the same size in both languages, and the pill beside it still. */
+    min-inline-size: 2.875rem;
+    box-sizing: border-box;
     padding: 8px 12px;
     color: var(--color-ink-700);
     text-decoration: none;
@@ -67,9 +75,16 @@ const label = (locale: Locale) =>
     border-radius: 999px;
   }
   .lang-toggle--footer .lang-toggle__link {
+    min-inline-size: 3.25rem;
     padding: 8px 16px;
   }
   .lang-toggle__link:focus-visible {
     outline-offset: -3px;
   }
 </style>
+
+<script>
+  import { initLanguagePrefetch } from '~/lib/lang-prefetch';
+
+  initLanguagePrefetch();
+</script>

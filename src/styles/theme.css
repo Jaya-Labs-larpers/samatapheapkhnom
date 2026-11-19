@@ -256,6 +256,10 @@
     -webkit-text-size-adjust: 100%;
     /* The header is sticky, so an anchor target has to clear it. */
     scroll-padding-top: var(--header-h);
+    /* Khmer and English pages are different lengths; reserving the scrollbar
+       keeps centred chrome (header, wrap) from stepping sideways when only one
+       of the two pages is tall enough to scroll. */
+    scrollbar-gutter: stable;
   }
   @media (prefers-reduced-motion: reduce) {
     *,

@@ -4,7 +4,6 @@ import type { CmsImage } from '~/lib/content/types';
 import type { SkAction } from '~/lib/skeleton-content';
 import InlineLinks from '~/components/content/InlineLinks.astro';
 import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
-import ButterflyField from '~/components/media/ButterflyField.astro';
 import SkSection from './SkSection.astro';
 import SkLines from './SkLines.astro';
 import SkButtons from './SkButtons.astro';
@@ -21,6 +20,7 @@ interface Props {
   /** Homepage hero: a photo filling the first screen, text over it. */
   home?: boolean;
   image?: CmsImage | null;
+  keep?: boolean;
   lang?: Locale;
 }
 
@@ -34,6 +34,7 @@ const {
   actions,
   home = false,
   image,
+  keep = false,
   lang = 'en',
 } = Astro.props;
 ---
@@ -42,10 +43,9 @@ const {
   home ? (
     <section class="sk-hero--home" data-home-hero data-hero-dark>
       <div class="sk-hero__media">
-        {image && <ResponsiveImage image={image} lang={lang} eager sizes="100vw" />}
+        {image && <ResponsiveImage image={image} lang={lang} eager sizes="100vw" keep={keep} />}
       </div>
-      <ButterflyField />
-      <div class="sk-wrap sk-hero__text" data-butterfly-shelter>
+      <div class="sk-wrap sk-hero__text">
         {eyebrow && <p class="sk-eyebrow">{eyebrow}</p>}
         <h1 class="sk-h1" lang={titleLang}>
           {title}

@@ -1,0 +1,173 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Story } from '~/lib/content/types';
+import { getProgram } from '~/lib/content';
+import { langAttr, localizePath, pick, t } from '~/lib/i18n/utils';
+import { blocksToPlainText } from '~/lib/portable-text';
+import { hasImage } from '~/lib/sanity/image';
+import { resolveSeo } from '~/lib/seo';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import ProgramDetail from '~/page-templates/ProgramDetail.astro';
+import RichText from '~/components/content/RichText.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+
+interface Props {
+  lang: Locale;
+  story: Story;
+}
+
+const { lang, story } = Astro.props;
+
+const name = story.personName || t(lang, 'typeStory');
+const quote = pick(story.quote, lang);
+const role = pick(story.personRole, lang);
+const body = pick(story.body, lang);
+const programTitle = pick(story.program?.title, lang);
+const featuredProgram =
+  story._id === 'story-1' && story.program?.slug === 'resilient-city-and-migration'
+    ? await getProgram(story.program.slug)
+    : null;
+const photo = !story.useSilhouette && hasImage(story.photo) ? story.photo : null;
+const caption = pick(photo?.caption, lang);
+const seo = resolveSeo(null, lang, {
+  title: name,
+  description: quote.value ?? blocksToPlainText(body.value),
+  image: photo,
+});
+---
+
+{
+  featuredProgram ? (
+    <ProgramDetail lang={lang} program={featuredProgram} featuredStory={story} />
+  ) : (
+    <BaseLayout
+      lang={lang}
+      title={seo.title}
+      description={seo.description}
+      ogImage={seo.ogImage}
+      noindex
+    >
+      <article class="story">
+        <header class="story__intro">
+          <div class:list={['story__cover', photo && 'story__cover--photo']}>
+            <div class="story__heading">
+              <h1 class="sk-h1">{name}</h1>
+              {role.value && (
+                <p class="story__role" lang={langAttr(role)}>
+                  {role.value}
+                </p>
+              )}
+            </div>
+            {photo && (
+              <figure class="story__figure">
+                <div class="sk-media">
+                  <ResponsiveImage
+                    image={photo}
+                    lang={lang}
+                    alt={caption.value ? '' : undefined}
+                    eager
+                    keep
+                    sizes="(min-width: 75rem) 720px, (min-width: 56rem) 54vw, 100vw"
+                  />
+                </div>
+                {caption.value && <figcaption lang={langAttr(caption)}>{caption.value}</figcaption>}
+              </figure>
+            )}
+          </div>
+        </header>
+        <div class="story__reading">
+          {body.value ? (
+            <RichText blocks={story.body} lang={lang} />
+          ) : (
+            quote.value && (
+              <p class="story__lead" lang={langAttr(quote)}>
+                {quote.value}
+              </p>
+            )
+          )}
+          {story.program && programTitle.value && (
+            <a
+              class="sk-link"
+              href={localizePath(`/programs/${story.program.slug}`, lang)}
+              lang={langAttr(programTitle)}
+            >
+              {programTitle.value} →
+            </a>
+          )}
+        </div>
+      </article>
+    </BaseLayout>
+  )
+}
+
+<style>
+  .story__intro {
+    background: var(--color-surface-subtle);
+    padding: clamp(40px, 6vw, 104px) clamp(20px, 5.5vw, 80px);
+  }
+
+  .story__cover {
+    display: grid;
+    gap: clamp(24px, 4vw, 72px);
+    max-width: 1280px;
+    margin-inline: auto;
+  }
+
+  .story__heading {
+    align-self: center;
+    min-width: 0;
+  }
+
+  .story__heading h1 {
+    max-width: none;
+    font-size: clamp(2.75rem, 1.5rem + 4.6vw, 6rem);
+  }
+
+  .story__lead {
+    max-width: 32ch;
+    margin: 20px 0 0;
+    color: var(--color-ink-900);
+    font-size: clamp(1.125rem, 0.95rem + 0.8vw, 1.625rem);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .story__role {
+    margin: 24px 0 0;
+    color: var(--color-ink-600);
+  }
+
+  .story__figure {
+    min-width: 0;
+    margin: 0;
+  }
+
+  .story__figure figcaption {
+    margin-top: 10px;
+    color: var(--color-ink-600);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .story__reading {
+    max-width: 50rem;
+    margin-inline: auto;
+    padding: clamp(40px, 6vw, 88px) clamp(20px, 4vw, 48px);
+  }
+
+  .story__reading :global(.prose) {
+    font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+    line-height: 1.7;
+  }
+
+  .story__reading .sk-link {
+    display: inline-block;
+    margin-top: 28px;
+  }
+
+  @media (min-width: 56rem) {
+    .story__cover--photo {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+  }
+</style>

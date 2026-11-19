@@ -74,6 +74,11 @@ const lqipStyle = lqip
   ? `background-image:url(${lqip});background-size:cover;background-position:center`
   : undefined;
 const frameStyle = lqip ? `--lqip:url(${lqip})` : undefined;
+const hotspot = image?.hotspot;
+const focusStyle = hotspot
+  ? `object-position:${Math.round(hotspot.x * 100)}% ${Math.round(hotspot.y * 100)}%`
+  : undefined;
+const imgStyle = [eager ? lqipStyle : undefined, focusStyle].filter(Boolean).join(';') || undefined;
 ---
 
 {
@@ -90,7 +95,7 @@ const frameStyle = lqip ? `--lqip:url(${lqip})` : undefined;
         decoding={eager ? 'sync' : 'async'}
         fetchpriority={eager ? 'high' : undefined}
         class:list={imageClass}
-        style={eager ? lqipStyle : undefined}
+        style={imgStyle}
       />
     ) : (
       <span class="blur-up" data-blur-up style={frameStyle}>
@@ -107,6 +112,7 @@ const frameStyle = lqip ? `--lqip:url(${lqip})` : undefined;
               loading="lazy"
               decoding="async"
               class:list={imageClass}
+              style={focusStyle}
             />
             <noscript>
               <img
@@ -119,6 +125,7 @@ const frameStyle = lqip ? `--lqip:url(${lqip})` : undefined;
                 loading="lazy"
                 decoding="async"
                 class:list={imageClass}
+                style={focusStyle}
               />
             </noscript>
           </>
@@ -133,6 +140,7 @@ const frameStyle = lqip ? `--lqip:url(${lqip})` : undefined;
             loading="lazy"
             decoding="async"
             class:list={imageClass}
+            style={focusStyle}
           />
         )}
       </span>

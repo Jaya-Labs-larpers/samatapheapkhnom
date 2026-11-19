@@ -67,6 +67,7 @@ const single = cards.length === 1;
                     image={card.photo}
                     lang={lang}
                     alt=""
+                    keep
                     aspect="360/457"
                     sizes={
                       single ? '(min-width: 80rem) 1240px, 100vw' : '(min-width: 40rem) 360px, 80vw'
@@ -83,7 +84,11 @@ const single = cards.length === 1;
                       {card.quote}
                     </p>
                   )}
-                  {single && <span class="slider__more">{t(lang, 'readTheStory')} →</span>}
+                  {single && (
+                    <span class="slider__more" lang={tLang(lang, 'readTheStory')}>
+                      {t(lang, 'readTheStory')} →
+                    </span>
+                  )}
                 </div>
               </a>
             </li>
@@ -165,6 +170,11 @@ const single = cards.length === 1;
     color: #fff;
     text-decoration: none;
   }
+  .slider__card :global(.blur-up) {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
   .slider__card :global(img) {
     position: absolute;
     inset: 0;
@@ -228,6 +238,27 @@ const single = cards.length === 1;
     padding: clamp(24px, 5vw, 64px);
     border-radius: 16px;
   }
+  .slider__track--single .slider__card::after {
+    background: linear-gradient(
+      to bottom,
+      rgb(11 27 48 / 0.7),
+      rgb(11 27 48 / 0) 35%,
+      rgb(11 27 48 / 0.2) 50%,
+      rgb(11 27 48 / 0.88)
+    );
+  }
+  @media (min-width: 48rem) {
+    .slider__track--single .slider__card::after {
+      background:
+        linear-gradient(
+          to right,
+          rgb(11 27 48 / 0.85),
+          rgb(11 27 48 / 0.6) 34%,
+          rgb(11 27 48 / 0) 58%
+        ),
+        linear-gradient(to bottom, rgb(11 27 48 / 0.45), rgb(11 27 48 / 0) 30%);
+    }
+  }
   .slider__track--single .slider__top b {
     font-size: clamp(1.75rem, 3vw, 2.5rem);
   }
@@ -241,6 +272,11 @@ const single = cards.length === 1;
     font-family: var(--font-display);
     font-size: clamp(1.25rem, 2.2vw, 1.75rem);
     line-height: 1.4;
+  }
+  @media (min-width: 48rem) {
+    .slider__track--single .slider__quote {
+      max-width: 34rem;
+    }
   }
   .slider__card:focus-visible {
     outline: 3px solid var(--color-blue-700);

@@ -1,5 +1,5 @@
 ---
-import type { Locale } from '~/lib/i18n/config';
+import { htmlLang, locales, type Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
 import { getPrograms } from '~/lib/content';
 import { localizePath, parsePath, pick, t, text } from '~/lib/i18n/utils';
@@ -69,7 +69,16 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
                 class="nav-link hdr__link"
                 aria-current={isCurrent(item.path) ? 'page' : undefined}
               >
-                {t(lang, item.key)}
+                <span class="hdr__labels">
+                  {locales.map((locale) => (
+                    <span
+                      class:list={['hdr__label', `hdr__label--${locale}`]}
+                      lang={htmlLang[locale]}
+                    >
+                      {t(locale, item.key)}
+                    </span>
+                  ))}
+                </span>
               </a>
               {links.length > 0 && (
                 <>
@@ -137,7 +146,7 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
         <LanguageToggle lang={lang} pathname={pathname} variant="phone" />
       </span>
       <a href={localizePath('/contact?topic=partner', lang)} class="hdr__pill"
-        >{t(lang, 'partnerWithUs')}</a
+        >{t(lang, 'contactUs')}</a
       >
       <button
         type="button"
@@ -205,7 +214,7 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
           {t(lang, 'donate')}
         </a>
         <a href={localizePath('/contact?topic=partner', lang)} class="mega__pill">
-          {t(lang, 'partnerWithUs')}
+          {t(lang, 'contactUs')}
         </a>
       </div>
     </nav>
@@ -284,6 +293,32 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     font-size: clamp(15px, 0.3vw + 11px, 16px);
     font-weight: 500;
     white-space: nowrap;
+  }
+  /* Both languages are rendered in the same grid cell, so the slot is as wide
+     as the longer of the two and every item starts at the same x in either
+     language. Only the active one is visible; the hidden one still measures. */
+  .hdr__labels {
+    display: grid;
+    place-items: center;
+  }
+  .hdr__label {
+    grid-area: 1 / 1;
+    visibility: hidden;
+    text-align: center;
+  }
+  .hdr__label--en {
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    line-height: 1.2;
+  }
+  .hdr__label--km {
+    font-size: clamp(15px, 0.3vw + 11px, 16px);
+    font-weight: 500;
+  }
+  :global(html[lang='en']) .hdr__label--en,
+  :global(html[lang='km']) .hdr__label--km {
+    visibility: visible;
   }
   .hdr__link::after {
     height: 1.5px;
@@ -435,7 +470,6 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     .hdr::before,
     .hdr__link::after,
     .hdr__pill,
-    .hdr__pill::after,
     .hdr__tools :global(.lang-toggle__link),
     .dd,
     .dd__list li,
@@ -457,8 +491,10 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
   }
   .hdr__pill {
     align-items: center;
+    justify-content: center;
     box-sizing: border-box;
     height: 44px;
+    min-inline-size: 160px;
     padding: 0 22px;
     border-radius: 999px;
     background: var(--hdr-pill-bg);
@@ -471,27 +507,8 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
       background-color 360ms var(--hdr-ease),
       padding 360ms var(--hdr-ease);
   }
-  .hdr__pill::after {
-    content: '→';
-    display: inline-block;
-    overflow: hidden;
-    max-width: 0;
-    opacity: 0;
-    translate: -6px 0;
-    transition:
-      max-width 360ms var(--hdr-ease),
-      opacity 360ms var(--hdr-ease),
-      translate 360ms var(--hdr-ease),
-      margin 360ms var(--hdr-ease);
-  }
   .hdr__pill:is(:hover, :focus-visible) {
     background: var(--hdr-pill-hover);
-  }
-  .hdr__pill:is(:hover, :focus-visible)::after {
-    max-width: 1em;
-    margin-inline-start: 8px;
-    opacity: 1;
-    translate: 0 0;
   }
   .hdr__pill:focus-visible {
     outline: 2px solid var(--hdr-fg);
@@ -585,7 +602,7 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     display: block;
   }
 
-  @media (min-width: 64rem) {
+  @media (min-width: 75rem) {
     .hdr__nav {
       height: 52px;
       padding-inline: 12px;
@@ -674,7 +691,7 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     }
   }
 
-  @media (min-width: 64rem) {
+  @media (min-width: 75rem) {
     .hdr :global(.hdr__logo) {
       height: 82px;
     }
