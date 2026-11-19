@@ -10,9 +10,8 @@
  * back to the edges. They fly behind the hero text ([data-butterfly-shelter]),
  * which is also a no-follow zone. Between two pages that both have a hero they
  * carry straight on: the flock is saved on the way out and redrawn by the
- * inline script below before first paint, so each comes back where it was and
- * lazy-loads in with the arriving page, a beat behind the hero (Page arrival
- * in global.css). Leaving for a page with no hero they fade out with the page.
+ * inline script below before first paint, so each comes back where it was.
+ * Leaving for a page with no hero they fade out with the page.
  *
  * On phones they are small and keep to the edges. Under
  * prefers-reduced-motion or data saver they rest in place and never move.
@@ -193,17 +192,21 @@ import ButterflyGlyph from './ButterflyGlyph.astro';
     // covers browsers without it.
     window.addEventListener('pageswap', save);
     window.addEventListener('pagehide', save);
-    // Otherwise a first page brought back from the back/forward cache still
-    // counts as arrived, and the flock skips its beat behind the page.
-    window.addEventListener('pageswap', () => layer.removeAttribute('data-arriving'));
+    // A prerendered page read the flock before the previous page saved it.
+    if ((document as Document & { prerendering?: boolean }).prerendering) {
+      document.addEventListener(
+        'prerenderingchange',
+        () => {
+          const fresh = readSaved();
+          if (fresh) Object.assign(flock, restoreFlock(fresh, viewport(layer)));
+          render();
+        },
+        { once: true },
+      );
+    }
 
     render();
-    if (layer.hasAttribute('data-pending')) {
-      // First page of the visit: nothing to restore, so the flock lazy-loads in
-      // on its own, with no arriving page around it.
-      layer.setAttribute('data-arriving', '');
-      layer.removeAttribute('data-pending');
-    }
+    layer.removeAttribute('data-pending');
     start();
   }
 

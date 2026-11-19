@@ -4,12 +4,11 @@ import '~/styles/global.css';
 import { htmlLang, type Locale } from '~/lib/i18n/config';
 import { t } from '~/lib/i18n/utils';
 import { getSiteSettings } from '~/lib/content';
-import { gtmId, hasSanity, smoothScrollEnabled } from '~/lib/config';
+import { cfAnalyticsToken, gtmId, hasSanity, smoothScrollEnabled } from '~/lib/config';
 import type { CmsImage } from '~/lib/content/types';
 import Header from '~/components/layout/Header.astro';
 import Footer from '~/components/layout/Footer.astro';
 import MinimalHeader from '~/components/layout/MinimalHeader.astro';
-import PageLoader from '~/components/layout/PageLoader.astro';
 import SeoHead from '~/components/seo/SeoHead.astro';
 
 interface Props {
@@ -24,8 +23,6 @@ interface Props {
   jsonLd?: Record<string, unknown> | null;
   /** Extra properties for the Organization node. */
   orgJsonLd?: Record<string, unknown> | null;
-  /** Play the intro (PageLoader) when a visit starts on this page. */
-  intro?: boolean;
   /** A focused page (Donate): slim header, no footer, no third-party scripts. */
   minimal?: boolean;
 }
@@ -40,7 +37,6 @@ const {
   publishedAt,
   jsonLd,
   orgJsonLd,
-  intro,
   minimal = false,
 } = Astro.props;
 
@@ -49,7 +45,9 @@ const pathname = Astro.url.pathname;
 /*
   GTM waits for the page's own load and then for an idle moment, so its download
   and parse never compete with the first paint. Page views are still counted:
-  GTM fires its own page-view from the dataLayer once it starts.
+  GTM fires its own page-view from the dataLayer once it starts. A prerendered
+  page waits until the visitor actually opens it, so unvisited prerenders never
+  count as views.
 */
 const gtmLoader =
   gtmId && !minimal
@@ -57,7 +55,25 @@ const gtmLoader =
     : '';
 const gtmSnippet =
   gtmLoader &&
-  `(function(){var go=function(){${gtmLoader}};var idle=function(){(window.requestIdleCallback||function(f){setTimeout(f,1)})(go,{timeout:4000})};if(document.readyState==='complete')idle();else addEventListener('load',idle);})();`;
+  `(function(){var go=function(){${gtmLoader}};var idle=function(){(window.requestIdleCallback||function(f){setTimeout(f,1)})(go,{timeout:4000})};var start=function(){if(document.readyState==='complete')idle();else addEventListener('load',idle)};if(document.prerendering)document.addEventListener('prerenderingchange',start,{once:true});else start();})();`;
+const beaconLoader =
+  cfAnalyticsToken && !minimal
+    ? `(function(){var go=function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon',${JSON.stringify(JSON.stringify({ token: cfAnalyticsToken }))});document.head.appendChild(s)};if(document.prerendering)document.addEventListener('prerenderingchange',go,{once:true});else go();})();`
+    : '';
+const speculationRules = JSON.stringify({
+  prerender: [
+    {
+      where: {
+        and: [
+          { href_matches: '/*' },
+          { not: { href_matches: ['/api/*', '/*.*'] } },
+          { not: { selector_matches: '[download], [target=_blank], [rel~=nofollow]' } },
+        ],
+      },
+      eagerness: 'moderate',
+    },
+  ],
+});
 const preloadFonts =
   lang === 'km'
     ? ['noto-sans-khmer', 'noto-sans-latin', 'source-serif-4-latin']
@@ -78,6 +94,7 @@ const preloadFonts =
     }
     <meta http-equiv="Content-Security-Policy" content="__CSP_POLICY__" />
     {gtmSnippet && <script is:inline set:html={gtmSnippet} />}
+    {beaconLoader && <script is:inline set:html={beaconLoader} />}
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="generator" content={Astro.generator} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -109,6 +126,14 @@ const preloadFonts =
     }
     {hasSanity && <link rel="preconnect" href="https://cdn.sanity.io" />}
     <link rel="preload" as="image" type="image/svg+xml" href="/logo/sko-logo-full-colour.svg" />
+    {
+      /*
+      Prerenders a same-site page once the visitor shows intent (hover on
+      desktop, touch start on phones), so the click swaps to a finished page.
+      Files, the API and links that open elsewhere are left out.
+    */
+    }
+    <script is:inline type="speculationrules" set:html={speculationRules} />
     <SeoHead
       lang={lang}
       pathname={pathname}
@@ -121,62 +146,8 @@ const preloadFonts =
       publishedAt={publishedAt}
       jsonLd={jsonLd}
       orgJsonLd={orgJsonLd}
-      noAnalytics={minimal}
     />
 
-    {
-      /*
-      Marks a page reached by a view transition so it lazy-loads in (Page
-      arrival in global.css). pagereveal fires just before the first frame,
-      so this has to be inline in the head. The mark is dropped once the
-      slowest arrival (270ms late, 900ms long) has played, and on pageswap
-      before this page is captured on the way out, so a page brought back from
-      the back/forward cache arrives afresh.
-    */
-    }
-    <script is:inline>
-      (function () {
-        var root = document.documentElement;
-        var settled = 0;
-        var switchKey = 'sko-lang-switch';
-        var langSwitch = false;
-        try {
-          langSwitch = sessionStorage.getItem(switchKey) === '1';
-          if (langSwitch) sessionStorage.removeItem(switchKey);
-        } catch (error) {}
-        if (langSwitch) {
-          root.setAttribute('data-lang-switch', '');
-          setTimeout(function () {
-            root.removeAttribute('data-lang-switch');
-          }, 1500);
-        }
-        addEventListener('pagereveal', function (event) {
-          if (!event.viewTransition) return;
-          /* A language switch is the same page in another script. The content
-             crossfade is enough; the full arrival rise makes it read as slow. */
-          if (langSwitch) return;
-          root.setAttribute('data-arriving', '');
-          clearTimeout(settled);
-          settled = setTimeout(function () {
-            root.removeAttribute('data-arriving');
-          }, 1500);
-        });
-        addEventListener('pageswap', function (event) {
-          clearTimeout(settled);
-          root.removeAttribute('data-arriving');
-          var entry = event.activation && event.activation.entry;
-          if (!entry || !entry.url) return;
-          var isKhmer = function (path) {
-            return path === '/km' || path.indexOf('/km/') === 0;
-          };
-          try {
-            if (isKhmer(location.pathname) !== isKhmer(new URL(entry.url).pathname)) {
-              sessionStorage.setItem(switchKey, '1');
-            }
-          } catch (error) {}
-        });
-      })();
-    </script>
   </head>
   <body class="bg-white">
     {
@@ -191,8 +162,6 @@ const preloadFonts =
         </noscript>
       )
     }
-    {intro && <PageLoader />}
-
     <a
       href="#main"
       class="sr-only-focusable absolute top-3 left-3 z-[100] rounded-[var(--radius-md)] bg-[color:var(--color-blue-700)] px-4 py-3 text-[15px] font-semibold text-white no-underline"

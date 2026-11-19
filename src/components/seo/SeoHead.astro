@@ -1,7 +1,7 @@
 ---
 import { htmlLang, locales, ogLocale, type Locale } from '~/lib/i18n/config';
 import { alternatePath } from '~/lib/i18n/utils';
-import { cfAnalyticsToken, siteUrl, preventIndexing } from '~/lib/config';
+import { siteUrl, preventIndexing } from '~/lib/config';
 import type { CmsImage, SiteSettings } from '~/lib/content/types';
 import { hasImage, imageUrl } from '~/lib/sanity/image';
 import { text } from '~/lib/i18n/utils';
@@ -23,8 +23,6 @@ interface Props {
   jsonLd?: Record<string, unknown> | null;
   /** Extra properties for the Organization node, e.g. opening hours on the contact page. */
   orgJsonLd?: Record<string, unknown> | null;
-  /** Leave out third-party analytics (the Donate page). */
-  noAnalytics?: boolean;
 }
 
 const {
@@ -39,7 +37,6 @@ const {
   publishedAt,
   jsonLd: extraJsonLd,
   orgJsonLd,
-  noAnalytics = false,
 } = Astro.props;
 
 const orgName = text(settings.orgName, lang);
@@ -193,16 +190,5 @@ const webSiteJsonLd = {
 {
   extraJsonLd && (
     <script is:inline type="application/ld+json" set:html={serializeJsonLd(extraJsonLd)} />
-  )
-}
-
-{
-  cfAnalyticsToken && !noAnalytics && (
-    <script
-      is:inline
-      defer
-      src="https://static.cloudflareinsights.com/beacon.min.js"
-      data-cf-beacon={`{"token": "${cfAnalyticsToken}"}`}
-    />
   )
 }

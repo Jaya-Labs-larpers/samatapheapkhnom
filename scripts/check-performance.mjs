@@ -25,7 +25,7 @@ export const BUDGETS = {
   /** Render-blocking stylesheets per page: the site's, plus a page's own. */
   stylesheetsPerPage: 2,
   /**
-   * All first-party JavaScript in /_astro, gzipped: butterflies, intro, reveals, count-up,
+   * All first-party JavaScript in /_astro, gzipped: butterflies, reveals, count-up,
    * and smooth scrolling (Lenis, ~5.4 KB, its own lazily loaded chunk) with the scroll-driven
    * text, scrub and step scripts.
    */

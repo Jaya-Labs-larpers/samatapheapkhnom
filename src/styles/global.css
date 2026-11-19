@@ -45,8 +45,7 @@
    them, and neither ever hides something already on screen.
 
    Script cost: one pageswap listener (card-morph.ts) that names the clicked
-   card's photo, the inline pagereveal listener in BaseLayout that marks a
-   page arriving by a view transition, and the hero butterfly loop. Page
+   card's photo, and the hero butterfly loop. Page
    transitions are the native cross-document API, so unsupported browsers
    navigate exactly as before.
    ========================================================================= */
@@ -130,8 +129,7 @@ main {
 /*
  * Asymmetric: the outgoing page leaves quickly, the incoming one eases in.
  * Only a crossfade: nothing on either page can be clicked while a transition
- * runs, so it stays short, and the incoming page's slow rise plays on the
- * live page instead (Page arrival, below).
+ * runs, so it stays short.
  */
 ::view-transition-old(page-content) {
   animation: page-exit 110ms ease-out both;
@@ -236,46 +234,6 @@ html.lenis body {
     var(--color-ink-400),
     var(--color-ink-900) calc(var(--t) * (2 - var(--t)) * 100%)
   );
-}
-
-/* --- Page arrival -----------------------------------------------------------
- * A page reached by a view transition lazy-loads in the way a box does on
- * scroll: each section of <main> rises into place with the box reveal's
- * motion, 90ms after the one before, and the hero's butterflies follow on
- * beats of their own — as they also do on the first page of a visit, where
- * ButterflyField marks the flock itself. html[data-arriving] comes from the
- * inline script in BaseLayout. `backwards`, so nothing is held once it ends:
- * a box set aside by the reveal keeps its own state underneath. */
-@keyframes arrive-fade {
-  from {
-    opacity: 0;
-  }
-}
-@keyframes arrive-rise {
-  from {
-    translate: 0 var(--reveal-rise);
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  html[data-arriving] main > *,
-  html[data-arriving] .flock-bird,
-  .butterfly-flock[data-arriving] > .flock-bird {
-    animation:
-      arrive-fade var(--reveal-fade) var(--ease-reveal) var(--arrive-delay, 0ms) backwards,
-      arrive-rise var(--reveal-move) var(--ease-pop) var(--arrive-delay, 0ms) backwards;
-  }
-}
-main > :nth-child(2),
-.flock-bird:nth-child(1) {
-  --arrive-delay: 90ms;
-}
-main > :nth-child(3),
-.flock-bird:nth-child(2) {
-  --arrive-delay: 180ms;
-}
-main > :nth-child(n + 4),
-.flock-bird:nth-child(3) {
-  --arrive-delay: 270ms;
 }
 
 /* --- Mobile navigation panel ---------------------------------------------- */
@@ -1369,73 +1327,8 @@ details[open] > summary > .disclosure-icon {
   will-change: transform;
 }
 
-/* --- Page loader ------------------------------------------------------------
-   PageLoader, the loading screen at the start of a visit, driven by its own
-   inline script. The butterfly holds still and only its wings beat; the bar
-   follows the page's real loading progress (--intro-progress, 0 to 1). It sits
-   below the skip link, and the page underneath does not scroll while it shows. */
-.page-loader {
-  --loader-size: clamp(9.5rem, 6rem + 14vw, 14rem);
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(1.75rem, 1.25rem + 2vw, 2.75rem);
-  padding: 1rem;
-  background: var(--color-canvas);
-  transition: opacity 480ms var(--ease-out-soft);
-}
-html[data-intro] .page-loader {
-  display: flex;
-}
-html[data-intro=''] {
-  overflow: hidden;
-}
-html[data-intro='done'] .page-loader {
-  opacity: 0;
-  pointer-events: none;
-}
-.page-loader__butterfly {
-  width: var(--loader-size);
-}
-.page-loader__butterfly .butterfly-wings {
-  animation: loader-flap 500ms cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
-}
-.page-loader__track {
-  width: calc(var(--loader-size) * 0.65);
-  height: 3px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--color-surface-sunken);
-}
-.page-loader__fill {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--color-sky-400);
-  transform-origin: left center;
-  scale: var(--intro-progress, 0) 1;
-  transition: scale 450ms var(--ease-out-soft);
-}
-.page-loader__label {
-  color: var(--color-ink-600);
-  font-family: var(--font-sans);
-  font-size: clamp(0.9375rem, 0.875rem + 0.2vw, 1.0625rem);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-@keyframes loader-flap {
-  to {
-    scale: 0.55 1;
-  }
-}
-
 @media print {
-  .butterfly-flock,
-  .page-loader {
+  .butterfly-flock {
     display: none;
   }
 }
