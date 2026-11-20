@@ -125,7 +125,7 @@ jobs:
       # Keep the raw reports so a red run can be diagnosed, not just re-run.
       - name: Upload Lighthouse reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouse-reports
           path: lighthouse-reports/
