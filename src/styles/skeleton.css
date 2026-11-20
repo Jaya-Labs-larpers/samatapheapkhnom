@@ -554,13 +554,15 @@
     max-width: 16ch;
     font-family: var(--font-display);
     font-weight: 400;
-    font-size: clamp(2.5rem, min(1rem + 6vw, 10svh), 6rem);
+    font-size: calc(clamp(2.5rem, min(1rem + 6vw, 10svh), 6rem) - 8px);
     line-height: 1.04;
     letter-spacing: -0.035em;
   }
   .sk-hero--home .sk-btn {
+    min-height: 55px;
     background: var(--color-sky-400);
     color: var(--color-ink-900);
+    font-size: 21px;
   }
   .sk-hero--home .sk-btn:hover {
     background: var(--color-sky-200);
@@ -733,7 +735,7 @@
   :lang(km) .sk-hero--home .sk-h1 {
     letter-spacing: normal;
     line-height: 1.35;
-    font-size: clamp(2rem, min(1rem + 5vw, 8svh), 5rem);
+    font-size: calc(clamp(2rem, min(1rem + 5vw, 8svh), 5rem) - 8px);
   }
   :lang(km) .sk-stat__num {
     line-height: 1.1;

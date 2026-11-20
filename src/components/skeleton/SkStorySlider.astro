@@ -2,6 +2,7 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { Story } from '~/lib/content/types';
 import { langAttr, localizePath, pick, t, tLang } from '~/lib/i18n/utils';
+import { hasImage, imageDimensions } from '~/lib/sanity/image';
 import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 import SkSection from './SkSection.astro';
 
@@ -27,11 +28,19 @@ const cards = stories.map((story) => {
 });
 const slider = cards.length > 1;
 const single = cards.length === 1;
+const zoom = single && hasImage(cards[0]?.photo);
+const { width, height } = imageDimensions(cards[0]?.photo);
+const singleSizes = '(min-width: 80rem) 1280px, 100vw';
+const photoSizes = zoom
+  ? `(min-height: 38rem) and (prefers-reduced-motion: no-preference) max(112vw, ${Math.ceil((112 * width) / height)}dvh), ${singleSizes}`
+  : single
+    ? singleSizes
+    : '(min-width: 40rem) 360px, 80vw';
 ---
 
 {
   cards.length > 0 && (
-    <SkSection tone="tint">
+    <SkSection tone="tint" class={zoom ? 'story-zoom' : undefined}>
       <div data-carousel class="slider">
         <div class="slider__head">
           <h2 class="sk-h2" lang={tLang(lang, 'storiesHeading')}>
@@ -58,7 +67,13 @@ const single = cards.length === 1;
             </div>
           )}
         </div>
-        <ul class:list={['slider__track', single && 'slider__track--single']} data-carousel-track>
+        <ul
+          class:list={['slider__track', single && 'slider__track--single']}
+          data-carousel-track
+          data-scrub={zoom ? '' : undefined}
+          data-scrub-start={zoom ? 'top 32%' : undefined}
+          data-scrub-end={zoom ? 'bottom 112%' : undefined}
+        >
           {cards.map((card) => (
             <li class="slider__item">
               <a href={card.href} class="slider__card">
@@ -69,9 +84,7 @@ const single = cards.length === 1;
                     alt=""
                     keep
                     aspect="360/457"
-                    sizes={
-                      single ? '(min-width: 80rem) 1240px, 100vw' : '(min-width: 40rem) 360px, 80vw'
-                    }
+                    sizes={photoSizes}
                   />
                 )}
                 <div class="slider__top">
@@ -281,5 +294,53 @@ const single = cards.length === 1;
   .slider__card:focus-visible {
     outline: 3px solid var(--color-blue-700);
     outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (min-height: 38rem) {
+    :global(.story-zoom):has(.slider__track[data-scrub-ready]) {
+      --story-gutter: max(clamp(20px, 5.5vw, 80px), calc((100% - 1280px) / 2));
+      padding-inline: 0;
+    }
+    :global(.story-zoom):has(.slider__track[data-scrub-ready]) > :global(.sk-wrap) {
+      max-width: none;
+    }
+    .slider:has(.slider__track[data-scrub-ready]) .slider__head {
+      margin-inline: var(--story-gutter);
+    }
+    .slider__track[data-scrub-ready] {
+      --story-padding: clamp(24px, 5vw, 64px);
+      --story-top: var(--header-h);
+      --story-bottom: max(0px, 100dvh - var(--story-top) - min(80svh, 720px));
+      --progress: var(--p, 0);
+      --remaining: calc(1 - var(--progress) * var(--progress) * (3 - 2 * var(--progress)));
+      display: block;
+      min-height: 156dvh;
+      margin-top: calc(-1 * var(--story-top));
+    }
+    .slider__track[data-scrub-ready] .slider__item {
+      position: sticky;
+      top: 0;
+    }
+    .slider__track[data-scrub-ready] .slider__card {
+      height: 100dvh;
+      min-height: 0;
+      padding-inline: calc(var(--story-gutter) + var(--story-padding));
+      padding-top: calc(var(--story-top) + var(--story-padding));
+      border-radius: 0;
+      clip-path: inset(
+        calc(var(--story-top) * var(--remaining)) calc(var(--story-gutter) * var(--remaining))
+          calc(var(--story-bottom) * var(--remaining)) round calc(16px * var(--remaining))
+      );
+    }
+    .slider__track[data-scrub-ready] .slider__card :global(.blur-up) {
+      transform: scale(calc(1.12 - 0.12 * var(--remaining)));
+    }
+    .slider__track[data-scrub-ready] .slider__bottom {
+      transform: translateY(calc(-1 * var(--story-bottom) * var(--remaining)));
+    }
+    .slider__track[data-scrub-ready] .slider__card:focus-visible .slider__more {
+      text-decoration: underline;
+      text-underline-offset: 0.25em;
+    }
   }
 </style>

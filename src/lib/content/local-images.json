@@ -22,17 +22,17 @@
     ],
     "lqip": "data:image/webp;base64,UklGRoQAAABXRUJQVlA4IHgAAAAQAgCdASoQAAwAA4BaJbACdAYubsIgJ8KAAPqfFfO14x28i0vc+7Xh7NQJ/+vD+8XtwWzVvtq/tXgBIRVOEMFACX/G7izx1TGag0yIHNgWU+tNNg9/EiZlbHjmyZqWQLvxMj0KqcYP5+Z6ZLl9MshxANv+PVLgAAA="
   },
-  "home-hero-family": {
-    "width": 1280,
-    "height": 960,
+  "home-hero-community": {
+    "width": 2000,
+    "height": 1500,
     "widths": [
       400,
       640,
       828,
       1200,
-      1280
+      1600
     ],
-    "lqip": "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAABQAgCdASoQAAwAA4BaJZACdAYvrWVKNdWzXAAA/qbPUpMrDwDuRVjvIapMFbK3fz0hdED9AQZZdOATVqwo+jbxAQ28Pt7to0MZxs6QnZ3hdht2YjiiSyKpDZzfUHnW+P9ZtvsubgAAAA=="
+    "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAAAwAgCdASoQAAwAA4BaJbACdAYtfkm3godEAADh3AQ256ZqKu1Bo1Z/twHgbjHNhrR7S//3RCW1ko4I8VW1w5GZmpGJ9Y/armBLliGa2hB5iwbEYogk19bx2iDidE3FEAA="
   },
   "home-hero": {
     "width": 1430,

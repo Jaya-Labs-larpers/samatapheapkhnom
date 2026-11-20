@@ -69,6 +69,7 @@ export function initScrub(root: ParentNode = document): void {
       start: parseLine(el.dataset.scrubStart, START),
       end: parseLine(el.dataset.scrubEnd, END),
     });
+    el.setAttribute('data-scrub-ready', '');
     observer.observe(el);
   }
   if (lines.size === 0) return;
