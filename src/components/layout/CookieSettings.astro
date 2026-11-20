@@ -1,0 +1,115 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+
+interface Props {
+  lang: Locale;
+  containerId: string;
+}
+
+const { lang, containerId } = Astro.props;
+const labels = lang === 'km' ? {
+  title: 'ការកំណត់ខូគី',
+  message: 'តើអ្នកអនុញ្ញាតឱ្យយើងប្រើខូគីសម្រាប់ការវិភាគ ដើម្បីយល់ពីរបៀបដែលអ្នកអានប្រើគេហទំព័រនេះដែរឬទេ?',
+  accept: 'យល់ព្រម', decline: 'បដិសេធ',
+} : {
+  title: 'Cookie settings',
+  message: 'May we use optional analytics cookies to understand how people use this website?',
+  accept: 'Accept', decline: 'Decline',
+};
+---
+
+<div data-cookie-settings={containerId}>
+  <button type="button" data-settings-toggle hidden aria-controls="cookie-panel" aria-expanded="false">{labels.title}</button>
+  <section id="cookie-panel" aria-label={labels.title} hidden>
+    <p>{labels.message}</p>
+    <div class="choices">
+      <button type="button" value="accepted">{labels.accept}</button>
+      <button type="button" value="declined">{labels.decline}</button>
+    </div>
+  </section>
+</div>
+
+<script>
+  import { whenSettled } from '~/lib/lazy';
+
+  const root = document.querySelector<HTMLElement>('[data-cookie-settings]');
+  if (root) {
+    const key = 'sko-analytics-choice';
+    const panel = root.querySelector<HTMLElement>('section')!;
+    const toggle = root.querySelector<HTMLButtonElement>('[data-settings-toggle]')!;
+    let choice: string | null = null;
+    let started = false;
+
+    function show(open: boolean) {
+      panel.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+    }
+
+    const sync = () => {
+      try { choice = localStorage.getItem(key); } catch {}
+      if (started && choice !== 'accepted') {
+        location.reload();
+        return;
+      }
+      show(choice !== 'accepted' && choice !== 'declined');
+      if (choice === 'accepted') scheduleTags();
+    };
+
+    const id = root.dataset.cookieSettings!;
+    function scheduleTags() {
+      whenSettled(() => {
+        if (started || choice !== 'accepted' || ('prerendering' in document && document.prerendering)) return;
+        started = true;
+        const host = window as Window & { dataLayer?: unknown[] };
+        (host.dataLayer ??= []).push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+        const script = document.createElement('script');
+        script.src = 'https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(id);
+        document.head.append(script);
+      });
+    }
+
+    toggle.hidden = false;
+    toggle.addEventListener('click', () => {
+      show(panel.hidden);
+      if (!panel.hidden) panel.querySelector('button')?.focus();
+    });
+    panel.querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
+      choice = button.value;
+      try { localStorage.setItem(key, choice); } catch {}
+      const fromFooter = toggle.getBoundingClientRect().top < innerHeight;
+      show(false);
+      if (fromFooter) toggle.focus({ preventScroll: true });
+      if (choice === 'accepted') scheduleTags();
+      else if (started) location.reload();
+    }));
+    window.addEventListener('storage', event => {
+      if (event.key === null || event.key === key) sync();
+    });
+    window.addEventListener('pageshow', event => { if (event.persisted) sync(); });
+    document.addEventListener('prerenderingchange', sync, { once: true });
+    sync();
+  }
+</script>
+
+<style>
+  [data-settings-toggle] { text-decoration: underline; }
+  section {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 80;
+    padding: 1rem max(1.25rem, calc((100vw - 1240px) / 2)) max(1rem, env(safe-area-inset-bottom));
+    background: white;
+    color: var(--color-ink-900);
+    border-top: 1px solid var(--color-line-strong);
+    box-shadow: 0 -3px 18px #17264015;
+    text-align: start;
+  }
+  section:not([hidden]), .choices { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  section p { flex: 1 1 25rem; margin: 0; }
+  .choices button {
+    padding: 0.6rem 1.2rem;
+    border: 1px solid currentColor;
+    border-radius: 2rem;
+    color: var(--color-blue-800);
+  }
+</style>

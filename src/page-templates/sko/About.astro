@@ -2,6 +2,7 @@
 import type { Locale } from '~/lib/i18n/config';
 import { getDirectorMessage, getOrgChart, getPage } from '~/lib/content';
 import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
+import { blockText, splitBody } from '~/lib/content/sections';
 import { resolveSeo } from '~/lib/seo';
 import { aboutPageJsonLd } from '~/lib/seo/page-schema';
 import { ctaActions, tStrict } from '~/lib/skeleton-content';
@@ -43,9 +44,14 @@ const title = pick(page?.title, lang);
 const intro = pick(page?.intro, lang);
 const aboutTitle = title.value ?? tStrict(lang, 'pageAbout');
 const heading = isOverview ? aboutTitle : tStrict(lang, group.key);
+const sections = splitBody(pick(page?.body, lang).value).sections;
+const sectionDescription = group.sections
+  .flatMap((index) => sections[index]?.blocks ?? [])
+  .map(blockText)
+  .find((text) => text.trim());
 const seo = resolveSeo(isOverview ? page?.seo : null, lang, {
   title: heading,
-  description: isOverview ? intro.value : null,
+  description: (isOverview ? intro.value : sectionDescription) || intro.value || heading,
   image: page?.heroImage,
 });
 const aboutPage = aboutPageJsonLd({

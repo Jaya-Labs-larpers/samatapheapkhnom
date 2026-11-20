@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import './theme.css';
-@import './design.css';
 @import './skeleton.css';
 
 /* ============================================================================
@@ -27,6 +26,10 @@
    guarantees the first screen is filled.
    ========================================================================= */
 @layer base {
+  html {
+    overscroll-behavior-y: none;
+  }
+
   main {
     min-height: calc(100vh - var(--header-h));
     min-height: calc(100svh - var(--header-h));
@@ -110,8 +113,18 @@ main {
   view-transition-name: page-content;
 }
 
+::view-transition-group(*) {
+  animation-duration: 100ms;
+}
+
+/*
+ * page-content too: its group would otherwise slide from the old page's box to
+ * the new one, and the home hero starts under the header while other pages
+ * start below it, so the photo visibly rose into place. It crossfades in place.
+ */
 ::view-transition-group(site-header),
-::view-transition-group(site-footer) {
+::view-transition-group(site-footer),
+::view-transition-group(page-content) {
   animation: none;
 }
 
@@ -132,10 +145,10 @@ main {
  * runs, so it stays short.
  */
 ::view-transition-old(page-content) {
-  animation: page-exit 110ms ease-out both;
+  animation: page-exit 60ms ease-out both;
 }
 ::view-transition-new(page-content) {
-  animation: page-enter 260ms var(--ease-out-soft) both;
+  animation: page-enter 100ms var(--ease-out-soft) both;
 }
 
 /*
@@ -143,7 +156,7 @@ main {
  * The two crops differ, so both snapshots cover the group rather than stretch.
  */
 ::view-transition-group(card-media) {
-  animation-duration: 320ms;
+  animation-duration: 140ms;
   animation-timing-function: var(--ease-out-soft);
 }
 ::view-transition-old(card-media),
@@ -506,392 +519,6 @@ details[open] > summary > .disclosure-icon {
     transform: translateX(3px);
   }
 
-  /* --- Program rows (home) ---------------------------------------------- *
-   * Ruled rows on the paper: index, title and summary, a small photo, an
-   * arrow. The photo and arrow only join on wide screens; on a phone a row is
-   * index plus text. */
-  .program-rows {
-    border-top: 1px solid var(--color-line);
-  }
-  /* On a phone the index sits above the title and the summary is cut to three
-     lines: the row is a signpost to the programme page, not the page itself. */
-  .program-row {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.5rem 1.5rem;
-    align-items: start;
-    padding-block: 1.375rem;
-    border-bottom: 1px solid var(--color-line);
-    transition: background-color var(--duration-base) var(--ease-out-soft);
-  }
-  .program-row__index {
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--color-blue-700);
-  }
-  .program-row__title {
-    font-size: clamp(1.125rem, 0.85rem + 1.4vw, 2rem);
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-    transition: color var(--duration-fast) var(--ease-out-soft);
-  }
-  .program-row__summary {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    overflow: hidden;
-    margin-top: 0.5rem;
-    max-width: 58ch;
-    font-size: 0.9375rem;
-    line-height: 1.55;
-    color: var(--color-ink-400);
-  }
-  .program-row__arrow {
-    display: none;
-  }
-  @media (min-width: 48rem) {
-    .program-row {
-      grid-template-columns: 3.25rem minmax(0, 1fr);
-      gap: 0.75rem 1.5rem;
-      padding-block: 1.75rem;
-    }
-    .program-row__index {
-      padding-top: 0.35rem;
-    }
-    .program-row__summary {
-      -webkit-line-clamp: unset;
-      margin-top: 0.625rem;
-      line-height: 1.6;
-    }
-  }
-  @media (min-width: 64rem) {
-    .program-row {
-      grid-template-columns: 4.5rem minmax(0, 1fr) 2rem;
-      align-items: center;
-      gap: 0 2.5rem;
-      padding-block: 1.5rem;
-    }
-    .program-row__index {
-      align-self: start;
-      padding-top: 0.5rem;
-    }
-    .program-row__summary {
-      -webkit-line-clamp: 4;
-    }
-    .program-row__arrow {
-      display: block;
-      font-size: 1.5rem;
-      color: var(--color-blue-700);
-      transition: translate 480ms var(--ease-reveal);
-    }
-  }
-  .program-row:has(a:focus-visible) {
-    background: var(--color-blue-50);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .program-row:hover {
-      background: var(--color-blue-50);
-    }
-    .program-row:hover .program-row__title {
-      color: var(--color-blue-800);
-    }
-    .program-row:hover .program-row__arrow {
-      translate: 6px 0;
-    }
-  }
-
-  /* --- Activities, editorial (home) -------------------------------------- *
-   * Two columns with the right one dropped, so the latest reports read as a
-   * sequence rather than a product grid. One column on phones. */
-  .activity-editorial {
-    display: grid;
-    gap: 2rem;
-  }
-  @media (min-width: 48rem) {
-    .activity-editorial {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: clamp(1.5rem, 4vw, 4rem);
-      row-gap: 3rem;
-    }
-    .activity-editorial > :nth-child(even) {
-      margin-top: clamp(3rem, 8vw, 7.5rem);
-    }
-  }
-
-  /* --- About page body (SectionedBody) ---------------------------------- *
-   * Each "## " section of the CMS body gets a label column and a content
-   * column, divided by a hairline. The label sticks beside long prose so the
-   * visitor always knows which part they are reading. */
-  .about-lead {
-    font-size: var(--text-lead);
-    line-height: 1.7;
-    color: var(--color-ink-900);
-  }
-  .about-section {
-    padding-top: clamp(2.5rem, 2rem + 3vw, 5rem);
-  }
-  .about-section__grid {
-    display: grid;
-    gap: 1rem;
-    padding-top: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
-    border-top: 1px solid var(--color-line);
-  }
-  @media (min-width: 64rem) {
-    .about-section__grid {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 2.6fr);
-      gap: 3rem;
-    }
-    .about-section--prose .about-section__label {
-      position: sticky;
-      top: calc(var(--header-offset) + 1.5rem);
-      align-self: start;
-      transition: top 320ms var(--ease-out-soft);
-    }
-  }
-  .about-section__label {
-    padding-top: 0.4rem;
-  }
-
-  .prose.about-statement p {
-    max-width: 30ch;
-    font-size: var(--text-statement);
-    line-height: 1.3;
-    letter-spacing: -0.02em;
-    color: var(--color-ink-900);
-    text-align: start;
-    hyphens: manual;
-  }
-  .prose.about-statement:lang(km) p {
-    max-width: 36ch;
-    line-height: 1.6;
-    letter-spacing: normal;
-  }
-
-  .about-terms {
-    border-top: 1px solid var(--color-line);
-  }
-  .about-term {
-    display: grid;
-    grid-template-columns: 2.75rem minmax(0, 1fr);
-    gap: 0.25rem 1rem;
-    padding: 1.25rem 0.75rem;
-    border-bottom: 1px solid var(--color-line);
-    transition: background-color var(--duration-base) var(--ease-out-soft);
-  }
-  .about-term__index {
-    grid-row: span 2;
-    padding-top: 0.3rem;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--color-blue-700);
-  }
-  .about-term__name {
-    font-size: clamp(1.125rem, 0.95rem + 1vw, 1.625rem);
-    font-weight: 600;
-    line-height: 1.25;
-    letter-spacing: -0.015em;
-    color: var(--color-ink-900);
-  }
-  .about-term__text {
-    max-width: 60ch;
-    font-size: 0.9688rem;
-    line-height: 1.6;
-    color: var(--color-ink-600);
-  }
-  @media (min-width: 48rem) {
-    .about-term {
-      grid-template-columns: 3.5rem minmax(12rem, 1fr) minmax(0, 1.8fr);
-      align-items: baseline;
-      gap: 1.5rem;
-    }
-    .about-term__index {
-      grid-row: auto;
-    }
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .about-term:hover {
-      background: var(--color-blue-50);
-    }
-  }
-
-  .about-facts ul {
-    padding-left: 0;
-    list-style: none;
-    border-top: 1px solid var(--color-line);
-  }
-  .about-facts li {
-    margin: 0;
-    padding-block: 1.125rem;
-    border-bottom: 1px solid var(--color-line);
-    font-size: clamp(1rem, 0.85rem + 0.9vw, 1.5rem);
-    line-height: 1.4;
-    color: var(--color-ink-900);
-    text-align: start;
-  }
-  .prose.about-facts li + li {
-    margin-top: 0;
-  }
-
-  .about-prose--lead > p:first-child {
-    font-size: var(--text-lead);
-    line-height: 1.65;
-    color: var(--color-ink-900);
-  }
-
-  .statement-logos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 2rem;
-  }
-  .statement-logo {
-    display: grid;
-    place-items: center;
-    width: 10rem;
-    aspect-ratio: 5 / 3;
-    padding: 0.875rem;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-lg);
-    background: #fff;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1.3;
-    text-align: center;
-    color: var(--color-ink-600);
-  }
-  .statement-logo img {
-    max-height: 100%;
-  }
-
-  /* --- Programme detail ---------------------------------------------------- */
-  .program-hero {
-    background: var(--color-surface-subtle);
-  }
-  .program-hero__inner {
-    padding-block: 2.5rem 3rem;
-  }
-  @media (min-width: 64rem) {
-    .program-hero__inner {
-      padding-block: 3.5rem 4.5rem;
-    }
-    .program-hero__text {
-      max-width: 40rem;
-    }
-  }
-
-  .program-stats {
-    display: grid;
-    gap: 1px;
-    overflow: hidden;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-lg);
-    background: var(--color-line);
-  }
-  .program-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 1.75rem 1.5rem;
-    background: #fff;
-    container-type: inline-size;
-  }
-  /* A long figure such as "33,910 kg" shrinks to its tile rather than clipping
-     at the tile's edge. --value-em is the figure's width in em, estimated by
-     ProgramStats from the glyph widths of the stat font. */
-  .program-stat__value {
-    font-size: min(var(--text-stat), calc(100cqi / var(--value-em, 1)));
-    line-height: 1;
-    font-weight: 700;
-    letter-spacing: var(--text-stat--letter-spacing);
-    color: var(--color-blue-700);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .program-stat__label {
-    margin-top: 0.5rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    line-height: 1.4;
-    color: var(--color-ink-900);
-  }
-  .program-stat__context {
-    font-size: 0.8125rem;
-    line-height: 1.5;
-    color: var(--color-ink-400);
-  }
-  @media (min-width: 40rem) {
-    .program-stats {
-      grid-template-columns: repeat(var(--sm-cols), minmax(0, 1fr));
-    }
-    .program-stats--featured > :first-child {
-      grid-column: span 2;
-    }
-  }
-  @media (min-width: 64rem) {
-    .program-stats {
-      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-    }
-    .program-stats--featured > :first-child {
-      grid-column: auto;
-      grid-row: span 2;
-      justify-content: flex-end;
-      padding: 2.25rem 2rem;
-      background: var(--color-blue-900);
-    }
-    .program-stats--featured > :first-child .program-stat__value {
-      font-size: min(calc(var(--text-stat) * 1.6), calc(100cqi / var(--value-em, 1)));
-      color: #fff;
-    }
-    .program-stats--featured > :first-child .program-stat__label {
-      font-size: 1.125rem;
-      color: #fff;
-    }
-    .program-stats--featured > :first-child .program-stat__context {
-      color: var(--color-sky-200);
-    }
-  }
-
-  /* --- Footer closing line --------------------------------------------- */
-  .footer-closing {
-    display: grid;
-    gap: 1.25rem;
-    padding-bottom: clamp(2.5rem, 5vw, 4.5rem);
-    margin-bottom: clamp(2.5rem, 5vw, 4rem);
-    border-bottom: 1px solid rgb(255 255 255 / 0.12);
-  }
-  .footer-closing__title {
-    font-family: var(--font-display);
-    font-size: clamp(1.625rem, 0.6rem + 4.9vw, 4.75rem);
-    font-weight: 600;
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-    color: #fff;
-  }
-  .footer-closing__title:lang(km) {
-    font-family: var(--font-khmer);
-    line-height: 1.35;
-    letter-spacing: normal;
-  }
-  .footer-closing__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 2.5rem;
-  }
-  .footer-closing__link {
-    font-size: clamp(1rem, 0.8rem + 1.05vw, 1.625rem);
-    font-weight: 500;
-    color: var(--color-sky-200);
-    text-decoration: none;
-  }
-  .footer-closing__link:hover {
-    color: #fff;
-  }
-
   /* --- Story band (home) -------------------------------------------------- *
    * The page's one change of pace: navy, square-edged, and static. */
   .story-band {
@@ -957,59 +584,6 @@ details[open] > summary > .disclosure-icon {
   }
   .nav-link[aria-current] {
     color: var(--color-blue-800);
-  }
-
-  /* A label that rolls up to an identical copy on hover. The copy sits one
-     line plus a gap below, clipped; the extra block padding leaves room for
-     Khmer vowel marks above and below the line. `/ ""` keeps the copy out of
-     the accessibility tree so the label is announced once. */
-  .roll {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-    padding-block: 0.3em;
-    margin-block: -0.3em;
-  }
-  .roll__text {
-    position: relative;
-    display: inline-block;
-    transition: translate 480ms var(--ease-reveal);
-  }
-  .roll__text::after {
-    content: attr(data-text) / '';
-    position: absolute;
-    left: 0;
-    top: calc(100% + 0.6em);
-    white-space: nowrap;
-  }
-  :is(a, button):is(:hover, :focus-visible) .roll__text {
-    translate: 0 calc(-100% - 0.6em);
-  }
-
-  /* Contact: a rounded fill rises from below and flattens as it covers the
-     button. The blob sits under the content, which is lifted above it. */
-  .btn-fill {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-  }
-  .btn-fill > :not(.btn-fill__blob) {
-    position: relative;
-  }
-  .btn-fill__blob {
-    position: absolute;
-    inset: -1px;
-    z-index: -1;
-    background: var(--color-blue-900);
-    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-    translate: 0 101%;
-    transition:
-      translate 380ms cubic-bezier(0.4, 0, 0, 1),
-      border-radius 380ms cubic-bezier(0.4, 0, 0, 1);
-  }
-  .btn-fill:is(:hover, :focus-visible) .btn-fill__blob {
-    translate: 0 0;
-    border-radius: 0;
   }
 
   /* --- Surfaces ----------------------------------------------------------- */

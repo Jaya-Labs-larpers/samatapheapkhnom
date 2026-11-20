@@ -103,16 +103,16 @@ const { lang, heading, items, more, keep = false } = Astro.props;
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgb(0 0 0 / 0.8), rgb(0 0 0 / 0) 55%);
+    background: linear-gradient(to top, rgb(0 0 0 / 0.78), rgb(0 0 0 / 0) 50%);
     pointer-events: none;
   }
   .cards__title {
     position: absolute;
-    inset: 20px 20px auto;
+    inset: auto 16px 16px;
     z-index: 1;
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(1.25rem, 1rem + 0.8vw, 1.75rem);
+    font-size: clamp(1rem, 0.85rem + 0.5vw, 1.3rem);
     font-weight: 600;
     line-height: 1.15;
     color: #fff;

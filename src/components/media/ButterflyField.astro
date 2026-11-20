@@ -9,8 +9,8 @@
  * and after it has been still for IDLE_MS, or has left the hero, they drift
  * back to the edges. They fly behind the hero text ([data-butterfly-shelter]),
  * which is also a no-follow zone. Between two pages that both have a hero they
- * carry straight on: the flock is saved on the way out and redrawn by the
- * inline script below before first paint, so each comes back where it was.
+ * carry straight on: the flock is saved on the way out and restored when the
+ * animation starts, so each comes back where it was.
  * Leaving for a page with no hero they fade out with the page.
  *
  * On phones they are small and keep to the edges. Under
@@ -25,36 +25,6 @@ import ButterflyGlyph from './ButterflyGlyph.astro';
   <ButterflyGlyph class="flock-bird" />
   <ButterflyGlyph class="flock-bird" />
 </div>
-<script is:inline>
-  // Restores the flock where the previous page left it, before first paint.
-  // Reads the SavedFlock shape from ~/lib/butterflies/flight; keep in step.
-  (function () {
-    var layer = document.currentScript.previousElementSibling;
-    try {
-      var saved = JSON.parse(sessionStorage.getItem('sko-flock'));
-      if (!saved || !saved.f || saved.f.length !== layer.children.length) return;
-      var sx = layer.clientWidth / saved.w;
-      var sy = layer.clientHeight / saved.h;
-      saved.f.forEach(function (f, i) {
-        var bird = layer.children[i];
-        if (!bird) return;
-        bird.style.width = f.s + 'px';
-        bird.style.transform =
-          'translate(' +
-          f.x * sx +
-          'px,' +
-          f.y * sy +
-          'px) translate(-50%,-50%) rotate(' +
-          f.r +
-          'rad)';
-        var wings = bird.querySelector('.butterfly-wings');
-        if (wings) wings.style.transform = 'scaleX(' + f.k + ')';
-      });
-      layer.removeAttribute('data-pending');
-    } catch (error) {}
-  })();
-</script>
-
 <script>
   import {
     STORAGE_KEY,

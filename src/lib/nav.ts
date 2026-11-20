@@ -39,10 +39,10 @@ export const mainNav: NavItem[] = [
     path: '/impact',
     sections: [
       { path: '/impact/projects', key: 'impactProjects' },
+      { path: '/activities', key: 'navActivities' },
       { path: '/programs', key: 'ourPrograms' },
     ],
   },
-  { key: 'navActivities', path: '/activities' },
   { key: 'navGetInvolved', path: '/contact' },
 ];
 
@@ -54,7 +54,6 @@ export const mobileNav: NavItem[] = [
   { key: 'ourTeam', path: '/team' },
   { key: 'navWork', path: '/programs' },
   { key: 'navImpact', path: '/impact' },
-  { key: 'navActivities', path: '/activities' },
   { key: 'navReports', path: '/reports' },
   { key: 'navSafeguarding', path: '/safeguarding' },
   { key: 'navPartners', path: '/partners' },

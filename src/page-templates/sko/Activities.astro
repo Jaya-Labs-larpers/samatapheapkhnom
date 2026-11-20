@@ -42,7 +42,7 @@ const collection = collectionPageJsonLd({
 
 <BaseLayout lang={lang} title={title} description={description} noindex jsonLd={collection}>
   <SkHero title={heading} intro={tStrict(lang, 'introActivities')} actions={[]}>
-    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
+    <Breadcrumbs slot="before" lang={lang} trail={[{ label: tStrict(lang, 'navImpact'), path: '/impact' }, { label: heading }]} />
   </SkHero>
 
   {

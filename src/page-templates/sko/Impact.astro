@@ -37,7 +37,7 @@ const introText = intro.value ?? tStrict(lang, 'introImpact');
 const story = stories[0] ? storyCard(stories[0], lang) : null;
 const seo = resolveSeo(projects ? null : page?.seo, lang, {
   title: heading,
-  description: projects ? null : introText,
+  description: introText,
   image: page?.heroImage,
 });
 ---
@@ -65,19 +65,16 @@ const seo = resolveSeo(projects ? null : page?.seo, lang, {
     />
   </SkHero>
 
-  {
-    hasProjects && (
-      <SkSubnav
-        lang={lang}
-        pathname={Astro.url.pathname}
-        items={[
-          { key: 'navImpact', path: '/impact' },
-          { key: 'impactProjects', path: impactProjectsPath },
-          { key: 'ourPrograms', path: '/programs' },
-        ]}
-      />
-    )
-  }
+  <SkSubnav
+    lang={lang}
+    pathname={Astro.url.pathname}
+    items={[
+      { key: 'navImpact', path: '/impact' },
+      ...(hasProjects ? [{ key: 'impactProjects' as const, path: impactProjectsPath }] : []),
+      { key: 'navActivities', path: '/activities' },
+      { key: 'ourPrograms', path: '/programs' },
+    ]}
+  />
 
   {
     !projects && stats.length > 0 && (

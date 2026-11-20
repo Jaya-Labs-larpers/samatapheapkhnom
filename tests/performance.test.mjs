@@ -52,8 +52,11 @@ test('static files are cached for at least 30 days', () => {
 });
 
 test('GTM starts after the page has loaded, not in the head', () => {
-  assert.match(layout, /addEventListener\('load'/);
-  assert.match(layout, /requestIdleCallback/);
+  const consent = read('src/components/layout/CookieSettings.astro');
+  assert.doesNotMatch(layout, /googletagmanager|gtmSnippet|beaconLoader/);
+  assert.match(consent, /whenSettled\(\(\) =>/);
+  assert.match(consent, /choice !== 'accepted'/);
+  assert.match(read('src/lib/lazy.ts'), /window.addEventListener\('load', idle/);
 });
 
 test('the contact form styles load only with the form', () => {

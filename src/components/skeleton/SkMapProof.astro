@@ -24,7 +24,7 @@ const display = lead
 {
   lead && (
     <SkSection class="sk-proof">
-      <div class="proof reveal">
+      <div class="proof reveal" data-reveal-ms="1300">
         <div class="proof__lead">
           {prefix?.value && (
             <span class="proof__prefix" lang={prefix.isFallback ? prefix.lang : undefined}>
@@ -51,7 +51,9 @@ const display = lead
           decoding="async"
         />
       </div>
-      <ImpactStats lang={lang} stats={rest} columns={rest.length > 3 ? 4 : 3} />
+      <div class:list={['proof__stats', rest.length === 3 && 'proof__stats--row']}>
+        <ImpactStats lang={lang} stats={rest} columns={rest.length > 3 ? 4 : 3} />
+      </div>
     </SkSection>
   )
 }
@@ -101,17 +103,61 @@ const display = lead
   :global(:lang(km)) .proof__figure {
     letter-spacing: normal;
   }
+  @media (max-width: 63.99rem) {
+    .proof {
+      gap: 20px;
+    }
+    .proof__lead {
+      gap: 6px;
+    }
+    .proof__figure {
+      font-size: clamp(3rem, 1rem + 10vw, 4.5rem);
+    }
+    .proof__label {
+      max-width: none;
+      font-size: clamp(1rem, 0.5rem + 3.2vw, 1.25rem);
+    }
+    .proof__map {
+      width: min(86%, 420px);
+    }
+  }
+  @media (max-width: 63.99rem) {
+    .proof__stats--row :global(.grid) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 12px;
+    }
+    .proof__stats--row :global(b) {
+      font-size: clamp(1.75rem, 0.6rem + 6vw, 3rem);
+    }
+    .proof__stats--row :global(b + span) {
+      font-size: 13px;
+    }
+  }
   @media (min-width: 64rem) {
     .proof {
       grid-template-columns: 1fr 1fr;
     }
   }
   @media (prefers-reduced-motion: no-preference) {
+    .proof {
+      --reveal-rise: 14px;
+    }
+    .proof[data-reveal='pending'] {
+      translate: 0 14px;
+    }
+    .proof[data-reveal='shown'] {
+      transition:
+        opacity 1200ms var(--ease-reveal) var(--reveal-delay, 0ms),
+        translate 1200ms var(--ease-reveal) var(--reveal-delay, 0ms);
+    }
     .proof__map {
-      transition: opacity 0.8s ease;
+      transition:
+        opacity 1400ms ease-out 150ms,
+        scale 1400ms var(--ease-reveal) 150ms;
     }
     :global(.reveal[data-reveal='pending']) .proof__map {
       opacity: 0;
+      scale: 0.97;
     }
   }
 </style>

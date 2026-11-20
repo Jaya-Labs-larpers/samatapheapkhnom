@@ -72,7 +72,7 @@ const photoSizes = zoom
           data-carousel-track
           data-scrub={zoom ? '' : undefined}
           data-scrub-start={zoom ? 'top 32%' : undefined}
-          data-scrub-end={zoom ? 'bottom 112%' : undefined}
+          data-scrub-end={zoom ? 'bottom 200%' : undefined}
         >
           {cards.map((card) => (
             <li class="slider__item">
@@ -83,6 +83,7 @@ const photoSizes = zoom
                     lang={lang}
                     alt=""
                     keep
+                    defer="visible"
                     aspect="360/457"
                     sizes={photoSizes}
                   />
@@ -314,7 +315,7 @@ const photoSizes = zoom
       --progress: var(--p, 0);
       --remaining: calc(1 - var(--progress) * var(--progress) * (3 - 2 * var(--progress)));
       display: block;
-      min-height: 156dvh;
+      min-height: 280dvh;
       margin-top: calc(-1 * var(--story-top));
     }
     .slider__track[data-scrub-ready] .slider__item {

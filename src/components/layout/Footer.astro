@@ -3,6 +3,8 @@ import type { Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
 import { localizePath, t, text } from '~/lib/i18n/utils';
 import { footerColumns } from '~/lib/nav';
+import { gtmId } from '~/lib/config';
+import CookieSettings from './CookieSettings.astro';
 import LanguageToggle from './LanguageToggle.astro';
 import SocialIcon, { type SocialPlatform } from '~/components/design/SocialIcon.astro';
 import Logo from '~/components/Logo.astro';
@@ -98,6 +100,7 @@ const { email, phone } = settings;
     <div class="ftr__legal">
       <span>© {year} {orgName}</span>
       <a href={localizePath('/privacy', lang)} class="ftr__legal-link">{t(lang, 'navPrivacy')}</a>
+      {gtmId && <CookieSettings lang={lang} containerId={gtmId} />}
       <span class="ftr__lang">
         <LanguageToggle lang={lang} pathname={pathname} variant="footer" />
       </span>

@@ -28,6 +28,25 @@ import type {
   TeamMember,
 } from './types';
 
+const queryCache = new Map<string, { result: Promise<unknown>; expires: number }>();
+
+function readPublished<T>(query: string, params: Record<string, unknown>): Promise<T> {
+  const now = Date.now();
+  for (const [key, entry] of queryCache) {
+    if (entry.expires <= now) queryCache.delete(key);
+  }
+  const key = JSON.stringify([query, params]);
+  const cached = queryCache.get(key);
+  if (cached) return cached.result as Promise<T>;
+
+  const result = sanityClient!.fetch<T>(query, params).catch((error: unknown) => {
+    if (queryCache.get(key)?.result === result) queryCache.delete(key);
+    throw error;
+  });
+  queryCache.set(key, { result, expires: now + 15_000 });
+  return result;
+}
+
 /**
  * Every read passes through `stripPlaceholders`, so an unfinished marker cannot
  * reach a page whichever source it came from — a local fixture or a draft a
@@ -40,7 +59,7 @@ async function fetchOr<T>(query: string, params: Record<string, unknown>, fallba
     return stripPlaceholders(fallback);
   }
   try {
-    const result = await sanityClient.fetch<T>(query, params);
+    const result = await readPublished<T>(query, params);
     if (isProductionDeployment && result == null) {
       throw new Error('[readiness] Required published CMS document is missing');
     }

@@ -1,15 +1,16 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
-import type { Story } from '~/lib/content/types';
+import type { PortableBlock, Story } from '~/lib/content/types';
 import { getProgram } from '~/lib/content';
+import { blockText } from '~/lib/content/sections';
 import { langAttr, localizePath, pick, t } from '~/lib/i18n/utils';
 import { blocksToPlainText } from '~/lib/portable-text';
 import { hasImage } from '~/lib/sanity/image';
 import { resolveSeo } from '~/lib/seo';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import ProgramDetail from '~/page-templates/ProgramDetail.astro';
 import RichText from '~/components/content/RichText.astro';
 import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
 
 interface Props {
   lang: Locale;
@@ -23,12 +24,55 @@ const quote = pick(story.quote, lang);
 const role = pick(story.personRole, lang);
 const body = pick(story.body, lang);
 const programTitle = pick(story.program?.title, lang);
-const featuredProgram =
-  story._id === 'story-1' && story.program?.slug === 'resilient-city-and-migration'
-    ? await getProgram(story.program.slug)
-    : null;
 const photo = !story.useSilhouette && hasImage(story.photo) ? story.photo : null;
-const caption = pick(photo?.caption, lang);
+
+const opening = story._id === 'story-1' ? {
+  en: {
+    title: 'Why Sok Vanny speaks up about birth certificates',
+    intro: ['In Andoung 6, getting birth certificates helped Sok Vanny enroll her grandchildren in school.', 'Now she helps her neighbors understand why those papers matter.'],
+  },
+  km: {
+    title: 'ហេតុអ្វីបានជា Sok Vanny លើកឡើងពីសារៈសំខាន់នៃសំបុត្រកំណើត',
+    intro: ['នៅសហគមន៍អណ្ដូង ៦ សំបុត្រកំណើតបានជួយឱ្យ Sok Vanny ចុះឈ្មោះចៅៗរបស់គាត់ចូលរៀន។', 'សព្វថ្ងៃ គាត់ជួយអ្នកជិតខាងឱ្យយល់ពីសារៈសំខាន់នៃឯកសារទាំងនេះ។'],
+  },
+}[lang] : null;
+const caption = pick(photo?.alt, lang);
+
+/*
+  The programme page keeps the project's own closing paragraphs under its
+  "Impact" heading, after the account itself. They belong with the story, so
+  whatever that section holds after the story's own text is shown below it.
+*/
+const program = story.program ? await getProgram(story.program.slug) : null;
+const programBody = pick(program?.body, lang);
+const told = new Set((body.value ?? []).map(blockText));
+const isImpactHeading = (block: PortableBlock) =>
+  block._type === 'block' && block.style === 'h2' && /impact|លទ្ធផល/i.test(blockText(block));
+const blocks = programBody.value ?? [];
+const start = blocks.findIndex(isImpactHeading);
+const end = blocks.findIndex(
+  (block, i) => i > start && block._type === 'block' && block.style === 'h2',
+);
+const section = start < 0 ? [] : blocks.slice(start + 1, end < 0 ? blocks.length : end);
+const lastTold = section.findLastIndex((block) => told.has(blockText(block)));
+const context = section.slice(lastTold + 1);
+
+function formatParagraphs(blocks: PortableBlock[], locale: Locale): PortableBlock[] {
+  if (!opening || locale !== 'en') return blocks;
+  return blocks.flatMap((block) => {
+    if (block._type !== 'block' || block.listItem || (block.style && block.style !== 'normal')) {
+      return [block];
+    }
+    const children = block.children ?? [];
+    if (children.length !== 1) return [block];
+    const span = children[0]!;
+    const paragraphs = span.text.split(
+      /\s+(?=I am the primary caregiver|This was hardly enough|SKO supported and facilitated|While having National ID Card|SKO’s contribution|That is now beginning to change)/,
+    );
+    return paragraphs.map((text) => ({ ...block, children: [{ ...span, text }] }));
+  });
+}
+
 const seo = resolveSeo(null, lang, {
   title: name,
   description: quote.value ?? blocksToPlainText(body.value),
@@ -36,55 +80,61 @@ const seo = resolveSeo(null, lang, {
 });
 ---
 
-{
-  featuredProgram ? (
-    <ProgramDetail lang={lang} program={featuredProgram} featuredStory={story} />
+<BaseLayout
+  lang={lang}
+  title={seo.title}
+  description={seo.description}
+  ogImage={seo.ogImage}
+  noindex
+>
+  {opening && photo ? (
+    <header class="story-opening">
+      <div class="story-opening__copy">
+        <h1>{opening.title}</h1>
+        <div class="story-opening__intro">
+          {opening.intro.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+      </div>
+      <figure>
+        <div class="story-opening__photo">
+          <ResponsiveImage image={photo} lang={lang} keep eager sizes="(min-width: 800px) 55vw, 100vw" />
+        </div>
+        {caption.value && <figcaption lang={langAttr(caption)}>{caption.value}</figcaption>}
+      </figure>
+    </header>
   ) : (
-    <BaseLayout
-      lang={lang}
-      title={seo.title}
-      description={seo.description}
-      ogImage={seo.ogImage}
-      noindex
-    >
-      <article class="story">
-        <header class="story__intro">
-          <div class:list={['story__cover', photo && 'story__cover--photo']}>
-            <div class="story__heading">
-              <h1 class="sk-h1">{name}</h1>
-              {role.value && (
-                <p class="story__role" lang={langAttr(role)}>
-                  {role.value}
-                </p>
-              )}
-            </div>
-            {photo && (
-              <figure class="story__figure">
-                <div class="sk-media">
-                  <ResponsiveImage
-                    image={photo}
-                    lang={lang}
-                    alt={caption.value ? '' : undefined}
-                    eager
-                    keep
-                    sizes="(min-width: 75rem) 720px, (min-width: 56rem) 54vw, 100vw"
-                  />
-                </div>
-                {caption.value && <figcaption lang={langAttr(caption)}>{caption.value}</figcaption>}
-              </figure>
-            )}
-          </div>
-        </header>
-        <div class="story__reading">
-          {body.value ? (
-            <RichText blocks={story.body} lang={lang} />
-          ) : (
-            quote.value && (
-              <p class="story__lead" lang={langAttr(quote)}>
-                {quote.value}
-              </p>
-            )
-          )}
+  <SkHero
+    home={Boolean(photo)}
+    keep
+    lang={lang}
+    image={photo}
+    eyebrow={t(lang, 'typeStory')}
+    title={name}
+    intro={role.value ?? null}
+    introLang={langAttr(role)}
+    actions={[]}
+  />
+  )}
+
+  <article class="story">
+    <div class="story__reading">
+      {
+        body.value ? (
+          <RichText blocks={{ [body.lang]: formatParagraphs(body.value, body.lang) }} lang={lang} />
+        ) : (
+          quote.value && (
+            <p class="story__lead" lang={langAttr(quote)}>
+              {quote.value}
+            </p>
+          )
+        )
+      }
+    </div>
+
+    {
+      (context.length > 0 || (story.program && programTitle.value)) && (
+        <aside class="story__context">
+          {context.length > 0 && <RichText blocks={{ [programBody.lang]: formatParagraphs(context, programBody.lang) }} lang={lang} />}
           {story.program && programTitle.value && (
             <a
               class="sk-link"
@@ -94,80 +144,217 @@ const seo = resolveSeo(null, lang, {
               {programTitle.value} →
             </a>
           )}
-        </div>
-      </article>
-    </BaseLayout>
-  )
-}
+        </aside>
+      )
+    }
+
+    <section class="story__cta">
+      <h2 class="sk-h2">{t(lang, 'ctaProgramTitle')}</h2>
+      <div class="story__cta-actions">
+        <a href={localizePath('/contact', lang)} class="story__btn">{t(lang, 'contactUs')}</a>
+        <a href={localizePath('/reports', lang)} class="story__btn">{t(lang, 'seeReports')}</a>
+      </div>
+    </section>
+  </article>
+</BaseLayout>
 
 <style>
-  .story__intro {
-    background: var(--color-surface-subtle);
-    padding: clamp(40px, 6vw, 104px) clamp(20px, 5.5vw, 80px);
+  .story-opening {
+    display: grid;
+    grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);
+    min-height: calc(100svh - var(--header-h));
+    background: #f6f3eb;
+    color: var(--color-ink-900);
   }
 
-  .story__cover {
-    display: grid;
-    gap: clamp(24px, 4vw, 72px);
+  .story-opening__copy {
+    align-self: center;
+    padding: clamp(36px, 5vw, 88px);
+  }
+
+  .story-opening h1 {
+    font-family: var(--font-hero);
+    font-size: clamp(2.8rem, 4.8vw, 5.25rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+
+  .story-opening h1:lang(km) {
+    letter-spacing: normal;
+    line-height: 1.55;
+  }
+
+  .story-opening__intro {
+    max-width: 38ch;
+    margin-top: 1.4rem;
+    font-size: clamp(1.0625rem, 1.45vw, 1.375rem);
+    line-height: 1.6;
+  }
+
+  .story-opening__intro p + p {
+    margin-top: 0.65em;
+  }
+
+  .story-opening figure {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+  }
+
+  .story-opening__photo {
+    position: relative;
+    flex: 1;
+    min-height: clamp(26rem, 38vw, 42rem);
+  }
+
+  .story-opening__photo :global(img) {
+    position: absolute;
+    inset: 0;
+  }
+
+  .story-opening figcaption {
+    padding: 0.7rem 1.15rem;
+    color: var(--color-ink-700);
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 799px) {
+    .story-opening {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
+    }
+
+    .story-opening__copy {
+      padding: 2rem clamp(20px, 5vw, 40px);
+    }
+
+    .story-opening__photo {
+      min-height: min(52vw, 19rem);
+    }
+  }
+
+  .story {
+    display: flex;
+    flex-direction: column;
+    padding: 0 clamp(20px, 5.5vw, 80px) clamp(40px, 6vw, 96px);
+  }
+
+  .story__reading,
+  .story__context {
+    box-sizing: border-box;
+    width: 100%;
     max-width: 1280px;
     margin-inline: auto;
   }
 
-  .story__heading {
-    align-self: center;
-    min-width: 0;
-  }
-
-  .story__heading h1 {
-    max-width: none;
-    font-size: clamp(2.75rem, 1.5rem + 4.6vw, 6rem);
-  }
-
-  .story__lead {
-    max-width: 32ch;
-    margin: 20px 0 0;
-    color: var(--color-ink-900);
-    font-size: clamp(1.125rem, 0.95rem + 0.8vw, 1.625rem);
-    line-height: 1.5;
-    text-wrap: pretty;
-  }
-
-  .story__role {
-    margin: 24px 0 0;
-    color: var(--color-ink-600);
-  }
-
-  .story__figure {
-    min-width: 0;
-    margin: 0;
-  }
-
-  .story__figure figcaption {
-    margin-top: 10px;
-    color: var(--color-ink-600);
-    font-size: 0.875rem;
-    line-height: 1.5;
-  }
-
   .story__reading {
-    max-width: 50rem;
-    margin-inline: auto;
-    padding: clamp(40px, 6vw, 88px) clamp(20px, 4vw, 48px);
+    max-width: 40rem;
+    padding-block: clamp(40px, 6vw, 88px) 0;
   }
 
   .story__reading :global(.prose) {
-    font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+    max-width: none;
+    color: var(--color-ink-700);
+    font-size: clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem);
+    line-height: 1.75;
+  }
+
+  .story__reading :global(.prose > * + *) {
+    margin-top: 1.05em;
+  }
+
+  .story__reading :global(.prose p) {
+    text-align: start;
+    hyphens: manual;
+  }
+
+  .story__reading :global(.prose > p:first-child) {
+    color: var(--color-ink-900);
+    font-family: var(--font-display);
+    font-size: clamp(1.375rem, 1.1rem + 1.2vw, 1.875rem);
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+
+  .story__lead {
+    margin: 0;
+    color: var(--color-ink-900);
+    font-size: clamp(1.375rem, 1.1rem + 1.2vw, 1.875rem);
+    line-height: 1.45;
+  }
+
+  .story__context {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 52rem;
+    margin-top: clamp(40px, 6vw, 88px);
+    padding: clamp(24px, 4vw, 56px);
+    border-radius: 24px;
+    background: var(--color-surface-subtle);
+  }
+
+  .story__context :global(.prose) {
+    max-width: none;
+    color: var(--color-ink-700);
+    font-size: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
     line-height: 1.7;
   }
 
-  .story__reading .sk-link {
-    display: inline-block;
-    margin-top: 28px;
+  .story__context :global(.prose p) {
+    text-align: start;
+    hyphens: manual;
   }
 
-  @media (min-width: 56rem) {
-    .story__cover--photo {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    }
+  .story__context .sk-link {
+    align-self: flex-start;
+  }
+
+  .story__cta {
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px 40px;
+    width: 100%;
+    max-width: 1280px;
+    margin: clamp(48px, 7vw, 104px) auto 0;
+    padding: clamp(32px, 5vw, 72px);
+    border-radius: 24px;
+    background: var(--color-ink-900);
+  }
+
+  .story__cta .sk-h2 {
+    max-width: 14ch;
+    color: #fff;
+  }
+
+  .story__cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .story__btn {
+    padding: clamp(12px, 1.8vw, 18px) clamp(27px, 3.75vw, 39px);
+    border-radius: 999px;
+    background: var(--color-blue-700);
+    color: #fff;
+    font-size: clamp(0.9375rem, 0.675rem + 1.2vw, 1.5rem);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.25s ease;
+  }
+
+  .story__btn:is(:hover, :focus-visible) {
+    background: var(--color-blue-800);
+  }
+
+  .story__btn:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
   }
 </style>

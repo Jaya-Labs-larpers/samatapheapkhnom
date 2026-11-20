@@ -3,7 +3,6 @@ import type { Locale } from '~/lib/i18n/config';
 import { langAttr, localizePath, pick, t, text } from '~/lib/i18n/utils';
 import {
   getDirectorMessage,
-  getFeaturedActivities,
   getImpactStats,
   getPartners,
   getPrograms,
@@ -11,12 +10,11 @@ import {
   getStories,
 } from '~/lib/content';
 import { localCmsImage } from '~/lib/sanity/image';
-import { ctaActions, heroActions, postItem, programCard, tStrict } from '~/lib/skeleton-content';
+import { ctaActions, heroActions, programCard, tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import SkSection from '~/components/skeleton/SkSection.astro';
 import SkHero from '~/components/skeleton/SkHero.astro';
 import SkDirector from '~/components/skeleton/SkDirector.astro';
-import SkPosts from '~/components/skeleton/SkPosts.astro';
 import SkSplitCta from '~/components/skeleton/SkSplitCta.astro';
 import SkPartnerMarquee from '~/components/skeleton/SkPartnerMarquee.astro';
 import SkStoryText from '~/components/skeleton/SkStoryText.astro';
@@ -31,12 +29,11 @@ interface Props {
 
 const { lang } = Astro.props;
 
-const [settings, stats, director, programs, featured, partners, stories] = await Promise.all([
+const [settings, stats, director, programs, partners, stories] = await Promise.all([
   getSiteSettings(),
   getImpactStats(),
   getDirectorMessage(),
   getPrograms(),
-  getFeaturedActivities(3),
   getPartners(),
   getStories(),
 ]);
@@ -135,16 +132,6 @@ const heroImage = {
       />
     )
   }
-
-  <SkPosts
-    heading={tStrict(lang, 'latestActivities')}
-    keep
-    n={featured.length}
-    lang={lang}
-    readMore={tStrict(lang, 'readMore')}
-    items={featured.map((activity) => postItem(activity, lang))}
-    more={{ label: tStrict(lang, 'allActivities'), href: localizePath('/activities', lang) }}
-  />
 
   <SkSplitCta
     lang={lang}

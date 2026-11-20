@@ -269,3 +269,23 @@ const service = serviceJsonLd({
     }
   }
 </style>
+
+<style is:global>
+@layer components {
+  /* --- Programme detail ---------------------------------------------------- */
+  .program-hero {
+    background: var(--color-surface-subtle);
+  }
+  .program-hero__inner {
+    padding-block: 2.5rem 3rem;
+  }
+  @media (min-width: 64rem) {
+    .program-hero__inner {
+      padding-block: 3.5rem 4.5rem;
+    }
+    .program-hero__text {
+      max-width: 40rem;
+    }
+  }
+}
+</style>
