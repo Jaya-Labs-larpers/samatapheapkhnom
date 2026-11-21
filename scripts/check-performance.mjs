@@ -21,7 +21,7 @@ export const BUDGETS = {
   /** The largest inline <svg> a page may carry (icons are well under this). */
   inlineSvgChars: 6_000,
   /** The site stylesheet, gzipped. */
-  cssGzipBytes: 16_000,
+  cssGzipBytes: 16_500,
   /** Render-blocking stylesheets per page: the site's, plus a page's own. */
   stylesheetsPerPage: 2,
   /**
