@@ -258,8 +258,10 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     font-family: var(--font-sans);
   }
   /* Once the page moves, only the link group takes a faint frosted surface so
-     the links stay legible; the logo and the actions keep floating. */
-  .hdr[data-scrolled] .hdr__nav {
+     the links stay legible; the logo and the actions keep floating. A page
+     whose top is split light/dark (data-nav-solid) keeps it from the start. */
+  .hdr[data-scrolled] .hdr__nav,
+  :global(:root:has(main > [data-nav-solid]:first-child)) .hdr__nav {
     background: var(--hdr-scrolled);
     -webkit-backdrop-filter: blur(20px) saturate(1.4);
     backdrop-filter: blur(20px) saturate(1.4);
@@ -603,6 +605,14 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     .hdr__bar
     :global(.logo--reversed),
   .hdr[data-tone='dark'] .hdr__bar :global(.logo--reversed) {
+    display: block;
+  }
+  .hdr[data-brand-tone='dark'] .hdr__bar :global(.logo--full),
+  .hdr[data-brand-tone='light'] .hdr__bar :global(.logo--reversed) {
+    display: none;
+  }
+  .hdr[data-brand-tone='dark'] .hdr__bar :global(.logo--reversed),
+  .hdr[data-brand-tone='light'] .hdr__bar :global(.logo--full) {
     display: block;
   }
 

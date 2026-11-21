@@ -43,7 +43,6 @@ export const mainNav: NavItem[] = [
       { path: '/programs', key: 'ourPrograms' },
     ],
   },
-  { key: 'navGetInvolved', path: '/contact' },
 ];
 
 export const mobileNav: NavItem[] = [

@@ -1,5 +1,4 @@
-/* Contact form, its topic picker, the safeguarding panel and the contact page
-   layout. Loaded only where ContactForm.astro is, so no other page pays for it. */
+/* Contact form and the contact page layout. Loaded only where ContactForm.astro is, so no other page pays for it. */
 @layer components {
   /* --- Form controls ------------------------------------------------------ */
   .field {
@@ -270,123 +269,6 @@
     color: var(--color-ink-400);
   }
 
-  /* Two or three radios drawn as one sliding switch. The real inputs sit
-     invisibly over their labels, so the keyboard, the form and assistive
-     technology all see plain radio buttons. */
-  .segmented {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 1fr;
-    gap: 2px;
-    width: max-content;
-    max-width: 100%;
-    padding: 3px;
-    border-radius: var(--radius-md);
-    background: var(--color-surface-sunken);
-  }
-  .segmented__item {
-    position: relative;
-  }
-  .segmented__item input {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    opacity: 0;
-    cursor: pointer;
-  }
-  .segmented__item span {
-    display: block;
-    padding: 0.4375rem 1.125rem;
-    border-radius: calc(var(--radius-md) - 2px);
-    font-size: 0.9375rem;
-    line-height: 1.4;
-    font-weight: 600;
-    text-align: center;
-    white-space: nowrap;
-    color: var(--color-ink-600);
-    transition:
-      background var(--duration-base) var(--ease-out-soft),
-      color var(--duration-base) var(--ease-out-soft),
-      box-shadow var(--duration-base) var(--ease-out-soft);
-  }
-  .segmented__item:hover input:not(:checked) + span {
-    color: var(--color-ink-900);
-  }
-  .segmented__item input:checked + span {
-    background: var(--color-surface);
-    color: var(--color-ink-900);
-    box-shadow: var(--shadow-sm);
-  }
-  .segmented__item input:focus-visible + span {
-    outline: 3px solid var(--color-blue-700);
-    outline-offset: 2px;
-  }
-
-  /* --- Topic cards --------------------------------------------------------
-     A native <select> holds the value; once the script runs, these cards
-     stand in for it. Each card is a title and a hint. */
-  .topic-cards[data-enhanced] > .topic-cards__native {
-    display: none;
-  }
-  .topic-cards__grid {
-    display: grid;
-    gap: 0.625rem;
-    grid-template-columns: 1fr;
-  }
-  @media (min-width: 40rem) {
-    .topic-cards__grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-  .topic-card {
-    display: grid;
-    align-content: start;
-    gap: 0.25rem;
-    padding: 0.875rem 1rem;
-    text-align: start;
-    background: var(--color-surface);
-    border: 1px solid var(--color-line-strong);
-    border-radius: var(--radius-lg);
-    color: var(--color-ink-900);
-    cursor: pointer;
-    transition:
-      border-color var(--duration-base) var(--ease-reveal),
-      background-color var(--duration-base) var(--ease-reveal);
-  }
-  .topic-card:hover {
-    border-color: var(--color-blue-700);
-  }
-  .topic-card:focus-visible {
-    outline: 3px solid var(--color-blue-700);
-    outline-offset: 2px;
-  }
-  .topic-card[aria-checked='true'] {
-    border-color: var(--color-blue-700);
-    background: var(--color-blue-50);
-    box-shadow: inset 0 0 0 1px var(--color-blue-700);
-  }
-  .topic-card__label {
-    font-weight: 600;
-  }
-  .topic-card__hint {
-    font-size: 0.8125rem;
-    line-height: 1.4;
-    color: var(--color-ink-600);
-  }
-  .topic-card[data-tone='danger'] .topic-card__label {
-    color: var(--color-danger-700);
-  }
-  .topic-card[data-tone='danger']:hover,
-  .topic-card[data-tone='danger'][aria-checked='true'] {
-    border-color: var(--color-danger-700);
-  }
-  .topic-card[data-tone='danger'][aria-checked='true'] {
-    background: var(--color-danger-50);
-    box-shadow: inset 0 0 0 1px var(--color-danger-700);
-  }
-
   /* --- Contact page --------------------------------------------------------- */
   /* Each box on the page arrives once it is on screen: a slow rise that
      sharpens out of a blur, its rows following one after another inside the
@@ -488,35 +370,19 @@
     color: var(--color-blue-700);
   }
 
-  /* Only the chosen topic's questions show; safeguarding hides the form's
-     fields, while its contact strip is on the page for every topic. */
+  /* Only the topic the visitor arrived with (?topic=…) shows its questions. */
   .contact-desk .form-topic {
     display: none;
   }
   .form-topic {
     gap: 1.125rem;
   }
-  .contact-desk:has([name='formType'] > option[value='partner']:checked)
-    [data-topic-fields='partner'],
-  .contact-desk:has([name='formType'] > option[value='volunteer']:checked)
-    [data-topic-fields='volunteer'],
-  .contact-desk:has([name='formType'] > option[value='media']:checked) [data-topic-fields='media'] {
+  .contact-desk form[data-topic='partner'] [data-topic-fields='partner'],
+  .contact-desk form[data-topic='volunteer'] [data-topic-fields='volunteer'],
+  .contact-desk form[data-topic='media'] [data-topic-fields='media'] {
     display: grid;
   }
-  /* The reason field stays, so the visitor can still change their mind. */
-  .contact-desk:has([name='formType'] > option[value='safeguarding']:checked)
-    .form-panel-body
-    > :not(.form-section--reason),
-  .contact-desk:has([name='formType'] > option[value='safeguarding']:checked) .form-panel-foot {
-    display: none;
-  }
-  .contact-desk:has([name='formType'] > option[value='safeguarding']:checked)
-    .form-section--reason {
-    padding-bottom: 1.75rem;
-  }
-  .contact-desk:has([name='formType'] > option[value='safeguarding']:checked) .safeguarding-panel {
-    border-width: 2px;
-  }
+
   /* On the contact page the form is the page itself, not a card on it. */
   .contact-desk .form-panel {
     --form-panel-pad: 0;
@@ -530,143 +396,250 @@
     background: none;
   }
   .contact-desk .form-panel-head {
-    display: none;
+    padding: 0 0 1.5rem;
   }
   .contact-desk .form-section {
-    gap: 0.875rem;
-    padding-block: 0.375rem;
-  }
-  .contact-desk textarea {
-    height: 7.5rem;
-  }
-  .contact-desk .form-section:first-child {
-    padding-top: 0;
+    gap: 1rem;
+    padding-block: 0 1rem;
   }
   .contact-desk .form-pair {
-    gap: 0.875rem;
+    gap: 1rem;
+  }
+  .contact-desk .field {
+    padding: 0.8125rem 1rem;
+    border-color: var(--color-line-strong);
+    border-radius: var(--radius-sm);
+    font-size: 0.9375rem;
+  }
+  .contact-desk .field::placeholder {
+    color: var(--color-ink-400);
+  }
+  .contact-desk .field--select:has(option[value='']:checked) {
+    color: var(--color-ink-400);
+  }
+  .contact-desk textarea {
+    height: 8.5rem;
+    resize: vertical;
+  }
+  .contact-desk .form-choice > .form-label,
+  .contact-desk .form-section__label {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    font-weight: 500;
+    color: var(--color-ink-600);
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  .contact-desk .form-section__label {
+    padding-top: 0.5rem;
+  }
+  .contact-desk .form-choice {
+    gap: 0.625rem;
+    padding-block: 0.25rem;
+  }
+  .contact-desk .form-choice__options {
+    gap: 0.5rem 2rem;
+    color: var(--color-ink-900);
+  }
+  .contact-desk .form-choice__options input {
+    margin: 0;
   }
   .contact-desk .form-panel-foot {
-    padding: 1rem 0 0;
+    padding: 0.75rem 0 0;
+  }
+  .contact-desk .form-panel-foot .btn {
+    width: auto;
+    min-width: 12rem;
   }
 
-  /* A phone gets one column: heading, form, safeguarding, details. From
-     64rem the details sit beside the form in a sticky card, and safeguarding
-     spans the page below. */
-  .contact-layout {
+  /* One desk filling the screen under the header: the contact column on the
+     dark surface to the left, the form to the right. A phone reads heading,
+     form, then the contact details. */
+  .contact-split {
+    --split-pad-top: clamp(2rem, 1rem + 4vw, 5rem);
     display: grid;
-    gap: 1.75rem;
-    grid-template-areas: 'title' 'hero' 'form' 'safe' 'info' 'band';
+    grid-template-areas: 'title' 'form' 'info';
+    min-height: calc(100svh - var(--header-h));
   }
-  @media (min-width: 64rem) {
-    .contact-layout {
-      grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
-      grid-template-areas: 'title title' 'hero hero' 'form info' 'safe safe' 'band band';
-      column-gap: clamp(3rem, 6vw, 6rem);
-      row-gap: 2.5rem;
-      align-items: start;
-    }
-  }
-  .contact-layout__title {
+  .contact-split__title {
     grid-area: title;
     margin: 0;
-    font-size: var(--text-h2);
-    line-height: var(--text-h2--line-height);
+    padding: var(--split-pad-top) var(--gutter-right) 0 var(--gutter-left);
+    font-size: var(--text-h1);
+    line-height: var(--text-h1--line-height);
+    letter-spacing: var(--text-h1--letter-spacing);
+    font-weight: 700;
+    color: var(--color-ink-900);
   }
-  .contact-layout__form {
+  .contact-split__form {
     grid-area: form;
+    padding: 1.75rem var(--gutter-right) 3rem var(--gutter-left);
   }
-  .contact-layout__hero {
-    grid-area: hero;
-    aspect-ratio: 16 / 7;
-    border-radius: var(--radius-xl);
-  }
-  @media (min-width: 64rem) {
-    .contact-layout__hero {
-      aspect-ratio: 24 / 5;
-    }
-  }
-  .contact-layout__side {
+  .contact-split__info {
+    --info-pad-bottom: 3rem;
+    --mark-w: 7rem;
     grid-area: info;
-    display: grid;
-    gap: 1.25rem;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    padding: 2.5rem var(--gutter-right) var(--info-pad-bottom) var(--gutter-left);
+    background: var(--color-blue-900);
+    color: #fff;
   }
-  .contact-layout__photo {
-    aspect-ratio: 4 / 3;
-    border-radius: var(--radius-xl);
+  .contact-split__info :focus-visible {
+    outline-color: #fff;
   }
-  .contact-info.contact-layout__info {
-    padding: 1.5rem;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-xl);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-sm);
+  /* The butterfly from the logo sits on Donate's line, at the far edge of the
+     column. Donate is the last thing in the column, so both are measured from
+     the column's bottom padding. */
+  .contact-split__mark {
+    position: absolute;
+    right: var(--gutter-right);
+    bottom: calc(var(--info-pad-bottom) + 0.75rem - var(--mark-w) * 0.205);
+    width: var(--mark-w);
+    height: auto;
+    opacity: 0.3;
+    pointer-events: none;
   }
-  @media (min-width: 64rem) {
-    .contact-layout__side {
-      position: sticky;
-      top: calc(var(--header-offset) + 1.5rem);
+  .contact-split__donate {
+    position: relative;
+    align-self: flex-start;
+    margin-top: auto;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .contact-split__donate::after {
+    content: ' →';
+  }
+  .contact-split__donate:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  @media (min-width: 56rem) {
+    /* Runs up under the see-through header, so the dark column starts at the
+       top of the window, behind the logo. The dark is a real background (not a
+       pseudo-element) because header-scroll.ts reads background colours to pick
+       the logo's tone. */
+    .contact-split {
+      --split-pad-x: clamp(2rem, 4vw, 4.5rem);
+      margin-top: calc(var(--header-h) * -1);
+      min-height: 100svh;
+      background: var(--color-blue-900);
+      grid-template-columns: 42% minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        'title form'
+        'info form';
+    }
+    .contact-split__title {
+      padding: calc(var(--header-h) + var(--split-pad-top)) var(--split-pad-x) 2rem
+        var(--gutter-left);
+      color: #fff;
+    }
+    .contact-split__info {
+      --info-pad-bottom: var(--split-pad-top);
+      --mark-w: 10rem;
+      padding: 0 var(--split-pad-x) var(--info-pad-bottom) var(--gutter-left);
+    }
+    .contact-split__info .contact-info li:first-child {
+      padding-top: 1.25rem;
+      border-top: 1px solid rgb(255 255 255 / 0.14);
+    }
+    .contact-split__mark {
+      right: var(--split-pad-x);
+    }
+    .contact-split__form {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: var(--color-surface);
+      padding: calc(var(--header-h) + var(--split-pad-top)) var(--gutter-right) var(--split-pad-top)
+        var(--split-pad-x);
+    }
+    .contact-split__form > .form-panel {
+      max-width: 40rem;
     }
   }
-  .contact-layout__safe {
-    grid-area: safe;
-  }
-  .contact-layout__band {
-    grid-area: band;
-    margin: 0;
-  }
-
   .contact-info {
+    position: relative;
     display: grid;
-    gap: 1.25rem;
     margin: 0;
     padding: 0;
     list-style: none;
-    color: var(--color-ink-600);
   }
   .contact-info li {
     display: flex;
-    gap: 0.75rem;
+    gap: 1rem;
     align-items: flex-start;
+    padding-block: 1.25rem;
+    border-top: 1px solid rgb(255 255 255 / 0.14);
   }
-  .contact-info li > svg {
-    flex: none;
-    margin-top: 0.125rem;
-    color: var(--color-blue-700);
+  .contact-info li:first-child {
+    padding-top: 0;
+    border-top: 0;
   }
-  .contact-info li > span {
+  .contact-info li > span:last-child {
     display: grid;
     gap: 0.25rem;
+    min-width: 0;
   }
-  .contact-info a {
-    color: var(--color-ink-900);
+  .contact-info__chip {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--color-sky-200) 16%, transparent);
+    color: var(--color-sky-200);
+  }
+  .contact-info__label {
+    font-size: var(--text-eyebrow);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-blue-200);
+  }
+  .contact-info__label:lang(km) {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  .contact-info__value {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: #fff;
     text-decoration: none;
+    overflow-wrap: anywhere;
   }
-  .contact-info a:hover {
-    color: var(--color-blue-700);
+  .contact-info__value:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
   .contact-info small {
     font-size: var(--text-sm);
-    color: var(--color-ink-400);
+    line-height: 1.55;
+    color: rgb(255 255 255 / 0.78);
   }
-  .contact-info a[target='_blank'] {
-    color: var(--color-blue-700);
+  .contact-info__address {
+    white-space: pre-line;
+    line-height: 1.55;
   }
-
-  .safeguarding-panel {
-    padding: 1.75rem;
-    border: 1px solid var(--color-danger-700);
-    border-radius: var(--radius-xl);
-    background: var(--color-danger-50);
+  .contact-info__action {
+    justify-self: start;
+    margin-top: 0.375rem;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-sky-200);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--color-sky-200) 45%, transparent);
+    text-underline-offset: 0.25em;
   }
-  .safeguarding-panel__title {
-    margin-top: 0;
-    font-size: var(--text-h3);
-    line-height: var(--text-h3--line-height);
-    color: var(--color-ink-900);
-  }
-  .safeguarding-panel__body {
-    margin-top: 0.625rem;
-    color: var(--color-ink-700);
+  .contact-info__action:hover {
+    text-decoration-color: currentColor;
   }
 
   .contact-next {

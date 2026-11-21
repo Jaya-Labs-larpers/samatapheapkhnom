@@ -19,6 +19,7 @@ export function initHeaderScroll(): void {
   const header = document.querySelector<HTMLElement>('header.site-header');
   if (!header) return;
   const probe = header.querySelector<HTMLElement>('.hdr__tools') ?? header;
+  const brand = header.querySelector<HTMLElement>('.hdr__brand');
 
   let ticking = false;
   const update = () => {
@@ -27,6 +28,17 @@ export function initHeaderScroll(): void {
     const box = probe.getBoundingClientRect();
     const dark = contentIsDark(header, box.left + box.width / 2, box.top + box.height / 2);
     header.dataset.tone = dark ? 'dark' : 'light';
+    if (brand) {
+      // The logo can sit over a different surface than the actions (a split
+      // page with a dark left column), so it reads its own background.
+      const logo = brand.getBoundingClientRect();
+      const brandDark = contentIsDark(
+        header,
+        logo.left + logo.width / 2,
+        logo.top + logo.height / 2,
+      );
+      header.dataset.brandTone = brandDark ? 'dark' : 'light';
+    }
   };
 
   const schedule = () => {

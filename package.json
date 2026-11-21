@@ -43,7 +43,7 @@
     "prettier-plugin-tailwindcss": "0.8.1",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
-    "wrangler": "4.153.0"
+    "wrangler": "^4.166.0"
   },
   "overrides": {
     "undici@7.29.1": "7.30.1",

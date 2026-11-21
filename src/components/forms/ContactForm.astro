@@ -4,31 +4,17 @@ import { t } from '~/lib/i18n/utils';
 import { contactEnabled, turnstileSiteKey } from '~/lib/config';
 import { getSiteSettings } from '~/lib/content';
 import Icon from '~/components/Icon.astro';
-import TopicCards from '~/components/forms/TopicCards.astro';
 import '~/styles/forms.css';
 
 interface Props {
   lang: Locale;
-  /** The form's id. The topic radios on the page point at it with form="…". */
+  /** The form's id. */
   id: string;
   /** Extra classes on the panel — used by pages to make it stick on desktop. */
   class?: string;
 }
 
 const { lang, id, class: className } = Astro.props;
-
-const topics = [
-  { value: 'general', label: 'topicGeneral', hint: 'topicGeneralHint' },
-  { value: 'partner', label: 'topicPartner', hint: 'topicPartnerHint' },
-  { value: 'volunteer', label: 'topicVolunteer', hint: 'topicVolunteerHint' },
-  { value: 'media', label: 'topicMedia', hint: 'topicMediaHint' },
-  {
-    value: 'safeguarding',
-    label: 'topicSafeguarding',
-    hint: 'topicSafeguardingHint',
-    tone: 'danger',
-  },
-] as const;
 
 const partnershipTypes = [
   'partnershipFunding',
@@ -76,18 +62,7 @@ const strings = {
     data-strings={JSON.stringify(strings)}
   >
     <div class="form-panel-body">
-      <section class="form-section form-section--reason form-enter-row" style="--i: 1">
-        <span class="form-label" id={`${id}-formType-label`}>
-          {t(lang, 'contactHelpTitle')}
-        </span>
-        <TopicCards
-          lang={lang}
-          id={`${id}-formType`}
-          name="formType"
-          labelId={`${id}-formType-label`}
-          topics={topics}
-        />
-      </section>
+      <input type="hidden" name="formType" value="general" />
 
       <section class="form-section form-enter-row" style="--i: 2">
         <div class="form-field">
@@ -96,6 +71,7 @@ const strings = {
           </label>
           <div class="form-control">
             <input
+              placeholder={t(lang, 'formName')}
               class="field"
               id={`${id}-name`}
               name="name"
@@ -121,6 +97,7 @@ const strings = {
             </label>
             <div class="form-control">
               <input
+                placeholder={t(lang, 'formEmail')}
                 class="field"
                 id={`${id}-email`}
                 name="email"
@@ -138,6 +115,7 @@ const strings = {
             </label>
             <div class="form-control">
               <input
+                placeholder={t(lang, 'formPhone')}
                 class="field"
                 id={`${id}-phone`}
                 name="phone"
@@ -152,12 +130,12 @@ const strings = {
 
         <fieldset class="form-choice">
           <legend class="form-label">{t(lang, 'formPreferred')}</legend>
-          <div class="segmented">
-            <label class="segmented__item">
+          <div class="form-choice__options">
+            <label>
               <input type="radio" name="preferredContact" value="email" checked />
               <span>{t(lang, 'formPreferEmail')}</span>
             </label>
-            <label class="segmented__item">
+            <label>
               <input type="radio" name="preferredContact" value="phone" />
               <span>{t(lang, 'formPreferPhone')}</span>
             </label>
@@ -184,6 +162,7 @@ const strings = {
           </label>
           <div class="form-control">
             <input
+              placeholder={t(lang, 'formOrganization')}
               class="field"
               id={`${id}-organization`}
               name="organization"
@@ -198,6 +177,7 @@ const strings = {
             <label class="form-label" for={`${id}-role`}>{t(lang, 'formRole')}</label>
             <div class="form-control">
               <input
+                placeholder={t(lang, 'formRole')}
                 class="field"
                 id={`${id}-role`}
                 name="role"
@@ -211,6 +191,7 @@ const strings = {
             <label class="form-label" for={`${id}-country`}>{t(lang, 'formCountry')}</label>
             <div class="form-control">
               <input
+                placeholder={t(lang, 'formCountry')}
                 class="field"
                 id={`${id}-country`}
                 name="country"
@@ -227,7 +208,7 @@ const strings = {
           >
           <div class="form-control">
             <select class="field field--select" id={`${id}-partnershipType`} name="partnershipType">
-              <option value=""></option>
+              <option value="">{t(lang, 'formPartnershipType')}</option>
               {partnershipTypes.map((key) => <option value={t('en', key)}>{t(lang, key)}</option>)}
             </select>
           </div>
@@ -242,12 +223,12 @@ const strings = {
         <h3 class="form-section__label">{t(lang, 'formSectionVolunteer')}</h3>
         <fieldset class="form-choice">
           <legend class="form-label">{t(lang, 'formVolunteerType')}</legend>
-          <div class="segmented">
-            <label class="segmented__item">
+          <div class="form-choice__options">
+            <label>
               <input type="radio" name="volunteerType" value="Volunteer" checked />
               <span>{t(lang, 'volunteerTypeVolunteer')}</span>
             </label>
-            <label class="segmented__item">
+            <label>
               <input type="radio" name="volunteerType" value="Internship" />
               <span>{t(lang, 'volunteerTypeIntern')}</span>
             </label>
@@ -273,6 +254,7 @@ const strings = {
             <label class="form-label" for={`${id}-languages`}>{t(lang, 'formLanguages')}</label>
             <div class="form-control">
               <input
+                placeholder={t(lang, 'formLanguages')}
                 class="field"
                 id={`${id}-languages`}
                 name="languages"
@@ -296,6 +278,7 @@ const strings = {
             <label class="form-label" for={`${id}-outlet`}>{t(lang, 'formOutlet')}</label>
             <div class="form-control">
               <input
+                placeholder={t(lang, 'formOutlet')}
                 class="field"
                 id={`${id}-outlet`}
                 name="outlet"
@@ -309,6 +292,7 @@ const strings = {
             <label class="form-label" for={`${id}-deadline`}>{t(lang, 'formDeadline')}</label>
             <div class="form-control">
               <input
+                placeholder={t(lang, 'formDeadline')}
                 class="field"
                 id={`${id}-deadline`}
                 name="deadline"
@@ -320,7 +304,7 @@ const strings = {
         </div>
       </section>
 
-      <section class="form-section form-enter-row" style="--i: 4">
+      <section class="form-section form-section--message form-enter-row" style="--i: 4">
         <div class="form-field">
           <label class="form-label" for={`${id}-message`}>
             {t(lang, 'formMessage')}
@@ -592,4 +576,17 @@ const strings = {
   });
 
   loadTurnstile();
+</script>
+
+<script>
+  // Links elsewhere on the site arrive as /contact/?topic=partner and so on;
+  // the topic decides which extra questions show and how the message is filed.
+  const TOPICS = ['general', 'partner', 'volunteer', 'media'];
+  const requested = new URLSearchParams(window.location.search).get('topic') ?? '';
+  const topic = TOPICS.includes(requested) ? requested : 'general';
+  document.querySelectorAll<HTMLFormElement>('form[data-form-type]').forEach((form) => {
+    const field = form.elements.namedItem('formType');
+    if (field instanceof HTMLInputElement) field.value = topic;
+    form.dataset.topic = topic;
+  });
 </script>

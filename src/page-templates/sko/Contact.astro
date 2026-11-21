@@ -8,9 +8,7 @@ import { donateHref, tStrict } from '~/lib/skeleton-content';
 import { donatePageLive } from '~/config/donation';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import ContactForm from '~/components/forms/ContactForm.astro';
-import InlineLinks from '~/components/content/InlineLinks.astro';
 import Icon from '~/components/Icon.astro';
-import SkSection from '~/components/skeleton/SkSection.astro';
 
 interface Props {
   lang: Locale;
@@ -21,7 +19,6 @@ const { lang } = Astro.props;
 const settings = await getSiteSettings();
 const address = pick(settings.address, lang);
 const hours = pick(settings.officeHours, lang);
-const safeguarding = pick(settings.safeguardingContact, lang);
 const heading = tStrict(lang, 'pageContact');
 const tel = (phone: string) => `tel:${phone.replace(/[^+\d]/g, '')}`;
 const withContact = (value: string) =>
@@ -30,7 +27,6 @@ const intro = withContact(tStrict(lang, 'introContact'));
 const title = tStrict(lang, 'seoContact') || heading;
 const description = withContact(tStrict(lang, 'metaContact')) || stripInlineLinks(intro);
 const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: title, description });
-const safeguardingPolicy = tStrict(lang, 'contactSafeguardingPolicy');
 ---
 
 <BaseLayout
@@ -41,138 +37,81 @@ const safeguardingPolicy = tStrict(lang, 'contactSafeguardingPolicy');
   jsonLd={contactPage}
   orgJsonLd={{ openingHoursSpecification: officeOpeningHours }}
 >
-  <SkSection class="pt-8 pb-12 lg:pt-12 lg:pb-16">
-    <div class="contact-layout contact-desk">
-      <h1 class="sk-h1 contact-layout__title">{tStrict(lang, 'formPanelTitleGeneral')}</h1>
+  <div class="contact-split contact-desk" data-nav-solid>
+    <h1 class="contact-split__title">{tStrict(lang, 'contactUs')}</h1>
 
-      <div class="media-placeholder contact-layout__hero" aria-hidden="true">
-        <svg
-          class="media-placeholder__icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          ><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.75"
-          ></circle><path d="m21 16-5-5-9 9"></path></svg
-        >
-      </div>
+    <div class="contact-split__form">
+      <ContactForm lang={lang} id="form-contact" />
+    </div>
 
-      <div class="contact-layout__form">
-        <ContactForm lang={lang} id="form-contact" />
-      </div>
-
-      <div class="contact-layout__side">
-        <ul class="contact-info contact-layout__info">
-          {
-            settings.email && (
-              <li>
+    <div class="contact-split__info">
+      <img class="contact-split__mark" src="/images/butterfly.svg" alt="" width="100" height="41" />
+      <ul class="contact-info">
+        {
+          settings.email && (
+            <li>
+              <span class="contact-info__chip">
                 <Icon name="envelope" />
-                <a href={`mailto:${settings.email}`} style="overflow-wrap:anywhere">
+              </span>
+              <span>
+                <span class="contact-info__label">{tStrict(lang, 'contactEmail')}</span>
+                <a href={`mailto:${settings.email}`} class="contact-info__value">
                   {settings.email}
                 </a>
-              </li>
-            )
-          }
-          {
-            settings.phone && (
-              <li>
+              </span>
+            </li>
+          )
+        }
+        {
+          settings.phone && (
+            <li>
+              <span class="contact-info__chip">
                 <Icon name="phone" />
-                <span>
-                  <a href={tel(settings.phone)}>{settings.phone}</a>
-                  {hours.value && <small lang={langAttr(hours)}>{hours.value}</small>}
-                </span>
-              </li>
-            )
-          }
-          {
-            address.value && (
-              <li>
+              </span>
+              <span>
+                <span class="contact-info__label">{tStrict(lang, 'contactCall')}</span>
+                <a href={tel(settings.phone)} class="contact-info__value">
+                  {settings.phone}
+                </a>
+                {hours.value && <small lang={langAttr(hours)}>{hours.value}</small>}
+              </span>
+            </li>
+          )
+        }
+        {
+          address.value && (
+            <li>
+              <span class="contact-info__chip">
                 <Icon name="map-pin" />
-                <span>
-                  <span style="white-space:pre-line" lang={langAttr(address)}>
-                    {address.value}
-                  </span>
-                  {settings.mapUrl && (
-                    <a href={settings.mapUrl} rel="noopener noreferrer" target="_blank">
-                      {tStrict(lang, 'viewOnGoogleMaps')}
-                    </a>
-                  )}
+              </span>
+              <span>
+                <span class="contact-info__label">{tStrict(lang, 'contactVisit')}</span>
+                <span class="contact-info__address" lang={langAttr(address)}>
+                  {address.value}
                 </span>
-              </li>
-            )
-          }
-        </ul>
-
-        <div class="media-placeholder contact-layout__photo" aria-hidden="true">
-          <svg
-            class="media-placeholder__icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            ><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.75"
-            ></circle><path d="m21 16-5-5-9 9"></path></svg
-          >
-        </div>
-      </div>
-
-      <div
-        class="safeguarding-panel contact-layout__safe"
-        role="region"
-        aria-label={tStrict(lang, 'safeguardingPanelTitle')}
-      >
-        <h2 class="safeguarding-panel__title">{tStrict(lang, 'safeguardingPanelTitle')}</h2>
-        {
-          safeguarding.value && (
-            <p class="safeguarding-panel__body" lang={langAttr(safeguarding)}>
-              {safeguarding.value}
-            </p>
+                {settings.mapUrl && (
+                  <a
+                    href={settings.mapUrl}
+                    class="contact-info__action"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {tStrict(lang, 'viewOnGoogleMaps')}
+                  </a>
+                )}
+              </span>
+            </li>
           )
         }
-        {
-          safeguardingPolicy && (
-            <p class="safeguarding-panel__body inline-links">
-              <InlineLinks text={safeguardingPolicy} />
-            </p>
-          )
-        }
-        <div class="sk-actions" style="margin-top:20px">
-          {
-            settings.phone && (
-              <a href={tel(settings.phone)} class="sk-btn">
-                {settings.phone}
-              </a>
-            )
-          }
-          {
-            settings.safeguardingEmail && (
-              <a
-                href={`mailto:${settings.safeguardingEmail}`}
-                class="sk-btn sk-btn--outline"
-                style="overflow-wrap:anywhere"
-              >
-                {settings.safeguardingEmail}
-              </a>
-            )
-          }
-        </div>
-      </div>
+      </ul>
 
       {
         donatePageLive && (
-          <div class="contact-layout__band sk-actions">
-            <a href={donateHref(lang)} class="sk-btn">
-              {tStrict(lang, 'donate')}
-            </a>
-          </div>
+          <a href={donateHref(lang)} class="contact-split__donate">
+            {tStrict(lang, 'donate')}
+          </a>
         )
       }
     </div>
-  </SkSection>
+  </div>
 </BaseLayout>
