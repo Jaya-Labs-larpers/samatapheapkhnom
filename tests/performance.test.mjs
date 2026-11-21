@@ -61,5 +61,5 @@ test('GTM starts after the page has loaded, not in the head', () => {
 
 test('the contact form styles load only with the form', () => {
   assert.match(read('src/components/forms/ContactForm.astro'), /styles\/forms\.css/);
-  assert.doesNotMatch(read('src/styles/global.css'), /\.topic-picker|\.form-panel/);
+  assert.doesNotMatch(read('src/styles/global.css'), /\.topic-cards|\.topic-card|\.form-panel/);
 });

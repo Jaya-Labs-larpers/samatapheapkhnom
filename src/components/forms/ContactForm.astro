@@ -4,7 +4,7 @@ import { t } from '~/lib/i18n/utils';
 import { contactEnabled, turnstileSiteKey } from '~/lib/config';
 import { getSiteSettings } from '~/lib/content';
 import Icon from '~/components/Icon.astro';
-import TopicPicker from '~/components/forms/TopicPicker.astro';
+import TopicCards from '~/components/forms/TopicCards.astro';
 import '~/styles/forms.css';
 
 interface Props {
@@ -80,7 +80,7 @@ const strings = {
         <span class="form-label" id={`${id}-formType-label`}>
           {t(lang, 'contactHelpTitle')}
         </span>
-        <TopicPicker
+        <TopicCards
           lang={lang}
           id={`${id}-formType`}
           name="formType"

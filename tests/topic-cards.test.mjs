@@ -35,3 +35,17 @@ test('renders only existing copy: topic label and hint', () => {
   assert.match(cards, /t\(lang, topic\.hint\)/);
   assert.doesNotMatch(cards, /t\(lang, '/);
 });
+
+test('ContactForm uses TopicCards, not TopicPicker', async () => {
+  const form = await read('src/components/forms/ContactForm.astro');
+  assert.match(form, /import TopicCards from/);
+  assert.match(form, /<TopicCards/);
+  assert.doesNotMatch(form, /TopicPicker/);
+});
+
+test('forms.css has no topic-picker rules and has topic-card rules', async () => {
+  const css = await read('src/styles/forms.css');
+  assert.doesNotMatch(css, /\.topic-picker/);
+  assert.match(css, /\.topic-card\b/);
+  assert.match(css, /\.topic-cards__grid/);
+});
