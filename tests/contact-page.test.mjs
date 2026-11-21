@@ -51,7 +51,14 @@ test('the page invents no copy: every key it uses already exists', () => {
 });
 
 test('desktop puts the reach card beside the form, mobile stacks it after safeguarding', () => {
-  assert.match(css, /grid-template-areas:\s*'title' 'form' 'safe' 'info' 'band'/);
-  assert.match(css, /'title title' 'form info' 'safe safe' 'band band'/);
+  assert.match(css, /grid-template-areas:\s*'title' 'hero' 'form' 'safe' 'info' 'band'/);
+  assert.match(css, /'title title' 'hero hero' 'form info' 'safe safe' 'band band'/);
   assert.match(css, /\.contact-layout__info[\s\S]*?position:\s*sticky/);
+});
+
+test('two picture placeholders, no existing photo reused', () => {
+  assert.equal(page.match(/class="media-placeholder\b/g)?.length, 2);
+  assert.match(page, /contact-layout__hero/);
+  assert.match(page, /contact-layout__photo/);
+  assert.doesNotMatch(page, /images\/|<img|ResponsiveImage/);
 });

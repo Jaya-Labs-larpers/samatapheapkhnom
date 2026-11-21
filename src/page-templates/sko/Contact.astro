@@ -45,50 +45,82 @@ const safeguardingPolicy = tStrict(lang, 'contactSafeguardingPolicy');
     <div class="contact-layout contact-desk">
       <h1 class="sk-h1 contact-layout__title">{tStrict(lang, 'formPanelTitleGeneral')}</h1>
 
+      <div class="media-placeholder contact-layout__hero" aria-hidden="true">
+        <svg
+          class="media-placeholder__icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          ><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.75"
+          ></circle><path d="m21 16-5-5-9 9"></path></svg
+        >
+      </div>
+
       <div class="contact-layout__form">
         <ContactForm lang={lang} id="form-contact" />
       </div>
 
-      <ul class="contact-info contact-layout__info">
-        {
-          settings.email && (
-            <li>
-              <Icon name="envelope" />
-              <a href={`mailto:${settings.email}`} style="overflow-wrap:anywhere">
-                {settings.email}
-              </a>
-            </li>
-          )
-        }
-        {
-          settings.phone && (
-            <li>
-              <Icon name="phone" />
-              <span>
-                <a href={tel(settings.phone)}>{settings.phone}</a>
-                {hours.value && <small lang={langAttr(hours)}>{hours.value}</small>}
-              </span>
-            </li>
-          )
-        }
-        {
-          address.value && (
-            <li>
-              <Icon name="map-pin" />
-              <span>
-                <span style="white-space:pre-line" lang={langAttr(address)}>
-                  {address.value}
+      <div class="contact-layout__side">
+        <ul class="contact-info contact-layout__info">
+          {
+            settings.email && (
+              <li>
+                <Icon name="envelope" />
+                <a href={`mailto:${settings.email}`} style="overflow-wrap:anywhere">
+                  {settings.email}
+                </a>
+              </li>
+            )
+          }
+          {
+            settings.phone && (
+              <li>
+                <Icon name="phone" />
+                <span>
+                  <a href={tel(settings.phone)}>{settings.phone}</a>
+                  {hours.value && <small lang={langAttr(hours)}>{hours.value}</small>}
                 </span>
-                {settings.mapUrl && (
-                  <a href={settings.mapUrl} rel="noopener noreferrer" target="_blank">
-                    {tStrict(lang, 'viewOnGoogleMaps')}
-                  </a>
-                )}
-              </span>
-            </li>
-          )
-        }
-      </ul>
+              </li>
+            )
+          }
+          {
+            address.value && (
+              <li>
+                <Icon name="map-pin" />
+                <span>
+                  <span style="white-space:pre-line" lang={langAttr(address)}>
+                    {address.value}
+                  </span>
+                  {settings.mapUrl && (
+                    <a href={settings.mapUrl} rel="noopener noreferrer" target="_blank">
+                      {tStrict(lang, 'viewOnGoogleMaps')}
+                    </a>
+                  )}
+                </span>
+              </li>
+            )
+          }
+        </ul>
+
+        <div class="media-placeholder contact-layout__photo" aria-hidden="true">
+          <svg
+            class="media-placeholder__icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            ><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.75"
+            ></circle><path d="m21 16-5-5-9 9"></path></svg
+          >
+        </div>
+      </div>
 
       <div
         class="safeguarding-panel contact-layout__safe"
