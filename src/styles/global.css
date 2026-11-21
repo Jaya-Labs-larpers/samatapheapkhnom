@@ -65,8 +65,9 @@
 
 /*
  * The chrome holds still and only the content changes — a *continuity
- * transition*. Crossfading the header too would make the logo and nav flicker
- * on every click, which reads as a page reload rather than a smooth move.
+ * transition*. The header does not move; only what differs between the two
+ * headers (nav labels after a language switch, the toggle's active chip)
+ * crossfades, briefly, instead of snapping.
  */
 header.site-header {
   view-transition-name: site-header;
@@ -149,6 +150,12 @@ main {
 }
 ::view-transition-new(page-content) {
   animation: page-enter 100ms var(--ease-out-soft) both;
+}
+::view-transition-old(site-header) {
+  animation: page-exit 120ms ease-out both;
+}
+::view-transition-new(site-header) {
+  animation: page-enter 120ms var(--ease-out-soft) both;
 }
 
 /*

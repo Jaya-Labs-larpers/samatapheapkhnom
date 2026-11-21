@@ -16,12 +16,13 @@ interface Props {
 
 const { lang, id, class: className } = Astro.props;
 
-const partnershipTypes = [
-  'partnershipFunding',
-  'partnershipTechnical',
-  'partnershipReferrals',
-  'partnershipCorporate',
-  'partnershipOther',
+const helpTopics = [
+  'helpPartnership',
+  'helpFunding',
+  'helpVolunteer',
+  'helpConcern',
+  'helpMedia',
+  'helpOther',
 ] as const;
 
 /**
@@ -83,51 +84,6 @@ const strings = {
           </div>
         </div>
 
-        {
-          /*
-          Email and phone share a row once the panel itself is wide enough. Both
-          answer "how do we reach you", so they belong on one line where there is
-          room, and stack on a phone where there is not.
-        */
-        }
-        <div class="form-pair">
-          <div class="form-field">
-            <label class="form-label" for={`${id}-email`}>
-              {t(lang, 'formEmail')}
-            </label>
-            <div class="form-control">
-              <input
-                placeholder={t(lang, 'formEmail')}
-                class="field"
-                id={`${id}-email`}
-                name="email"
-                type="email"
-                autocomplete="email"
-                required
-                maxlength="200"
-              />
-            </div>
-          </div>
-
-          <div class="form-field">
-            <label class="form-label" for={`${id}-phone`}>
-              {t(lang, 'formPhone')}
-            </label>
-            <div class="form-control">
-              <input
-                placeholder={t(lang, 'formPhone')}
-                class="field"
-                id={`${id}-phone`}
-                name="phone"
-                type="tel"
-                inputmode="tel"
-                autocomplete="tel"
-                maxlength="32"
-              />
-            </div>
-          </div>
-        </div>
-
         <fieldset class="form-choice">
           <legend class="form-label">{t(lang, 'formPreferred')}</legend>
           <div class="form-choice__options">
@@ -141,170 +97,70 @@ const strings = {
             </label>
           </div>
         </fieldset>
-      </section>
 
-      {
-        /*
-        Each topic's extra questions. The page shows only the group matching the
-        chosen topic (CSS, in global.css), and the script sends only that group,
-        so a visitor who switches topics never submits the answers they left.
-      */
-      }
-      <section
-        class="form-section form-topic form-enter-row"
-        data-topic-fields="partner"
-        style="--i: 3"
-      >
-        <h3 class="form-section__label">{t(lang, 'formSectionPartner')}</h3>
-        <div class="form-field">
-          <label class="form-label" for={`${id}-organization`}>
-            {t(lang, 'formOrganization')}
+        {/* Only the field matching the choice above shows, and only it is sent. */}
+        <div class="form-field" data-contact-field="email">
+          <label class="form-label" for={`${id}-email`}>
+            {t(lang, 'formEmail')}
           </label>
           <div class="form-control">
             <input
-              placeholder={t(lang, 'formOrganization')}
+              placeholder={t(lang, 'formEmail')}
               class="field"
-              id={`${id}-organization`}
-              name="organization"
-              type="text"
-              autocomplete="organization"
-              maxlength="160"
+              id={`${id}-email`}
+              name="email"
+              type="email"
+              autocomplete="email"
+              maxlength="200"
             />
           </div>
         </div>
-        <div class="form-pair">
-          <div class="form-field">
-            <label class="form-label" for={`${id}-role`}>{t(lang, 'formRole')}</label>
-            <div class="form-control">
-              <input
-                placeholder={t(lang, 'formRole')}
-                class="field"
-                id={`${id}-role`}
-                name="role"
-                type="text"
-                autocomplete="organization-title"
-                maxlength="120"
-              />
-            </div>
-          </div>
-          <div class="form-field">
-            <label class="form-label" for={`${id}-country`}>{t(lang, 'formCountry')}</label>
-            <div class="form-control">
-              <input
-                placeholder={t(lang, 'formCountry')}
-                class="field"
-                id={`${id}-country`}
-                name="country"
-                type="text"
-                autocomplete="country-name"
-                maxlength="80"
-              />
-            </div>
+
+        <div class="form-field" data-contact-field="phone">
+          <label class="form-label" for={`${id}-phone`}>
+            {t(lang, 'formPhone')}
+          </label>
+          <div class="form-control">
+            <input
+              placeholder={t(lang, 'formPhone')}
+              class="field"
+              id={`${id}-phone`}
+              name="phone"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              maxlength="32"
+            />
           </div>
         </div>
+
         <div class="form-field">
-          <label class="form-label" for={`${id}-partnershipType`}
-            >{t(lang, 'formPartnershipType')}</label
-          >
+          <label class="form-label" for={`${id}-country`}>{t(lang, 'formCountry')}</label>
           <div class="form-control">
-            <select class="field field--select" id={`${id}-partnershipType`} name="partnershipType">
-              <option value="">{t(lang, 'formPartnershipType')}</option>
-              {partnershipTypes.map((key) => <option value={t('en', key)}>{t(lang, key)}</option>)}
+            <input
+              placeholder={t(lang, 'formCountry')}
+              class="field"
+              id={`${id}-country`}
+              name="country"
+              type="text"
+              autocomplete="country-name"
+              maxlength="80"
+            />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for={`${id}-helpWith`}>{t(lang, 'contactHelpTitle')}</label>
+          <div class="form-control">
+            <select class="field field--select" id={`${id}-helpWith`} name="helpWith">
+              <option value="">{t(lang, 'contactHelpTitle')}</option>
+              {helpTopics.map((key) => <option value={t('en', key)}>{t(lang, key)}</option>)}
             </select>
           </div>
         </div>
       </section>
 
-      <section
-        class="form-section form-topic form-enter-row"
-        data-topic-fields="volunteer"
-        style="--i: 3"
-      >
-        <h3 class="form-section__label">{t(lang, 'formSectionVolunteer')}</h3>
-        <fieldset class="form-choice">
-          <legend class="form-label">{t(lang, 'formVolunteerType')}</legend>
-          <div class="form-choice__options">
-            <label>
-              <input type="radio" name="volunteerType" value="Volunteer" checked />
-              <span>{t(lang, 'volunteerTypeVolunteer')}</span>
-            </label>
-            <label>
-              <input type="radio" name="volunteerType" value="Internship" />
-              <span>{t(lang, 'volunteerTypeIntern')}</span>
-            </label>
-          </div>
-        </fieldset>
-        <div class="form-pair">
-          <div class="form-field">
-            <label class="form-label" for={`${id}-availability`}
-              >{t(lang, 'formAvailability')}</label
-            >
-            <div class="form-control">
-              <input
-                class="field"
-                id={`${id}-availability`}
-                name="availability"
-                type="text"
-                maxlength="200"
-                placeholder={t(lang, 'formAvailabilityHint')}
-              />
-            </div>
-          </div>
-          <div class="form-field">
-            <label class="form-label" for={`${id}-languages`}>{t(lang, 'formLanguages')}</label>
-            <div class="form-control">
-              <input
-                placeholder={t(lang, 'formLanguages')}
-                class="field"
-                id={`${id}-languages`}
-                name="languages"
-                type="text"
-                maxlength="120"
-              />
-            </div>
-          </div>
-        </div>
-        <p class="form-note">{t(lang, 'formVolunteerNote')}</p>
-      </section>
-
-      <section
-        class="form-section form-topic form-enter-row"
-        data-topic-fields="media"
-        style="--i: 3"
-      >
-        <h3 class="form-section__label">{t(lang, 'formSectionMedia')}</h3>
-        <div class="form-pair">
-          <div class="form-field">
-            <label class="form-label" for={`${id}-outlet`}>{t(lang, 'formOutlet')}</label>
-            <div class="form-control">
-              <input
-                placeholder={t(lang, 'formOutlet')}
-                class="field"
-                id={`${id}-outlet`}
-                name="outlet"
-                type="text"
-                autocomplete="organization"
-                maxlength="160"
-              />
-            </div>
-          </div>
-          <div class="form-field">
-            <label class="form-label" for={`${id}-deadline`}>{t(lang, 'formDeadline')}</label>
-            <div class="form-control">
-              <input
-                placeholder={t(lang, 'formDeadline')}
-                class="field"
-                id={`${id}-deadline`}
-                name="deadline"
-                type="text"
-                maxlength="40"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="form-section form-section--message form-enter-row" style="--i: 4">
+      <section class="form-section form-section--message form-enter-row" style="--i: 3">
         <div class="form-field">
           <label class="form-label" for={`${id}-message`}>
             {t(lang, 'formMessage')}
@@ -420,16 +276,18 @@ const strings = {
     return (field.type === 'radio' || field.type === 'checkbox') && !field.checked;
   }
 
-  /** Only the chosen topic's extra questions are sent. */
+  /** Of email and phone, only the one the visitor chose to be reached by is sent. */
   function fieldValues(form: HTMLFormElement): Record<string, string> {
     const elements = Array.from(form.elements) as HTMLInputElement[];
     const chosen = form.elements.namedItem('formType') as HTMLSelectElement | null;
     const topic = chosen?.value || form.dataset.formType || 'general';
+    const reachBy =
+      (form.elements.namedItem('preferredContact') as RadioNodeList | null)?.value || 'email';
     const body: Record<string, string> = { formType: topic };
     for (const field of elements) {
       if (!field.name || field.disabled || field.name === 'formType' || isUnchosen(field)) continue;
-      const group = field.closest?.<HTMLElement>('[data-topic-fields]');
-      if (group && group.dataset.topicFields !== topic) continue;
+      const only = field.closest?.<HTMLElement>('[data-contact-field]');
+      if (only && only.dataset.contactField !== reachBy) continue;
       body[field.name] = field.value;
     }
     return body;
@@ -580,7 +438,7 @@ const strings = {
 
 <script>
   // Links elsewhere on the site arrive as /contact/?topic=partner and so on;
-  // the topic decides which extra questions show and how the message is filed.
+  // the topic decides which inbox the message is filed to.
   const TOPICS = ['general', 'partner', 'volunteer', 'media'];
   const requested = new URLSearchParams(window.location.search).get('topic') ?? '';
   const topic = TOPICS.includes(requested) ? requested : 'general';

@@ -370,17 +370,11 @@
     color: var(--color-blue-700);
   }
 
-  /* Only the topic the visitor arrived with (?topic=…) shows its questions. */
-  .contact-desk .form-topic {
+  /* Email or phone: only the field for the way the visitor picked shows. */
+  form:has(input[name='preferredContact'][value='phone']:checked) [data-contact-field='email'],
+  form:not(:has(input[name='preferredContact'][value='phone']:checked))
+    [data-contact-field='phone'] {
     display: none;
-  }
-  .form-topic {
-    gap: 1.125rem;
-  }
-  .contact-desk form[data-topic='partner'] [data-topic-fields='partner'],
-  .contact-desk form[data-topic='volunteer'] [data-topic-fields='volunteer'],
-  .contact-desk form[data-topic='media'] [data-topic-fields='media'] {
-    display: grid;
   }
 
   /* On the contact page the form is the page itself, not a card on it. */

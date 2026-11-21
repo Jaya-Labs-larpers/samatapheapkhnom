@@ -118,7 +118,7 @@ test('valid partner enquiry preserves routing, escaping and reply-to', async (t)
         formType: 'partner',
         name: '<Test Person>',
         organization: 'Example Fund',
-        partnershipType: 'Funding',
+        helpWith: 'Funding',
       }),
     ),
     env,
@@ -128,16 +128,51 @@ test('valid partner enquiry preserves routing, escaping and reply-to', async (t)
   assert.equal(mail.reply_to, 'test@example.com');
   assert.match(mail.html, /&lt;Test Person&gt;/);
   assert.match(mail.html, /Example Fund/);
-  assert.match(mail.html, /Funding/);
+  assert.match(mail.html, /Help with<\/td><td[^>]*>Funding/);
 });
 
-test('a partner enquiry without an organisation is rejected on that field', async () => {
+test('a partner enquiry no longer needs an organisation', async (t) => {
+  t.mock.method(globalThis, 'fetch', async (url) =>
+    String(url).includes('siteverify')
+      ? Response.json({ success: true })
+      : Response.json({ id: 'mail-id' }),
+  );
   const response = await onRequest({
     request: request(JSON.stringify({ ...valid, formType: 'partner' })),
     env,
   });
-  assert.equal(response.status, 400);
-  assert.deepEqual((await response.json()).fieldErrors, { organization: 'required' });
+  assert.equal(response.status, 200);
+});
+
+test('a visitor who picks phone can send without an email, and gets no reply-to', async (t) => {
+  let mail;
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (String(url).includes('siteverify')) return Response.json({ success: true });
+    mail = JSON.parse(options.body);
+    return Response.json({ id: 'mail-id' });
+  });
+  const response = await onRequest({
+    request: request(
+      JSON.stringify({ ...valid, email: '', preferredContact: 'phone', phone: '+855 12 345 678' }),
+    ),
+    env,
+  });
+  assert.equal(response.status, 200);
+  assert.equal(mail.reply_to, undefined);
+  assert.match(mail.html, /\+855 12 345 678/);
+  assert.doesNotMatch(mail.html, />Email</);
+});
+
+test('the chosen way to reach the visitor is required', async () => {
+  for (const [body, fieldErrors] of [
+    [{ ...valid, email: '', preferredContact: 'email' }, { email: 'required' }],
+    [{ ...valid, email: '' }, { email: 'required' }],
+    [{ ...valid, preferredContact: 'phone', phone: '' }, { phone: 'required' }],
+  ]) {
+    const response = await onRequest({ request: request(JSON.stringify(body)), env });
+    assert.equal(response.status, 400);
+    assert.deepEqual((await response.json()).fieldErrors, fieldErrors);
+  }
 });
 
 test('media details reach the general inbox', async (t) => {
@@ -149,7 +184,12 @@ test('media details reach the general inbox', async (t) => {
   });
   const response = await onRequest({
     request: request(
-      JSON.stringify({ ...valid, formType: 'media', outlet: 'Phnom Penh Post', deadline: 'Friday' }),
+      JSON.stringify({
+        ...valid,
+        formType: 'media',
+        outlet: 'Phnom Penh Post',
+        deadline: 'Friday',
+      }),
     ),
     env,
   });
@@ -308,13 +348,22 @@ test('rate-limit quota is consumed only by Turnstile-verified submissions', asyn
 
   // Unverified requests (missing or rejected token) must not touch the counter.
   const { 'cf-turnstile-response': _token, ...noToken } = valid;
-  assert.equal((await onRequest({ request: request(JSON.stringify(noToken)), env: withKv })).status, 403);
-  assert.equal((await onRequest({ request: request(JSON.stringify(valid)), env: withKv })).status, 403);
+  assert.equal(
+    (await onRequest({ request: request(JSON.stringify(noToken)), env: withKv })).status,
+    403,
+  );
+  assert.equal(
+    (await onRequest({ request: request(JSON.stringify(valid)), env: withKv })).status,
+    403,
+  );
   assert.equal(store.size, 0);
 
   verified = true;
   for (let i = 0; i < 5; i += 1) {
-    assert.equal((await onRequest({ request: request(JSON.stringify(valid)), env: withKv })).status, 200);
+    assert.equal(
+      (await onRequest({ request: request(JSON.stringify(valid)), env: withKv })).status,
+      200,
+    );
   }
   assert.deepEqual([...store.values()], ['5']);
   const limited = await onRequest({ request: request(JSON.stringify(valid)), env: withKv });
@@ -335,7 +384,10 @@ test('rate-limit keys use a fixed window so a burst cannot extend its own expiry
   );
   const at = (ms) => {
     t.mock.method(Date, 'now', () => ms);
-    return onRequest({ request: request(JSON.stringify(valid)), env: { ...env, RATE_LIMIT_KV: kv } });
+    return onRequest({
+      request: request(JSON.stringify(valid)),
+      env: { ...env, RATE_LIMIT_KV: kv },
+    });
   };
   const base = 1667 * 600 * 1000; // start of a 600-second window
   await at(base + 30_000); // 30s into the window
@@ -363,5 +415,8 @@ test('line breaks in the name never reach the mail subject header', async (t) =>
   });
   assert.equal(response.status, 200);
   assert.doesNotMatch(mail.subject, /[\r\n]/, 'the subject is a single header line');
-  assert.match(mail.subject, /^\[SKO website\] general inquiry from Sender Bcc: victim@example\.com X-Injected: 1$/);
+  assert.match(
+    mail.subject,
+    /^\[SKO website\] general inquiry from Sender Bcc: victim@example\.com X-Injected: 1$/,
+  );
 });

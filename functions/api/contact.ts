@@ -129,10 +129,17 @@ const schema = z
   .object({
     formType: z.enum(['general', 'partner', 'volunteer', 'media']).default('general'),
     name: z.string().trim().min(2).max(120),
-    email: z.email().trim().max(200),
+    /** Required only when the visitor picks email as the way to reach them. */
+    email: z
+      .string()
+      .trim()
+      .max(200)
+      .optional()
+      .default('')
+      .refine((value) => value === '' || z.email().safeParse(value).success, { error: 'email' }),
     /**
-     * Optional. An empty string is a legitimate value — the field is not
-     * required — so the shape check only runs once something was typed. 7-15
+     * Required only when the visitor picks phone, so the shape check only runs
+     * once something was typed. 7-15
      * digits is the E.164 range; the punctuation people type is allowed around
      * them and stripped before counting.
      */
@@ -154,7 +161,7 @@ const schema = z
     organization: optionalText(160),
     country: optionalText(80),
     role: optionalText(120),
-    partnershipType: optionalText(60),
+    helpWith: optionalText(60),
     volunteerType: optionalText(40),
     availability: optionalText(200),
     languages: optionalText(120),
@@ -166,12 +173,9 @@ const schema = z
     'cf-turnstile-response': z.string().max(4096).optional().default(''),
   })
   .superRefine((data, ctx) => {
-    if (data.formType === 'partner' && data.organization === '') {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['organization'],
-        message: 'required',
-      });
+    const reachBy = data.preferredContact || 'email';
+    if (data[reachBy] === '') {
+      ctx.addIssue({ code: 'custom', path: [reachBy], message: 'required' });
     }
   });
 
@@ -189,8 +193,9 @@ function codeFor(issue: {
   origin?: unknown;
   format?: unknown;
 }): ErrorCode {
-  // The phone refine and the partner rule set their own message, which is the code itself.
+  // The email and phone refines and the reach-by rule set their own message, which is the code itself.
   if (issue.message === 'phone') return 'phone';
+  if (issue.message === 'email') return 'email';
   if (issue.message === 'required') return 'required';
   // zod v4 reports string formats as invalid_format with `format: 'email'`.
   if (issue.code === 'invalid_format' && (issue.format === 'email' || issue.origin === 'email')) {
@@ -346,7 +351,7 @@ async function sendEmail(env: Env, to: string, subject: string, html: string, re
     body: JSON.stringify({
       from: env.MAIL_FROM,
       to: [to],
-      reply_to: replyTo,
+      ...(replyTo ? { reply_to: replyTo } : {}),
       subject,
       html,
     }),
@@ -466,7 +471,7 @@ async function handlePost(context: FunctionContext): Promise<Response> {
     ['Organization', clean(data.organization, 160)],
     ['Role', clean(data.role, 120)],
     ['Country', clean(data.country, 80)],
-    ['Partnership', clean(data.partnershipType, 60)],
+    ['Help with', clean(data.helpWith, 60)],
     ['Wants to', clean(data.volunteerType, 40)],
     ['Availability', clean(data.availability, 200)],
     ['Languages', clean(data.languages, 120)],
@@ -475,7 +480,7 @@ async function handlePost(context: FunctionContext): Promise<Response> {
   ];
   const rows: [string, string][] = [
     ['Name', name],
-    ['Email', email],
+    ...(email ? ([['Email', email]] as [string, string][]) : []),
     ...optionalRows.filter(([, value]) => value !== ''),
     ['Form', data.formType],
   ];

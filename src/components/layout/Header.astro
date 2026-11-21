@@ -254,6 +254,8 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     --hdr-pill-hover: var(--color-blue-800);
     --hdr-soft: var(--color-blue-50);
     --hdr-scrolled: rgb(255 255 255 / 0.82);
+    /* One height for the link group, the language toggle and the Contact pill. */
+    --hdr-control-h: 40px;
     color: var(--hdr-fg);
     font-family: var(--font-sans);
   }
@@ -313,7 +315,7 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     text-align: center;
   }
   .hdr__label--en {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 500;
     letter-spacing: -0.005em;
     line-height: 1.2;
@@ -348,12 +350,12 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     color: var(--hdr-fg);
   }
   :global(html[lang='en']) .hdr__link {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 500;
     letter-spacing: -0.005em;
   }
   :global(html[lang='en']) .hdr__pill {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 500;
     letter-spacing: -0.005em;
   }
@@ -499,9 +501,9 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    height: 44px;
-    min-inline-size: 160px;
-    padding: 0 22px;
+    height: var(--hdr-control-h);
+    min-inline-size: 144px;
+    padding: 0 20px;
     border-radius: 999px;
     background: var(--hdr-pill-bg);
     color: var(--hdr-pill-fg);
@@ -543,7 +545,7 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     border-color: var(--hdr-line);
   }
   .hdr__toggle-desktop :global(.lang-toggle) {
-    height: 44px;
+    height: var(--hdr-control-h);
     box-sizing: border-box;
   }
   .hdr__tools :global(.lang-toggle__link) {
@@ -615,11 +617,29 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
   .hdr[data-brand-tone='light'] .hdr__bar :global(.logo--full) {
     display: block;
   }
+  /* Over the contact page's dark column the logo starts white, so the first
+     paint, and the page-switch snapshot taken of it, already match what
+     header-scroll.ts settles on. */
+  @media (min-width: 56rem) {
+    :global(:root:has(main > [data-nav-solid]:first-child))
+      .hdr:not([data-brand-tone])
+      .hdr__bar
+      :global(.logo--full) {
+      display: none;
+    }
+    :global(:root:has(main > [data-nav-solid]:first-child))
+      .hdr:not([data-brand-tone])
+      .hdr__bar
+      :global(.logo--reversed) {
+      display: block;
+    }
+  }
 
   @media (min-width: 75rem) {
     .hdr__nav {
-      height: 52px;
-      padding-inline: 12px;
+      box-sizing: border-box;
+      height: var(--hdr-control-h);
+      padding-inline: 8px;
       border-radius: 999px;
       background: transparent;
       transition:
@@ -727,7 +747,7 @@ const isCurrent = (path: string) => current === path || current.startsWith(`${pa
     .hdr__nav {
       display: flex;
       position: relative;
-      gap: clamp(4px, 1.2vw, 18px);
+      gap: clamp(2px, 0.8vw, 12px);
     }
     .hdr__toggle-desktop,
     .hdr__pill {
