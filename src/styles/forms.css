@@ -340,11 +340,6 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
-  @media (min-width: 64rem) {
-    .topic-cards__grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-  }
   .topic-card {
     display: grid;
     align-content: start;
@@ -493,10 +488,9 @@
     color: var(--color-blue-700);
   }
 
-  /* Only the chosen topic's questions show; safeguarding swaps the form for
-     the direct-contact panel. */
-  .contact-desk .form-topic,
-  .contact-desk .safeguarding-panel {
+  /* Only the chosen topic's questions show; safeguarding hides the form's
+     fields, while its contact strip is on the page for every topic. */
+  .contact-desk .form-topic {
     display: none;
   }
   .form-topic {
@@ -521,8 +515,7 @@
     padding-bottom: 1.75rem;
   }
   .contact-desk:has([name='formType'] > option[value='safeguarding']:checked) .safeguarding-panel {
-    display: block;
-    margin-top: 1.5rem;
+    border-width: 2px;
   }
   /* On the contact page the form is the page itself, not a card on it. */
   .contact-desk .form-panel {
@@ -556,18 +549,18 @@
     padding: 1rem 0 0;
   }
 
-  /* Heading and direct details on the left, the form on the right. On a phone
-     the form comes straight after the heading, details last. */
+  /* A phone gets one column: heading, form, safeguarding, details. From
+     64rem the details sit beside the form in a sticky card, and safeguarding
+     spans the page below. */
   .contact-layout {
     display: grid;
     gap: 1.75rem;
-    grid-template-areas: 'title' 'form' 'info';
+    grid-template-areas: 'title' 'form' 'safe' 'info' 'band';
   }
   @media (min-width: 64rem) {
     .contact-layout {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr);
-      grid-template-rows: auto 1fr;
-      grid-template-areas: 'title form' 'info form';
+      grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+      grid-template-areas: 'title title' 'form info' 'safe safe' 'band band';
       column-gap: clamp(3rem, 6vw, 6rem);
       row-gap: 2.5rem;
       align-items: start;
@@ -582,8 +575,26 @@
   .contact-layout__form {
     grid-area: form;
   }
-  .contact-layout__info {
+  .contact-info.contact-layout__info {
     grid-area: info;
+    padding: 1.5rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+  }
+  @media (min-width: 64rem) {
+    .contact-info.contact-layout__info {
+      position: sticky;
+      top: calc(var(--header-offset) + 1.5rem);
+    }
+  }
+  .contact-layout__safe {
+    grid-area: safe;
+  }
+  .contact-layout__band {
+    grid-area: band;
+    margin: 0;
   }
 
   .contact-info {

@@ -4,7 +4,8 @@ import { getSiteSettings } from '~/lib/content';
 import { langAttr, pick } from '~/lib/i18n/utils';
 import { stripInlineLinks } from '~/lib/inline-links';
 import { contactPageJsonLd, officeOpeningHours } from '~/lib/seo/page-schema';
-import { tStrict } from '~/lib/skeleton-content';
+import { donateHref, tStrict } from '~/lib/skeleton-content';
+import { donatePageLive } from '~/config/donation';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import ContactForm from '~/components/forms/ContactForm.astro';
 import InlineLinks from '~/components/content/InlineLinks.astro';
@@ -37,58 +38,15 @@ const safeguardingPolicy = tStrict(lang, 'contactSafeguardingPolicy');
   title={title}
   description={description}
   noindex
-  noFooter
   jsonLd={contactPage}
   orgJsonLd={{ openingHoursSpecification: officeOpeningHours }}
 >
-  <SkSection class="pt-8 pb-12 lg:min-h-[calc(100svh-var(--header-offset))] lg:pt-8">
-    <div class="contact-layout">
+  <SkSection class="pt-8 pb-12 lg:pt-12 lg:pb-16">
+    <div class="contact-layout contact-desk">
       <h1 class="sk-h1 contact-layout__title">{tStrict(lang, 'formPanelTitleGeneral')}</h1>
 
-      <div class="contact-desk contact-layout__form">
+      <div class="contact-layout__form">
         <ContactForm lang={lang} id="form-contact" />
-
-        <div
-          class="safeguarding-panel"
-          role="region"
-          aria-label={tStrict(lang, 'safeguardingPanelTitle')}
-        >
-          <h2 class="safeguarding-panel__title">{tStrict(lang, 'safeguardingPanelTitle')}</h2>
-          {
-            safeguarding.value && (
-              <p class="safeguarding-panel__body" lang={langAttr(safeguarding)}>
-                {safeguarding.value}
-              </p>
-            )
-          }
-          {
-            safeguardingPolicy && (
-              <p class="safeguarding-panel__body inline-links">
-                <InlineLinks text={safeguardingPolicy} />
-              </p>
-            )
-          }
-          <div class="sk-actions" style="margin-top:20px">
-            {
-              settings.phone && (
-                <a href={tel(settings.phone)} class="sk-btn">
-                  {settings.phone}
-                </a>
-              )
-            }
-            {
-              settings.safeguardingEmail && (
-                <a
-                  href={`mailto:${settings.safeguardingEmail}`}
-                  class="sk-btn sk-btn--outline"
-                  style="overflow-wrap:anywhere"
-                >
-                  {settings.safeguardingEmail}
-                </a>
-              )
-            }
-          </div>
-        </div>
       </div>
 
       <ul class="contact-info contact-layout__info">
@@ -108,9 +66,7 @@ const safeguardingPolicy = tStrict(lang, 'contactSafeguardingPolicy');
               <Icon name="phone" />
               <span>
                 <a href={tel(settings.phone)}>{settings.phone}</a>
-                {hours.value && (
-                  <small lang={langAttr(hours)}>{hours.value}</small>
-                )}
+                {hours.value && <small lang={langAttr(hours)}>{hours.value}</small>}
               </span>
             </li>
           )
@@ -133,6 +89,58 @@ const safeguardingPolicy = tStrict(lang, 'contactSafeguardingPolicy');
           )
         }
       </ul>
+
+      <div
+        class="safeguarding-panel contact-layout__safe"
+        role="region"
+        aria-label={tStrict(lang, 'safeguardingPanelTitle')}
+      >
+        <h2 class="safeguarding-panel__title">{tStrict(lang, 'safeguardingPanelTitle')}</h2>
+        {
+          safeguarding.value && (
+            <p class="safeguarding-panel__body" lang={langAttr(safeguarding)}>
+              {safeguarding.value}
+            </p>
+          )
+        }
+        {
+          safeguardingPolicy && (
+            <p class="safeguarding-panel__body inline-links">
+              <InlineLinks text={safeguardingPolicy} />
+            </p>
+          )
+        }
+        <div class="sk-actions" style="margin-top:20px">
+          {
+            settings.phone && (
+              <a href={tel(settings.phone)} class="sk-btn">
+                {settings.phone}
+              </a>
+            )
+          }
+          {
+            settings.safeguardingEmail && (
+              <a
+                href={`mailto:${settings.safeguardingEmail}`}
+                class="sk-btn sk-btn--outline"
+                style="overflow-wrap:anywhere"
+              >
+                {settings.safeguardingEmail}
+              </a>
+            )
+          }
+        </div>
+      </div>
+
+      {
+        donatePageLive && (
+          <div class="contact-layout__band sk-actions">
+            <a href={donateHref(lang)} class="sk-btn">
+              {tStrict(lang, 'donate')}
+            </a>
+          </div>
+        )
+      }
     </div>
   </SkSection>
 </BaseLayout>
