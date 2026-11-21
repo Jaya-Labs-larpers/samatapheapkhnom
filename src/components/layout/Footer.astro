@@ -100,7 +100,7 @@ const { email, phone } = settings;
     <div class="ftr__legal">
       <span>© {year} {orgName}</span>
       <a href={localizePath('/privacy', lang)} class="ftr__legal-link">{t(lang, 'navPrivacy')}</a>
-      {gtmId && <CookieSettings lang={lang} containerId={gtmId} />}
+      <CookieSettings lang={lang} containerId={gtmId} />
       <span class="ftr__lang">
         <LanguageToggle lang={lang} pathname={pathname} variant="footer" />
       </span>

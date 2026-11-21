@@ -1,5 +1,6 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
+import { localizePath, t } from '~/lib/i18n/utils';
 
 interface Props {
   lang: Locale;
@@ -9,54 +10,102 @@ interface Props {
 const { lang, containerId } = Astro.props;
 const labels = lang === 'km' ? {
   title: 'ការកំណត់ខូគី',
-  message: 'តើអ្នកអនុញ្ញាតឱ្យយើងប្រើខូគីសម្រាប់ការវិភាគ ដើម្បីយល់ពីរបៀបដែលអ្នកអានប្រើគេហទំព័រនេះដែរឬទេ?',
-  accept: 'យល់ព្រម', decline: 'បដិសេធ',
+  message: 'យើងប្រើខូគីជាជម្រើស ដើម្បីដឹងថាទំព័រណាមានប្រយោជន៍បំផុតសម្រាប់អ្នកអាន ដើម្បីកែលម្អគេហទំព័រនេះ។ គេហទំព័រដំណើរការពេញលេញទោះបីអ្នកជ្រើសរើសបែបណាក៏ដោយ។',
+  accept: 'យល់ព្រមទាំងអស់',
+  reject: 'បដិសេធខូគីជាជម្រើស',
+  preferences: 'ការកំណត់',
+  necessary: 'ចាំបាច់',
+  necessaryText: 'ចងចាំជម្រើសខូគីរបស់អ្នក។',
+  alwaysOn: 'បើកជានិច្ច',
+  analytics: 'ការវិភាគ',
+  analyticsText: 'Google Analytics៖ ទំព័រណាដែលអ្នកអានចូលមើល និងអ្វីដែលពួកគេចុច។',
+  save: 'រក្សាទុកជម្រើស',
 } : {
   title: 'Cookie settings',
-  message: 'May we use optional analytics cookies to understand how people use this website?',
-  accept: 'Accept', decline: 'Decline',
+  message: 'We use optional cookies to see which pages help people most, so we can improve this site. The site works fully either way.',
+  accept: 'Accept all',
+  reject: 'Reject optional',
+  preferences: 'Preferences',
+  necessary: 'Necessary',
+  necessaryText: 'Remembers your cookie choice.',
+  alwaysOn: 'Always on',
+  analytics: 'Analytics',
+  analyticsText: 'Google Analytics: which pages people visit and what they click.',
+  save: 'Save choices',
 };
 ---
 
 <div data-cookie-settings={containerId}>
   <button type="button" data-settings-toggle hidden aria-controls="cookie-panel" aria-expanded="false">{labels.title}</button>
   <section id="cookie-panel" aria-label={labels.title} hidden>
-    <p>{labels.message}</p>
-    <div class="choices">
-      <button type="button" value="accepted">{labels.accept}</button>
-      <button type="button" value="declined">{labels.decline}</button>
+    <div class="bar">
+      <p>
+        {labels.message}{' '}
+        <a href={localizePath('/privacy', lang)}>{t(lang, 'navPrivacy')}</a>
+      </p>
+      <div class="choices">
+        <button type="button" class="outline" data-action="preferences" aria-controls="cookie-preferences" aria-expanded="false">{labels.preferences}</button>
+        <button type="button" class="solid" data-action="reject">{labels.reject}</button>
+        <button type="button" class="solid" data-action="accept">{labels.accept}</button>
+      </div>
+    </div>
+    <div id="cookie-preferences" class="preferences" hidden>
+      <div class="row">
+        <div>
+          <strong>{labels.necessary}</strong>
+          <span>{labels.necessaryText}</span>
+        </div>
+        <span class="always">{labels.alwaysOn}</span>
+      </div>
+      <div class="row">
+        <div>
+          <strong id="cookie-analytics-label">{labels.analytics}</strong>
+          <span>{labels.analyticsText}</span>
+        </div>
+        <button type="button" role="switch" aria-checked="false" aria-labelledby="cookie-analytics-label" data-analytics-switch>
+          <span class="thumb"></span>
+        </button>
+      </div>
+      <div class="choices"><button type="button" class="solid" data-action="save">{labels.save}</button></div>
     </div>
   </section>
 </div>
 
 <script>
   import { whenSettled } from '~/lib/lazy';
+  import { CONSENT_KEY, clearAnalyticsCookies, readChoice, saveChoice, type Choice } from '~/lib/consent';
 
   const root = document.querySelector<HTMLElement>('[data-cookie-settings]');
   if (root) {
-    const key = 'sko-analytics-choice';
+    const id = root.dataset.cookieSettings ?? '';
     const panel = root.querySelector<HTMLElement>('section')!;
     const toggle = root.querySelector<HTMLButtonElement>('[data-settings-toggle]')!;
-    let choice: string | null = null;
+    const preferences = root.querySelector<HTMLElement>('.preferences')!;
+    const preferencesButton = root.querySelector<HTMLButtonElement>('[data-action="preferences"]')!;
+    const analyticsSwitch = root.querySelector<HTMLButtonElement>('[data-analytics-switch]')!;
+    const storage = (() => { try { return localStorage; } catch { return null; } })();
+    let choice: Choice | null = null;
     let started = false;
+    let openedFromFooter = false;
+
+    function setSwitch(on: boolean) {
+      analyticsSwitch.setAttribute('aria-checked', String(on));
+    }
+
+    function showPreferences(open: boolean) {
+      preferences.hidden = !open;
+      preferencesButton.setAttribute('aria-expanded', String(open));
+      if (open) setSwitch(choice === 'accepted');
+    }
 
     function show(open: boolean) {
       panel.hidden = !open;
       toggle.setAttribute('aria-expanded', String(open));
+      if (!open) showPreferences(false);
     }
 
-    const sync = () => {
-      try { choice = localStorage.getItem(key); } catch {}
-      if (started && choice !== 'accepted') {
-        location.reload();
-        return;
-      }
-      show(choice !== 'accepted' && choice !== 'declined');
-      if (choice === 'accepted') scheduleTags();
-    };
-
-    const id = root.dataset.cookieSettings!;
     function scheduleTags() {
+      if (!id) return;
       whenSettled(() => {
         if (started || choice !== 'accepted' || ('prerendering' in document && document.prerendering)) return;
         started = true;
@@ -68,22 +117,61 @@ const labels = lang === 'km' ? {
       });
     }
 
+    function stopTags() {
+      clearAnalyticsCookies(document, location.hostname);
+      if (started) location.reload();
+    }
+
+    function apply(next: Choice) {
+      choice = next;
+      saveChoice(storage, next);
+      show(false);
+      if (openedFromFooter) toggle.focus({ preventScroll: true });
+      openedFromFooter = false;
+      if (next === 'accepted') scheduleTags();
+      else stopTags();
+    }
+
+    function sync() {
+      choice = readChoice(storage);
+      if (started && choice !== 'accepted') {
+        stopTags();
+        return;
+      }
+      show(choice === null);
+      if (choice === 'accepted') scheduleTags();
+    }
+
     toggle.hidden = false;
     toggle.addEventListener('click', () => {
-      show(panel.hidden);
-      if (!panel.hidden) panel.querySelector('button')?.focus();
+      if (!panel.hidden && !preferences.hidden) {
+        show(false);
+        return;
+      }
+      openedFromFooter = true;
+      show(true);
+      showPreferences(true);
+      analyticsSwitch.focus();
     });
-    panel.querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
-      choice = button.value;
-      try { localStorage.setItem(key, choice); } catch {}
-      const fromFooter = toggle.getBoundingClientRect().top < innerHeight;
+    preferencesButton.addEventListener('click', () => {
+      showPreferences(preferences.hidden);
+      if (!preferences.hidden) analyticsSwitch.focus();
+    });
+    analyticsSwitch.addEventListener('click', () => {
+      setSwitch(analyticsSwitch.getAttribute('aria-checked') !== 'true');
+    });
+    root.querySelector('[data-action="accept"]')!.addEventListener('click', () => apply('accepted'));
+    root.querySelector('[data-action="reject"]')!.addEventListener('click', () => apply('declined'));
+    root.querySelector('[data-action="save"]')!.addEventListener('click', () => {
+      apply(analyticsSwitch.getAttribute('aria-checked') === 'true' ? 'accepted' : 'declined');
+    });
+    panel.addEventListener('keydown', event => {
+      if (event.key !== 'Escape' || choice === null) return;
       show(false);
-      if (fromFooter) toggle.focus({ preventScroll: true });
-      if (choice === 'accepted') scheduleTags();
-      else if (started) location.reload();
-    }));
+      toggle.focus({ preventScroll: true });
+    });
     window.addEventListener('storage', event => {
-      if (event.key === null || event.key === key) sync();
+      if (event.key === null || event.key === CONSENT_KEY) sync();
     });
     window.addEventListener('pageshow', event => { if (event.persisted) sync(); });
     document.addEventListener('prerenderingchange', sync, { once: true });
@@ -92,24 +180,37 @@ const labels = lang === 'km' ? {
 </script>
 
 <style>
-  [data-settings-toggle] { text-decoration: underline; }
+  a, [data-settings-toggle] { text-decoration: underline; }
   section {
     position: fixed;
     inset: auto 0 0;
     z-index: 80;
+    max-height: 85%;
+    overflow-y: auto;
     padding: 1rem max(1.25rem, calc((100vw - 1240px) / 2)) max(1rem, env(safe-area-inset-bottom));
     background: white;
     color: var(--color-ink-900);
     border-top: 1px solid var(--color-line-strong);
     box-shadow: 0 -3px 18px #17264015;
-    text-align: start;
   }
-  section:not([hidden]), .choices { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-  section p { flex: 1 1 25rem; margin: 0; }
+  .bar, .choices, .row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .bar p { flex: 1 1 25rem; margin: 0; }
   .choices button {
     padding: 0.6rem 1.2rem;
-    border: 1px solid currentColor;
+    border: 1px solid var(--color-blue-700);
     border-radius: 2rem;
-    color: var(--color-blue-800);
+    font-weight: 600;
+    color: var(--color-blue-700);
+  }
+  .choices .solid { color: white; background: var(--color-blue-700); }
+  .preferences:not([hidden]) { display: grid; gap: 0.75rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-line-strong); }
+  .row { flex-wrap: nowrap; justify-content: space-between; }
+  .row span { display: block; }
+  [role='switch'] { flex: none; width: 2.75rem; height: 1.5rem; padding: 3px; border-radius: 1rem; background: var(--color-line-strong); }
+  .thumb { width: 1.125rem; height: 1.125rem; border-radius: 1rem; background: white; }
+  [aria-checked='true'] { background: var(--color-blue-700); }
+  [aria-checked='true'] .thumb { margin-left: auto; }
+  @media (max-width: 640px) {
+    .choices { width: 100%; flex-direction: column; align-items: stretch; }
   }
 </style>

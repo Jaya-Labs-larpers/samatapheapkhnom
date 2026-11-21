@@ -1,16 +1,14 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
-import type { UIKey } from '~/lib/i18n/strings';
 import { getSiteSettings } from '~/lib/content';
 import { langAttr, pick } from '~/lib/i18n/utils';
 import { stripInlineLinks } from '~/lib/inline-links';
 import { contactPageJsonLd, officeOpeningHours } from '~/lib/seo/page-schema';
 import { tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
 import ContactForm from '~/components/forms/ContactForm.astro';
 import InlineLinks from '~/components/content/InlineLinks.astro';
-import SkHero from '~/components/skeleton/SkHero.astro';
+import Icon from '~/components/Icon.astro';
 import SkSection from '~/components/skeleton/SkSection.astro';
 
 interface Props {
@@ -25,7 +23,6 @@ const hours = pick(settings.officeHours, lang);
 const safeguarding = pick(settings.safeguardingContact, lang);
 const heading = tStrict(lang, 'pageContact');
 const tel = (phone: string) => `tel:${phone.replace(/[^+\d]/g, '')}`;
-const nextSteps: UIKey[] = ['nextStep1', 'nextStep2', 'nextStep3'];
 const withContact = (value: string) =>
   value.replace('{phone}', settings.phone ?? '').replace('{email}', settings.email ?? '');
 const intro = withContact(tStrict(lang, 'introContact'));
@@ -33,7 +30,6 @@ const title = tStrict(lang, 'seoContact') || heading;
 const description = withContact(tStrict(lang, 'metaContact')) || stripInlineLinks(intro);
 const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: title, description });
 const safeguardingPolicy = tStrict(lang, 'contactSafeguardingPolicy');
-const nextFaq = tStrict(lang, 'nextFaq');
 ---
 
 <BaseLayout
@@ -41,62 +37,15 @@ const nextFaq = tStrict(lang, 'nextFaq');
   title={title}
   description={description}
   noindex
+  noFooter
   jsonLd={contactPage}
   orgJsonLd={{ openingHoursSpecification: officeOpeningHours }}
 >
-  <SkHero title={heading} intro={intro} actions={[]}>
-    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
-  </SkHero>
+  <SkSection class="pt-8 pb-12 lg:min-h-[calc(100svh-var(--header-offset))] lg:pt-8">
+    <div class="contact-layout">
+      <h1 class="sk-h1 contact-layout__title">{tStrict(lang, 'formPanelTitleGeneral')}</h1>
 
-  <SkSection>
-    <div class="sk-grid">
-      {
-        settings.phone && (
-          <div class="sk-card">
-            <h2 class="sk-h3">{tStrict(lang, 'contactCall')}</h2>
-            <a href={tel(settings.phone)} class="sk-link">
-              {settings.phone}
-            </a>
-            {hours.value && (
-              <p class="sk-small" lang={langAttr(hours)}>
-                {hours.value}
-              </p>
-            )}
-          </div>
-        )
-      }
-      {
-        settings.email && (
-          <div class="sk-card">
-            <h2 class="sk-h3">{tStrict(lang, 'contactEmail')}</h2>
-            <a href={`mailto:${settings.email}`} class="sk-link" style="overflow-wrap:anywhere">
-              {settings.email}
-            </a>
-            <p class="sk-small">{tStrict(lang, 'contactEmailAction')}</p>
-          </div>
-        )
-      }
-      {
-        address.value && (
-          <div class="sk-card">
-            <h2 class="sk-h3">{tStrict(lang, 'contactVisit')}</h2>
-            <p class="sk-text" style="white-space:pre-line" lang={langAttr(address)}>
-              {address.value}
-            </p>
-            {settings.mapUrl && (
-              <a href={settings.mapUrl} rel="noopener noreferrer" target="_blank" class="sk-link">
-                {tStrict(lang, 'viewOnGoogleMaps')}
-              </a>
-            )}
-          </div>
-        )
-      }
-    </div>
-  </SkSection>
-
-  <SkSection tone="tint">
-    <div class="contact-desk grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-10">
-      <div>
+      <div class="contact-desk contact-layout__form">
         <ContactForm lang={lang} id="form-contact" />
 
         <div
@@ -142,64 +91,48 @@ const nextFaq = tStrict(lang, 'nextFaq');
         </div>
       </div>
 
-      <aside class="contact-next">
-        <h2 class="contact-next__title">{tStrict(lang, 'nextTitle')}</h2>
-        <ol class="contact-next__steps">
-          {nextSteps.map((step) => <li>{tStrict(lang, step)}</li>)}
-        </ol>
+      <ul class="contact-info contact-layout__info">
         {
-          nextFaq && (
-            <p class="contact-next__block inline-links">
-              <InlineLinks text={nextFaq} />
-            </p>
+          settings.email && (
+            <li>
+              <Icon name="envelope" />
+              <a href={`mailto:${settings.email}`} style="overflow-wrap:anywhere">
+                {settings.email}
+              </a>
+            </li>
           )
         }
         {
-          hours.value && (
-            <div class="contact-next__block">
-              <b>{tStrict(lang, 'nextHours')}</b>
-              <span lang={langAttr(hours)}>{hours.value}</span>
-            </div>
+          settings.phone && (
+            <li>
+              <Icon name="phone" />
+              <span>
+                <a href={tel(settings.phone)}>{settings.phone}</a>
+                {hours.value && (
+                  <small lang={langAttr(hours)}>{hours.value}</small>
+                )}
+              </span>
+            </li>
           )
         }
-        <p class="contact-next__block contact-next__privacy">{tStrict(lang, 'nextPrivacy')}</p>
-      </aside>
+        {
+          address.value && (
+            <li>
+              <Icon name="map-pin" />
+              <span>
+                <span style="white-space:pre-line" lang={langAttr(address)}>
+                  {address.value}
+                </span>
+                {settings.mapUrl && (
+                  <a href={settings.mapUrl} rel="noopener noreferrer" target="_blank">
+                    {tStrict(lang, 'viewOnGoogleMaps')}
+                  </a>
+                )}
+              </span>
+            </li>
+          )
+        }
+      </ul>
     </div>
   </SkSection>
 </BaseLayout>
-
-<script>
-  const ENTER_MS = 2000;
-  const STAGGER_MS = 180;
-  const boxes = Array.from(document.querySelectorAll<HTMLElement>('.contact-enter'));
-
-  const show = (box: HTMLElement, index: number) => {
-    const delay = index * STAGGER_MS;
-    box.style.setProperty('--enter-delay', `${delay}ms`);
-    box.dataset.enter = 'shown';
-    setTimeout(
-      () => {
-        box.dataset.enter = 'done';
-        box.style.removeProperty('--enter-delay');
-      },
-      delay + ENTER_MS + 900,
-    );
-  };
-
-  if (typeof IntersectionObserver !== 'function') {
-    boxes.forEach(show);
-  } else {
-    const arrival = new IntersectionObserver(
-      (entries) => {
-        entries
-          .filter((entry) => entry.isIntersecting)
-          .forEach((entry, index) => {
-            arrival.unobserve(entry.target);
-            show(entry.target as HTMLElement, index);
-          });
-      },
-      { threshold: 0.05 },
-    );
-    boxes.forEach((box) => arrival.observe(box));
-  }
-</script>

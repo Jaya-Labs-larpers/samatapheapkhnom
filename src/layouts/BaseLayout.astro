@@ -25,6 +25,7 @@ interface Props {
   orgJsonLd?: Record<string, unknown> | null;
   /** A focused page (Donate): slim header, no footer, no third-party scripts. */
   minimal?: boolean;
+  noFooter?: boolean;
 }
 
 const {
@@ -38,6 +39,7 @@ const {
   jsonLd,
   orgJsonLd,
   minimal = false,
+  noFooter = false,
 } = Astro.props;
 
 const settings = await getSiteSettings();
@@ -149,7 +151,7 @@ const preloadFonts =
       <slot />
     </main>
 
-    {!minimal && <Footer lang={lang} settings={settings} pathname={pathname} />}
+    {!minimal && !noFooter && <Footer lang={lang} settings={settings} pathname={pathname} />}
 
     <script>
       import { revealOnEntry } from '~/lib/reveal';

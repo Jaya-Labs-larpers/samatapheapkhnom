@@ -62,10 +62,9 @@ const strings = {
 };
 ---
 
-<div class:list={['form-panel', 'contact-enter', className]} data-enter="pending">
+<div class:list={['form-panel', className]}>
   <div class="form-panel-head form-enter-row" style="--i: 0">
     <h2 class="form-panel-title">{t(lang, 'formPanelTitleGeneral')}</h2>
-    <p class="form-panel-note">{t(lang, 'formPanelNoteGeneral')}</p>
   </div>
 
   <form
@@ -91,7 +90,6 @@ const strings = {
       </section>
 
       <section class="form-section form-enter-row" style="--i: 2">
-        <h3 class="form-section__label">{t(lang, 'formSectionYou')}</h3>
         <div class="form-field">
           <label class="form-label" for={`${id}-name`}>
             {t(lang, 'formName')}
@@ -323,7 +321,6 @@ const strings = {
       </section>
 
       <section class="form-section form-enter-row" style="--i: 4">
-        <h3 class="form-section__label">{t(lang, 'formSectionMessage')}</h3>
         <div class="form-field">
           <label class="form-label" for={`${id}-message`}>
             {t(lang, 'formMessage')}
@@ -362,16 +359,14 @@ const strings = {
     <div class="form-panel-foot form-enter-row" style="--i: 5">
       {
         turnstileSiteKey && (
-          <div class="form-field mb-4">
-            <span class="form-label">{t(lang, 'formVerifyLabel')}</span>
-            <div
-              class="cf-turnstile"
-              data-sitekey={turnstileSiteKey}
-              data-language={lang}
-              data-theme="light"
-              data-size="flexible"
-            />
-          </div>
+          <div
+            class="cf-turnstile"
+            data-sitekey={turnstileSiteKey}
+            data-language={lang}
+            data-theme="light"
+            data-size="flexible"
+            data-appearance="interaction-only"
+          />
         )
       }
       <button type="submit" class="btn btn-primary btn-block">
