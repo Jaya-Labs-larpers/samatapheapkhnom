@@ -26,6 +26,7 @@ const title = pick(page?.title, lang);
 const intro = pick(page?.intro, lang);
 const heading = title.value ?? t(lang, fallbackTitleKey);
 const seo = resolveSeo(page?.seo, lang, {
+  documentId: page?._id,
   title: heading,
   description: intro.value ?? blocksToPlainText(pick(page?.body, lang).value),
   image: page?.heroImage,

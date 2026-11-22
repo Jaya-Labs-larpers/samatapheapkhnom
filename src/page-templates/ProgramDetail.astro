@@ -70,6 +70,7 @@ const hasImpact = Object.values(impact).some((blocks) => blocks && blocks.length
 const pullQuote = story ? { ...story, body: hasImpact ? impact : null } : null;
 
 const seo = resolveSeo(program.seo, lang, {
+  documentId: program._id,
   title: heading,
   description: summary.value,
   image: program.image,

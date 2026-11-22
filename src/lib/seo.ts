@@ -3,6 +3,46 @@ import { pick } from './i18n/utils';
 import { stripInlineLinks } from './inline-links';
 import type { CmsImage, Seo } from './content/types';
 
+const searchCopy: Partial<Record<string, Pick<Seo, 'title' | 'description'>>> = {
+  'page-about': {
+    title: {
+      en: 'About Samatapheap Khnom Organization in Phnom Penh',
+      km: 'អំពីអង្គការសមត្ថភាពខ្ញុំ និងការងារសង្គមកិច្ចនៅភ្នំពេញ',
+    },
+  },
+  'page-impact': {
+    title: {
+      en: 'Results of Family Support Programs in Phnom Penh',
+      km: 'លទ្ធផលនៃកម្មវិធីគាំទ្រកុមារ និងគ្រួសារនៅភ្នំពេញ',
+    },
+  },
+  'page-faq': {
+    title: {
+      en: 'Common Questions About SKO’s Family Support Programs',
+      km: 'សំណួរញឹកញាប់អំពីកម្មវិធីគាំទ្រគ្រួសាររបស់អង្គការសមត្ថភាពខ្ញុំ',
+    },
+  },
+  'page-privacy': {
+    title: {
+      en: 'Website Privacy, Analytics and Contact Form Data',
+      km: 'ឯកជនភាពលើគេហទំព័រ និងព័ត៌មានក្នុងទម្រង់ទំនាក់ទំនង',
+    },
+    description: {
+      en: 'Learn how SKO handles the details you send through its contact form, measures website visits and protects the form against spam.',
+      km: 'ស្វែងយល់ពីរបៀបដែលអង្គការសមត្ថភាពខ្ញុំប្រើព័ត៌មានដែលអ្នកផ្ញើតាមទម្រង់ទំនាក់ទំនង ប្រមូលស្ថិតិអ្នកចូលមើលគេហទំព័រ និងការពារទម្រង់ពីសារឥតបានការ។',
+    },
+  },
+  'page-safeguarding': {
+    title: { km: 'គោលនយោបាយការពារកុមារ និងរបៀបរាយការណ៍ពីកង្វល់' },
+  },
+  'program-tfcf1': {
+    title: { km: 'កម្មវិធីសកម្មភាពពលរដ្ឋកុមារ៖ ការអប់រំ និងសុខភាពកុមារ' },
+  },
+  'activity-1': {
+    title: { en: 'Introducing SKO’s New Website in English and Khmer' },
+  },
+};
+
 export interface ResolvedSeo {
   title: string;
   description: string | undefined;
@@ -22,13 +62,16 @@ export function resolveSeo(
   seo: Seo | null | undefined,
   lang: Locale,
   fallback: {
+    documentId?: string;
     title: string;
     description?: string | null;
     image?: CmsImage | null;
   },
 ): ResolvedSeo {
-  const title = ownLanguage(seo?.title, lang) || fallback.title;
-  const description = ownLanguage(seo?.description, lang) || fallback.description || '';
+  const defaults = fallback.documentId ? searchCopy[fallback.documentId] : undefined;
+  const title = ownLanguage(seo?.title, lang) || defaults?.title?.[lang] || fallback.title;
+  const description =
+    ownLanguage(seo?.description, lang) || defaults?.description?.[lang] || fallback.description || '';
 
   return {
     title,

@@ -25,6 +25,7 @@ const title = pick(activity.title, lang);
 const excerpt = pick(activity.excerpt, lang);
 const heading = title.value ?? '';
 const seo = resolveSeo(activity.seo, lang, {
+  documentId: activity._id,
   title: heading,
   description: excerpt.value ?? blocksToPlainText(pick(activity.body, lang).value),
   image: activity.coverImage,
