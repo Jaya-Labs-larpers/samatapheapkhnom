@@ -132,9 +132,6 @@ const en = {
   notFoundCta: 'Go to the homepage',
 
   // --- Search-result titles and descriptions ----------------------------------
-  // The six code-driven pages and the home page keep their H1 in pageX/tagline;
-  // these are what search results and link previews show. Empty in Khmer: the
-  // page then falls back to its Khmer heading and intro.
   seoHome: 'Support for Vulnerable Families in Phnom Penh',
   metaHome:
     'Samatapheap Khnom Organization (SKO): a Cambodian NGO supporting vulnerable families in Phnom Penh since 2007 through social work and child protection.',
@@ -369,21 +366,21 @@ const km: Record<UIKey, string> = {
   notFoundBody: 'ទំព័រដែលអ្នកកំពុងស្វែងរក ត្រូវបានផ្លាស់ប្តូរ ឬមិនធ្លាប់មាន។',
   notFoundCta: 'ត្រឡប់ទៅទំព័រដើម',
 
-  seoHome: '',
-  metaHome: '',
+  seoHome: 'ការគាំទ្រកុមារ និងគ្រួសារងាយរងគ្រោះនៅភ្នំពេញ',
+  metaHome: 'ចាប់តាំងពីឆ្នាំ ២០០៧ អង្គការសមត្ថភាពខ្ញុំបានធ្វើការជាមួយគ្រួសារងាយរងគ្រោះនៅភ្នំពេញ ដើម្បីការពារកុមារ និងជួយឱ្យកុមាររស់នៅដោយសុវត្ថិភាពជាមួយគ្រួសារ។',
   homeAboutLink: '',
   viewAllPrograms: '',
   allPartners: '',
-  seoPrograms: '',
+  seoPrograms: 'កម្មវិធីគាំទ្រគ្រួសារ និងការពារកុមារនៅភ្នំពេញ',
   metaPrograms: '',
   programsSectionTitle: '',
-  seoActivities: '',
-  metaActivities: '',
+  seoActivities: 'ព័ត៌មាន និងសកម្មភាពគាំទ្រគ្រួសារនៅភ្នំពេញ',
+  metaActivities: 'តាមដានព័ត៌មានពីសហគមន៍ដែលអង្គការសមត្ថភាពខ្ញុំធ្វើការជាមួយនៅភ្នំពេញ រួមទាំងការចែកសម្ភារៈសិក្សាដល់សិស្ស និងការងាររបស់ក្រុមសង្គមកិច្ចជាមួយគ្រួសារ។',
   activitiesFromProgram: '',
-  seoPartners: '',
-  metaPartners: '',
-  seoContact: '',
-  metaContact: '',
+  seoPartners: 'ដៃគូ និងម្ចាស់ជំនួយសម្រាប់កម្មវិធីគាំទ្រគ្រួសារ',
+  metaPartners: 'ស្គាល់អង្គការ ស្ថាប័ន និងម្ចាស់ជំនួយដែលសហការជាមួយអង្គការសមត្ថភាពខ្ញុំ ដើម្បីគាំទ្រកម្មវិធីអប់រំ សុខភាព និងការការពារកុមារនៅភ្នំពេញ។',
+  seoContact: 'ទំនាក់ទំនងការិយាល័យអង្គការសមត្ថភាពខ្ញុំនៅភ្នំពេញ',
+  metaContact: 'ស្វែងរកអាសយដ្ឋានការិយាល័យ និងម៉ោងធ្វើការរបស់អង្គការសមត្ថភាពខ្ញុំនៅភ្នំពេញ។ សម្រាប់សំណួរ ឬការសហការ សូមទូរសព្ទទៅ {phone} ឬផ្ញើអ៊ីមែលទៅ {email}។',
   nextFaq: '',
   seoReports: '',
   metaReports: '',
