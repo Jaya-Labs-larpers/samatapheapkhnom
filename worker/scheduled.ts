@@ -31,6 +31,7 @@ const TRIGGERED_KEY = 'cron:content-sync:triggered';
 
 /** The newest sitemap lastmod already sent to IndexNow. */
 const INDEXNOW_MARK = 'cron:indexnow:submitted';
+const INDEXNOW_RETRY_AT = 'cron:indexnow:retry-at';
 
 type Log = (line: string) => void;
 
@@ -88,11 +89,15 @@ async function contentSync(env: Env, log: Log): Promise<string | undefined> {
 /**
  * Submits the pages changed since the last run. Unconfigured is not a
  * failure, so the rehearsal and a site without a key stay quiet. A rejected
- * key is reported; a rate limit or an outage is only logged, since the same
- * pages are picked up again on the next run.
+ * key is reported; rate-limited pages stay pending until the retry time.
  */
 async function indexNow(env: Env, log: Log): Promise<string | undefined> {
   if (!env.SITE_URL || !env.RATE_LIMIT_KV) return;
+  const retryAt = await env.RATE_LIMIT_KV.get(INDEXNOW_RETRY_AT);
+  if (retryAt && Date.parse(retryAt) > Date.now()) {
+    log(`[indexnow] rate limited until ${retryAt}`);
+    return;
+  }
   const origin = new URL(env.SITE_URL).origin;
 
   const keyFile = await fetch(`${origin}${KEY_PATH}`, { signal: AbortSignal.timeout(10_000) });
@@ -125,6 +130,18 @@ async function indexNow(env: Env, log: Log): Promise<string | undefined> {
     return;
   }
   log(`[indexnow] ${urls.length} pages not accepted: ${response.status}`);
+  if (response.status === 429) {
+    const now = Date.now();
+    const after = response.headers.get('Retry-After')?.trim() ?? '';
+    const retryTime = /^\d+$/.test(after) ? now + Number(after) * 1000 : Date.parse(after);
+    const retryDate = new Date(Math.max(now, retryTime));
+    const next = Number.isNaN(retryDate.getTime())
+      ? new Date(now + 24 * 60 * 60_000).toISOString()
+      : retryDate.toISOString();
+    await env.RATE_LIMIT_KV.put(INDEXNOW_RETRY_AT, next);
+    log(`[indexnow] next attempt at or after ${next}`);
+    return;
+  }
   if (response.status === 403 || response.status === 422) {
     return `IndexNow rejected the key (${response.status}); check ${KEY_PATH} is served`;
   }
