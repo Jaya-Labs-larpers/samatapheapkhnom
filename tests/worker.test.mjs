@@ -206,3 +206,53 @@ test("content sync rebuilds a missed publish once, then reports instead of retry
     globalThis.fetch = realFetch;
   }
 });
+
+test("IndexNow waits after a 429 and retries the pending pages", async (t) => {
+  const now = Date.parse("2026-11-22T15:45:00Z");
+  const origin = "https://www.example.org";
+  const lastmod = "2026-11-01T00:00:00Z";
+  const clock = t.mock.method(Date, "now", () => now);
+  for (const [header, hours] of [
+    ["7200", 2],
+    ["Mon, 23 Nov 2026 15:45:00 GMT", 24],
+    [null, 24],
+    ["invalid", 24],
+  ]) {
+    const store = new Map();
+    const submissions = [];
+    const cronEnv = env({
+      SANITY_PROJECT_ID: "abc123",
+      SITE_URL: origin,
+      RATE_LIMIT_KV: {
+        get: async (key) => store.get(key) ?? null,
+        put: async (key, value) => store.set(key, value),
+      },
+    });
+    const fetch = t.mock.method(globalThis, "fetch", async (url, init) => {
+      if (String(url).includes(".api.sanity.io/")) return Response.json({ result: null });
+      if (url === origin + "/indexnow-key.txt") return new Response("sample-public-key");
+      if (url === origin + "/sitemap-0.xml") {
+        return new Response(`<urlset><url><loc>${origin}/</loc><lastmod>${lastmod}</lastmod></url></urlset>`);
+      }
+      assert.equal(url, "https://api.indexnow.org/indexnow");
+      submissions.push(JSON.parse(init.body).urlList);
+      return submissions.length === 1
+        ? new Response(null, { status: 429, headers: header ? { "Retry-After": header } : {} })
+        : new Response(null, { status: 200 });
+    });
+    const tick = () => handler.scheduled({ cron: "45 * * * *" }, cronEnv);
+    const retryAt = now + hours * 3600_000;
+    clock.mock.mockImplementation(() => now);
+    await tick();
+    assert.equal(store.get("cron:indexnow:retry-at"), new Date(retryAt).toISOString());
+    assert.equal(store.has("cron:indexnow:submitted"), false);
+    clock.mock.mockImplementation(() => retryAt - 1);
+    await tick();
+    assert.equal(submissions.length, 1);
+    clock.mock.mockImplementation(() => retryAt);
+    await tick();
+    assert.deepEqual(submissions, [[origin + "/"], [origin + "/"]]);
+    assert.equal(store.get("cron:indexnow:submitted"), lastmod);
+    fetch.mock.restore();
+  }
+});
