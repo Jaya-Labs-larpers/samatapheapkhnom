@@ -6,3 +6,6 @@
 c7a1e4a1180d40cb3000069545496f69d35d2706:wrangler.jsonc:generic-api-key:43
 c7a1e4a1180d40cb3000069545496f69d35d2706:tests/indexnow.test.mjs:generic-api-key:59
 c7a1e4a1180d40cb3000069545496f69d35d2706:tests/indexnow.test.mjs:generic-api-key:62
+
+# This loopback preview session ended when its owner process exited.
+44c5e260c4d5783bf885c71b8303bb03f93239f0:.superpowers/brainstorm/41060-1795269988/state/server-info:generic-api-key:1
