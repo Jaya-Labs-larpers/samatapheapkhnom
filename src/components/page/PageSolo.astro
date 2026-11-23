@@ -1,0 +1,34 @@
+---
+import '~/styles/pages.css';
+import type { Locale } from '~/lib/i18n/config';
+import type { Crumb } from '~/lib/breadcrumbs';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import InlineLinks from '~/components/content/InlineLinks.astro';
+
+interface Props {
+  lang: Locale;
+  title: string;
+  titleLang?: string;
+  intro?: string | null;
+  introLang?: string;
+  trail: Crumb[];
+}
+
+const { lang, title, titleLang, intro, introLang, trail } = Astro.props;
+---
+
+<section class="pg-solo" data-hero-dark>
+  <div class="pg-wrap">
+    <Breadcrumbs lang={lang} trail={trail} />
+    <h1 class="pg-solo__title" lang={titleLang}>{title}</h1>
+    {
+      intro && (
+        <p class="pg-solo__lead" lang={introLang}>
+          <InlineLinks text={intro} />
+        </p>
+      )
+    }
+    <slot />
+  </div>
+  <slot name="media" />
+</section>

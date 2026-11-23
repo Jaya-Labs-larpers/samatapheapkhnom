@@ -1,6 +1,13 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
-import { getDirectorMessage, getOrgChart, getPage } from '~/lib/content';
+import {
+  getDirectorMessage,
+  getImpactStats,
+  getOrgChart,
+  getPage,
+  getSiteSettings,
+} from '~/lib/content';
+import { hasImage } from '~/lib/sanity/image';
 import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
 import { blockText, splitBody } from '~/lib/content/sections';
 import { resolveSeo } from '~/lib/seo';
@@ -8,16 +15,13 @@ import { aboutPageJsonLd } from '~/lib/seo/page-schema';
 import { ctaActions, tStrict } from '~/lib/skeleton-content';
 import { availableAboutGroups, type AboutGroup } from '~/lib/about-groups';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
 import RichText from '~/components/content/RichText.astro';
+import SectionedBody from '~/components/content/SectionedBody.astro';
 import OrgChart from '~/components/content/OrgChart.astro';
 import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
-import SkHero from '~/components/skeleton/SkHero.astro';
-import SkBody from '~/components/skeleton/SkBody.astro';
-import SkSplit from '~/components/skeleton/SkSplit.astro';
-import SkSection from '~/components/skeleton/SkSection.astro';
-import SkSubnav from '~/components/skeleton/SkSubnav.astro';
-import SkCta from '~/components/skeleton/SkCta.astro';
+import PageHero from '~/components/page/PageHero.astro';
+import GlanceBar from '~/components/page/GlanceBar.astro';
+import BandCta from '~/components/page/BandCta.astro';
 
 interface Props {
   lang: Locale;
@@ -30,10 +34,12 @@ const group = groups.find((item) => item.slug === (requested?.slug ?? '')) ?? gr
 const isOverview = group.slug === '';
 const isLeadership = group.slug === 'leadership';
 
-const [page, director, chart] = await Promise.all([
+const [page, director, chart, settings, stats] = await Promise.all([
   getPage('about'),
   getDirectorMessage(),
   getOrgChart(),
+  getSiteSettings(),
+  getImpactStats(),
 ]);
 
 const hasOrgChart =
@@ -60,14 +66,62 @@ const aboutPage = aboutPageJsonLd({
   description: seo.description,
 });
 
+const heroImage = page?.heroImage ?? settings.homeHero?.[0] ?? null;
+const heroCaption = pick(heroImage?.caption ?? heroImage?.alt, lang);
+
 const quote = pick(director.pullQuote, lang);
 const name = pick(director.name, lang);
 const role = pick(director.title, lang);
-const subnav = [
-  ...groups.map(({ key, path }) => ({ key, path })),
-  { key: 'ourTeam' as const, path: '/team' },
-  { key: 'navFaq' as const, path: '/faq' },
-];
+const directorPhoto = hasImage(director.photo) ? director.photo : null;
+
+const segmenter = new Intl.Segmenter(lang, { granularity: 'grapheme' });
+const initials = (value: string) => {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  const parts = words.length > 1 ? [words[0]!, words[words.length - 1]!] : words;
+  return parts
+    .map((word) =>
+      Array.from(segmenter.segment(word))
+        .slice(0, 2)
+        .map((part) => part.segment)
+        .join(''),
+    )
+    .join('')
+    .toUpperCase();
+};
+
+const registration = pick(settings.registration, lang);
+const since = stats.find((stat) => stat._id === 'stat-since') ?? stats[0];
+const khans = stats.find((stat) => stat._id === 'stat-khans');
+const sangkats = stats.find((stat) => stat._id === 'stat-sangkats');
+const glance = [
+  { label: tStrict(lang, 'glanceFounded'), value: since?.displayValue ?? '' },
+  {
+    label: tStrict(lang, 'glanceRegistered'),
+    value: registration.value?.split('|').slice(0, 2).join(' · ').trim() ?? '',
+    valueLang: langAttr(registration),
+  },
+  {
+    label: tStrict(lang, 'glanceWhere'),
+    value: [
+      khans?.displayValue && `${khans.displayValue} ${tStrict(lang, 'glanceKhans')}`,
+      sangkats?.displayValue && `${sangkats.displayValue} ${tStrict(lang, 'glanceSangkats')}`,
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  },
+  { label: tStrict(lang, 'glanceStatus'), value: tStrict(lang, 'glanceStatusValue') },
+].filter((item) => item.value);
+
+const chips = groups
+  .filter((item) => item.slug !== group.slug)
+  .map((item) => ({
+    label: tStrict(lang, item.key),
+    href: localizePath(item.path, lang),
+  }));
+chips.push(
+  { label: tStrict(lang, 'ourTeam'), href: localizePath('/team', lang) },
+  { label: tStrict(lang, 'navFaq'), href: localizePath('/faq', lang) },
+);
 ---
 
 <BaseLayout
@@ -78,68 +132,93 @@ const subnav = [
   noindex
   jsonLd={aboutPage}
 >
-  <SkHero
+  <PageHero
+    lang={lang}
     title={heading}
     titleLang={isOverview ? langAttr(title) : undefined}
     intro={isOverview ? intro.value : null}
     introLang={isOverview ? langAttr(intro) : undefined}
-    actions={[]}
-  >
-    <Breadcrumbs
-      slot="before"
-      lang={lang}
-      trail={isOverview
-        ? [{ label: heading }]
-        : [{ label: aboutTitle, path: '/about' }, { label: heading }]}
-    />
-  </SkHero>
+    trail={isOverview
+      ? [{ label: heading }]
+      : [{ label: aboutTitle, path: '/about' }, { label: heading }]}
+    image={heroImage}
+    caption={heroCaption.value}
+    captionLang={langAttr(heroCaption)}
+    chips={chips}
+  />
 
-  <SkSubnav lang={lang} pathname={Astro.url.pathname} items={subnav} />
+  {isOverview && <GlanceBar items={glance} />}
 
-  <SkBody lang={lang} body={page?.body} only={group.sections} />
+  <SectionedBody lang={lang} body={page?.body} only={group.sections} />
 
   {
-    isLeadership && (
-      <SkSplit id="director" heading={tStrict(lang, 'directorMessage')} tone="tint">
-        <div class="sk-media" style="aspect-ratio:4/5;max-width:300px">
-          <ResponsiveImage image={director.photo} lang={lang} alt="" aspect="4/5" sizes="300px" />
+    (isOverview || isLeadership) && quote.value && (
+      <section class="pg-section pg-section--tint">
+        <div class="pg-wrap">
+          <div class="pg-quote">
+            <div class="pg-quote__photo">
+              {directorPhoto ? (
+                <ResponsiveImage
+                  image={directorPhoto}
+                  lang={lang}
+                  aspect="1"
+                  sizes="(min-width: 40rem) 200px, 40vw"
+                />
+              ) : (
+                <span class="pg-avatar" style="width:100%;height:100%;border-radius:0">
+                  {initials(name.value ?? '')}
+                </span>
+              )}
+            </div>
+            <div>
+              <span class="pg-kicker">{tStrict(lang, 'directorMessage')}</span>
+              <blockquote lang={langAttr(quote)}>{quote.value}</blockquote>
+              <cite>
+                <b lang={langAttr(name)}>{name.value}</b>
+                {role.value && (
+                  <>
+                    {' · '}
+                    <span lang={langAttr(role)}>{role.value}</span>
+                  </>
+                )}
+              </cite>
+              {isLeadership && (
+                <div class="pg-quote__message">
+                  <RichText blocks={director.message} lang={lang} />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        {quote.value && (
-          <blockquote class="sk-quote" lang={langAttr(quote)}>
-            {quote.value}
-          </blockquote>
-        )}
-        <RichText blocks={director.message} lang={lang} />
-        <p class="sk-person">
-          <b lang={langAttr(name)}>{name.value}</b>
-          <span class="sk-small" lang={langAttr(role)}>
-            {role.value}
-          </span>
-        </p>
-      </SkSplit>
+      </section>
     )
   }
 
   {
     isLeadership && hasOrgChart && (
-      <SkSplit id="structure" heading={tStrict(lang, 'orgStructure')}>
-        <OrgChart lang={lang} chart={chart} />
-      </SkSplit>
+      <section class="pg-section" id="structure">
+        <div class="pg-wrap">
+          <h2 class="pg-h2">{tStrict(lang, 'orgStructure')}</h2>
+          <OrgChart lang={lang} chart={chart} />
+        </div>
+      </section>
     )
   }
 
   {
     isLeadership && (
-      <SkSection>
-        <h2 class="sk-h2">{tStrict(lang, 'ourTeam')}</h2>
-        <a href={localizePath('/team', lang)} class="sk-link">
-          {tStrict(lang, 'orgStructure')} →
-        </a>
-      </SkSection>
+      <section class="pg-section pg-section--tight">
+        <div class="pg-wrap">
+          <h2 class="pg-h2">{tStrict(lang, 'ourTeam')}</h2>
+          <a href={localizePath('/team', lang)} class="pg-link" style="margin-top:0.75rem">
+            {tStrict(lang, 'orgStructure')} <span aria-hidden="true">→</span>
+          </a>
+        </div>
+      </section>
     )
   }
 
-  <SkCta
+  <BandCta
     heading={tStrict(lang, 'ctaAboutTitle')}
     body={tStrict(lang, 'ctaAboutBody')}
     actions={ctaActions(lang)}

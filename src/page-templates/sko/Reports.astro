@@ -5,11 +5,9 @@ import { stripInlineLinks } from '~/lib/inline-links';
 import { collectionPageJsonLd } from '~/lib/seo/page-schema';
 import { tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
 import EmptyState from '~/components/content/EmptyState.astro';
-import ReportList from '~/components/content/ReportList.astro';
-import SkHero from '~/components/skeleton/SkHero.astro';
-import SkSection from '~/components/skeleton/SkSection.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import DocumentList from '~/components/page/DocumentList.astro';
 
 interface Props {
   lang: Locale;
@@ -26,25 +24,34 @@ const collection = collectionPageJsonLd({ pathname: Astro.url.pathname, name: ti
 ---
 
 <BaseLayout lang={lang} title={title} description={description} noindex jsonLd={collection}>
-  <SkHero title={heading} intro={tStrict(lang, 'introReports')} actions={[]}>
-    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
-  </SkHero>
+  <PageSolo
+    lang={lang}
+    title={heading}
+    intro={tStrict(lang, 'introReports')}
+    trail={[{ label: heading }]}
+  />
 
-  <SkSection narrow>
-    {
-      reports.length === 0 ? (
-        <EmptyState message={tStrict(lang, 'emptyReports')} />
-      ) : (
-        years.map((year) => (
-          <div style="display:flex;flex-direction:column;gap:16px">
-            <h2 class="sk-h2">{year || '—'}</h2>
-            <ReportList
-              lang={lang}
-              reports={reports.filter((report) => (report.year ?? 0) === year)}
-            />
+  <section class="pg-section">
+    <div class="pg-wrap">
+      {
+        reports.length === 0 ? (
+          <EmptyState message={tStrict(lang, 'emptyReports')} />
+        ) : (
+          <div class="pg-stack">
+            {years.map((year) => (
+              <div>
+                <h2 class="pg-h2" style="margin-bottom:1rem">
+                  {year || '—'}
+                </h2>
+                <DocumentList
+                  lang={lang}
+                  reports={reports.filter((report) => (report.year ?? 0) === year)}
+                />
+              </div>
+            ))}
           </div>
-        ))
-      )
-    }
-  </SkSection>
+        )
+      }
+    </div>
+  </section>
 </BaseLayout>

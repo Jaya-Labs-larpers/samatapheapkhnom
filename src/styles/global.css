@@ -90,6 +90,12 @@ header.site-header {
 :root:has(main > [data-hero-dark]:first-child) header.site-header {
   margin-bottom: calc(var(--header-h) * -1);
 }
+/* The header is parsed before <main>, so the browser can paint it before the
+   :has(main > …) rules that pick its ink can match, flashing the default blue.
+   Hold it back until the page's first block exists. */
+:root:not(:has(main > :first-child)) header.site-header {
+  visibility: hidden;
+}
 main > .sk-hero--home[data-hero-dark] {
   min-height: 100svh;
 }
@@ -151,11 +157,15 @@ main {
 ::view-transition-new(page-content) {
   animation: page-enter 100ms var(--ease-out-soft) both;
 }
+/* The old page's header keeps its own ink and logo (blue on light pages), so
+   crossfading it would ghost blue over a dark hero. The new header already
+   paints with the right ink on first frame, so swap instantly. */
 ::view-transition-old(site-header) {
-  animation: page-exit 120ms ease-out both;
+  animation: none;
+  opacity: 0;
 }
 ::view-transition-new(site-header) {
-  animation: page-enter 120ms var(--ease-out-soft) both;
+  animation: none;
 }
 
 /*

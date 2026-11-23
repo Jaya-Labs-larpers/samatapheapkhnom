@@ -5,14 +5,10 @@ import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
 import { resolveSeo } from '~/lib/seo';
 import { ctaActions, programRow, statItem, storyCard, tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
-import SkHero from '~/components/skeleton/SkHero.astro';
-import SkStats from '~/components/skeleton/SkStats.astro';
-import SkBody from '~/components/skeleton/SkBody.astro';
-import SkRows from '~/components/skeleton/SkRows.astro';
-import SkSection from '~/components/skeleton/SkSection.astro';
-import SkCta from '~/components/skeleton/SkCta.astro';
-import SkSubnav from '~/components/skeleton/SkSubnav.astro';
+import SectionedBody from '~/components/content/SectionedBody.astro';
+import PageHero from '~/components/page/PageHero.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
+import BandCta from '~/components/page/BandCta.astro';
 import { impactProjectsAvailable, impactProjectsPath } from '~/lib/impact-pages';
 
 interface Props {
@@ -35,11 +31,43 @@ const impactTitle = title.value ?? tStrict(lang, 'pageImpact');
 const heading = projects ? tStrict(lang, 'impactProjects') : impactTitle;
 const introText = intro.value ?? tStrict(lang, 'introImpact');
 const story = stories[0] ? storyCard(stories[0], lang) : null;
+const heroImage = page?.heroImage ?? null;
 const seo = resolveSeo(projects ? null : page?.seo, lang, {
   title: heading,
   description: introText,
   image: page?.heroImage,
 });
+
+const statById = (id: string) => stats.find((stat) => stat._id === id);
+const families = statById('stat-families');
+const mapIds = ['stat-since', 'stat-khans', 'stat-sangkats'];
+const badge = families ? statItem(families, lang) : null;
+const mapStats = mapIds.flatMap((id) => {
+  const stat = statById(id);
+  const item = stat ? statItem(stat, lang) : null;
+  return item?.value ? [item] : [];
+});
+const otherStats = stats
+  .filter((stat) => !mapIds.includes(stat._id))
+  .map((stat) => statItem(stat, lang))
+  .filter((item) => item.value);
+
+const programItems = programs.map((program, index) => {
+  const stat = program.impactStats?.[0];
+  return {
+    ...programRow(program, index, lang),
+    stat: stat ? statItem(stat, lang) : null,
+  };
+});
+
+const chips = [
+  { label: tStrict(lang, 'navImpact'), href: localizePath('/impact', lang) },
+  ...(hasProjects
+    ? [{ label: tStrict(lang, 'impactProjects'), href: localizePath(impactProjectsPath, lang) }]
+    : []),
+  { label: tStrict(lang, 'navActivities'), href: localizePath('/activities', lang) },
+  { label: tStrict(lang, 'ourPrograms'), href: localizePath('/programs', lang) },
+].filter((chip) => chip.label);
 ---
 
 <BaseLayout
@@ -49,86 +77,131 @@ const seo = resolveSeo(projects ? null : page?.seo, lang, {
   ogImage={seo.ogImage}
   noindex
 >
-  <SkHero
+  <PageHero
+    lang={lang}
     title={heading}
     titleLang={projects ? undefined : langAttr(title)}
     intro={projects ? null : introText}
     introLang={projects ? undefined : langAttr(intro)}
-    actions={[]}
-  >
-    <Breadcrumbs
-      slot="before"
-      lang={lang}
-      trail={projects
-        ? [{ label: impactTitle, path: '/impact' }, { label: heading }]
-        : [{ label: heading }]}
-    />
-  </SkHero>
-
-  <SkSubnav
-    lang={lang}
-    pathname={Astro.url.pathname}
-    items={[
-      { key: 'navImpact', path: '/impact' },
-      ...(hasProjects ? [{ key: 'impactProjects' as const, path: impactProjectsPath }] : []),
-      { key: 'navActivities', path: '/activities' },
-      { key: 'ourPrograms', path: '/programs' },
-    ]}
+    trail={projects
+      ? [{ label: impactTitle, path: '/impact' }, { label: heading }]
+      : [{ label: heading }]}
+    image={heroImage}
+    caption={pick(heroImage?.caption ?? heroImage?.alt, lang).value}
+    badge={!projects && badge?.value
+      ? { value: badge.value, label: badge.label ?? '', labelLang: badge.labelLang }
+      : null}
+    chips={chips}
   />
 
   {
-    !projects && stats.length > 0 && (
-      <SkStats
-        id="results"
-        heading={tStrict(lang, 'resultsAtAGlance')}
-        items={stats.map((stat) => statItem(stat, lang))}
-        more={{ label: tStrict(lang, 'seeReports'), href: localizePath('/reports', lang) }}
-      />
+    !projects && (mapStats.length > 0 || otherStats.length > 0) && (
+      <section class="pg-section" id="results">
+        <div class="pg-wrap">
+          <SectionHead
+            heading={tStrict(lang, 'resultsAtAGlance')}
+            more={{ label: tStrict(lang, 'seeReports'), href: localizePath('/reports', lang) }}
+          />
+          {mapStats.length > 0 && (
+            <div class="pg-mapbox">
+              <div class="pg-mapbox__map">
+                <img src="/maps/cambodia-phnom-penh.svg" alt="" width="1000" height="896" />
+              </div>
+              <div class="pg-mapbox__stats">
+                {mapStats.map((stat) => (
+                  <div>
+                    {stat.prefix && <small lang={stat.prefixLang}>{stat.prefix}</small>}
+                    <b>
+                      {stat.value}
+                      {stat.suffix && <small>{stat.suffix}</small>}
+                    </b>
+                    <span lang={stat.labelLang}>{stat.label}</span>
+                    {stat.context && <span lang={stat.contextLang}>{stat.context}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {otherStats.length > 0 && (
+            <div class="pg-grid pg-grid--4 pg-stat-grid">
+              {otherStats.map((stat) => (
+                <div class="pg-stat-card">
+                  {stat.prefix && <small lang={stat.prefixLang}>{stat.prefix}</small>}
+                  <b>
+                    {stat.value}
+                    {stat.suffix && <small>{stat.suffix}</small>}
+                  </b>
+                  <span lang={stat.labelLang}>{stat.label}</span>
+                  {stat.context && <span lang={stat.contextLang}>{stat.context}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
     )
   }
 
   {
     projects ? (
-      <SkBody lang={lang} body={page?.body} showLead={false} />
+      <SectionedBody lang={lang} body={page?.body} showLead={false} />
     ) : hasProjects ? (
-      <SkBody lang={lang} body={page?.body} only={[]} showLead />
+      <SectionedBody lang={lang} body={page?.body} only={[]} showLead />
     ) : (
-      <SkBody lang={lang} body={page?.body} />
+      <SectionedBody lang={lang} body={page?.body} />
     )
   }
 
   {
-    !projects && programs.length > 0 && (
-      <SkRows
-        id="programs"
-        heading={tStrict(lang, 'ourPrograms')}
-        items={programs.map((program, index) => programRow(program, index, lang))}
-        more={{ label: tStrict(lang, 'viewAll'), href: localizePath('/programs', lang) }}
-      />
+    !projects && programItems.length > 0 && (
+      <section class="pg-section pg-section--tint" id="programs">
+        <div class="pg-wrap">
+          <SectionHead
+            heading={tStrict(lang, 'ourPrograms')}
+            more={{ label: tStrict(lang, 'viewAll'), href: localizePath('/programs', lang) }}
+          />
+          <div class="pg-grid pg-grid--2">
+            {programItems.map((item) => (
+              <article class="pg-card">
+                <div class="pg-card__body">
+                  <span class="pg-kicker">{item.index}</span>
+                  <h3 class="pg-h3" lang={item.titleLang}>
+                    <a href={item.href}>{item.title}</a>
+                  </h3>
+                  {item.body && <p lang={item.bodyLang}>{item.body}</p>}
+                  {item.stat?.value && (
+                    <span class="pg-pill">
+                      <b>{item.stat.value}</b>
+                      <span lang={item.stat.labelLang}>{item.stat.label}</span>
+                    </span>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
     )
   }
 
   {
     !projects && story && (
-      <SkSection tone="tint">
-        <figure class="sk-figure">
-          {story.quote && (
-            <blockquote class="sk-quote" lang={story.quoteLang}>
-              {story.quote}
-            </blockquote>
-          )}
-          <figcaption class="sk-small">
-            — {story.cite}
-            {story.citeRole && (
-              <span lang={story.citeRoleLang}>
-                , {story.citeHref ? <a href={story.citeHref}>{story.citeRole}</a> : story.citeRole}
-              </span>
-            )}
-          </figcaption>
-        </figure>
-      </SkSection>
+      <section class="pg-section pg-section--tint">
+        <div class="pg-wrap">
+          <div class="pg-quote pg-quote--solo">
+            <div>
+              <span class="pg-kicker">{tStrict(lang, 'typeStory')}</span>
+              {story.quote && <blockquote lang={story.quoteLang}>{story.quote}</blockquote>}
+              <cite>
+                <b>{story.cite}</b>
+                {story.citeRole && <span lang={story.citeRoleLang}> · {story.citeRole}</span>}
+              </cite>
+            </div>
+          </div>
+        </div>
+      </section>
     )
   }
 
-  <SkCta heading={tStrict(lang, 'ctaImpactTitle')} actions={ctaActions(lang)} />
+  <BandCta heading={tStrict(lang, 'ctaImpactTitle')} actions={ctaActions(lang)} />
 </BaseLayout>

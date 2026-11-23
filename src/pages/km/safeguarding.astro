@@ -2,7 +2,7 @@
 import { getReports } from '~/lib/content';
 import { tStrict } from '~/lib/skeleton-content';
 import Policy from '~/page-templates/sko/Policy.astro';
-import ReportList from '~/components/content/ReportList.astro';
+import DocumentList from '~/components/page/DocumentList.astro';
 
 const lang = 'km' as const;
 const policies = (await getReports()).filter((report) => report.type === 'policy');
@@ -12,8 +12,8 @@ const policies = (await getReports()).filter((report) => report.type === 'policy
   {
     policies.length > 0 && (
       <>
-        <h2 class="sk-h2">{tStrict(lang, 'navSafeguarding')}</h2>
-        <ReportList lang={lang} reports={policies} />
+        <h2 class="pg-h2" style="margin:2rem 0 1rem">{tStrict(lang, 'navSafeguarding')}</h2>
+        <DocumentList lang={lang} reports={policies} />
       </>
     )
   }

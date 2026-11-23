@@ -32,14 +32,30 @@ interface Props {
   partners?: Partner[];
   /** Set the opening paragraph of running prose as a lead. */
   leadProse?: boolean;
+  /** Show only these h2 sections (by position). The lead rides with section 0. */
+  only?: number[];
+  /** Force the lead on or off; by default it shows with the whole body or with section 0. */
+  showLead?: boolean;
 }
 
-const { lang, body, limits = TERM_LIMITS, partners = [], leadProse = false } = Astro.props;
+const {
+  lang,
+  body,
+  limits = TERM_LIMITS,
+  partners = [],
+  leadProse = false,
+  only,
+  showLead,
+} = Astro.props;
 
 const picked = pick(body, lang);
 const bodyLang = picked.lang;
 const fallbackLang = picked.isFallback ? bodyLang : undefined;
-const { lead, sections } = splitBody(picked.value, limits);
+const split = splitBody(picked.value, limits);
+const lead = (showLead ?? (!only || only.includes(0))) ? split.lead : [];
+const sections = only
+  ? only.flatMap((position) => (split.sections[position] ? [split.sections[position]] : []))
+  : split.sections;
 
 /** RichText picks by locale, so each slice goes back in under the body's own language. */
 const asBlocks = (blocks: typeof lead): LocaleBlocks => ({

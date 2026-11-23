@@ -6,12 +6,11 @@ import { stripInlineLinks } from '~/lib/inline-links';
 import { canonicalUrl, collectionPageJsonLd } from '~/lib/seo/page-schema';
 import { postItem, tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
 import EmptyState from '~/components/content/EmptyState.astro';
 import Pagination from '~/components/content/Pagination.astro';
-import SkHero from '~/components/skeleton/SkHero.astro';
-import SkSection from '~/components/skeleton/SkSection.astro';
-import SkPosts from '~/components/skeleton/SkPosts.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
 
 interface Props {
   lang: Locale;
@@ -22,6 +21,9 @@ interface Props {
 
 const { lang, activities, currentPage, totalPages } = Astro.props;
 const heading = tStrict(lang, 'pageActivities');
+const items = activities.map((activity) => postItem(activity, lang));
+const lead = currentPage === 1 ? items[0] : undefined;
+const rest = currentPage === 1 ? items.slice(1) : items;
 
 const hrefFor = (page: number) =>
   page === 1 ? localizePath('/activities', lang) : localizePath(`/activities/page/${page}`, lang);
@@ -41,31 +43,87 @@ const collection = collectionPageJsonLd({
 ---
 
 <BaseLayout lang={lang} title={title} description={description} noindex jsonLd={collection}>
-  <SkHero title={heading} intro={tStrict(lang, 'introActivities')} actions={[]}>
-    <Breadcrumbs slot="before" lang={lang} trail={[{ label: tStrict(lang, 'navImpact'), path: '/impact' }, { label: heading }]} />
-  </SkHero>
+  <PageSolo
+    lang={lang}
+    title={heading}
+    intro={tStrict(lang, 'introActivities')}
+    trail={[{ label: tStrict(lang, 'navImpact'), path: '/impact' }, { label: heading }]}
+  />
 
-  {
-    activities.length === 0 ? (
-      <SkSection>
-        <EmptyState message={tStrict(lang, 'emptyActivities')} />
-      </SkSection>
-    ) : (
-      <SkPosts
-        heading={tStrict(lang, 'allActivities')}
-        n={activities.length}
-        lang={lang}
-        readMore={tStrict(lang, 'readMore')}
-        items={activities.map((activity) => postItem(activity, lang))}
-      />
-    )
-  }
-
-  {
-    totalPages > 1 && (
-      <SkSection>
-        <Pagination lang={lang} current={currentPage} total={totalPages} hrefFor={hrefFor} />
-      </SkSection>
-    )
-  }
+  <section class="pg-section">
+    <div class="pg-wrap">
+      {
+        activities.length === 0 ? (
+          <EmptyState message={tStrict(lang, 'emptyActivities')} />
+        ) : (
+          <>
+            <SectionHead heading={tStrict(lang, 'allActivities')} />
+            {lead && (
+              <article class="pg-feature">
+                {lead.image && (
+                  <div class="pg-feature__media">
+                    <ResponsiveImage
+                      image={lead.image}
+                      lang={lang}
+                      alt=""
+                      aspect="4/3"
+                      sizes="(min-width: 64rem) 50vw, 100vw"
+                    />
+                  </div>
+                )}
+                <div class="pg-feature__body">
+                  <p class="pg-meta">
+                    {lead.category && <span class="pg-tag">{lead.category}</span>}
+                    <time datetime={lead.datetime}>{lead.date}</time>
+                    {lead.author && <span>· {lead.author}</span>}
+                  </p>
+                  <h2 lang={lead.titleLang}>
+                    <a href={lead.href}>{lead.title}</a>
+                  </h2>
+                  {lead.excerpt && <p lang={lead.excerptLang}>{lead.excerpt}</p>}
+                  <div>
+                    <a class="pg-link" href={lead.href} style="margin-top:0.875rem">
+                      {tStrict(lang, 'readMore')} <span aria-hidden="true">→</span>
+                    </a>
+                  </div>
+                </div>
+              </article>
+            )}
+            {rest.length > 0 && (
+              <div class="pg-grid pg-grid--posts">
+                {rest.map((item) => (
+                  <article class="pg-card">
+                    {item.image && (
+                      <div class="pg-card__media">
+                        <ResponsiveImage
+                          image={item.image}
+                          lang={lang}
+                          alt=""
+                          aspect="16/10"
+                          sizes="(min-width: 64rem) 380px, (min-width: 40rem) 50vw, 100vw"
+                        />
+                      </div>
+                    )}
+                    <div class="pg-card__body">
+                      <p class="pg-meta">
+                        {item.category && <span class="pg-tag">{item.category}</span>}
+                        <time datetime={item.datetime}>{item.date}</time>
+                      </p>
+                      <h3 class="pg-h3" lang={item.titleLang}>
+                        <a href={item.href} style="color:inherit;text-decoration:none">
+                          {item.title}
+                        </a>
+                      </h3>
+                      {item.excerpt && <p lang={item.excerptLang}>{item.excerpt}</p>}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </>
+        )
+      }
+      <Pagination lang={lang} current={currentPage} total={totalPages} hrefFor={hrefFor} />
+    </div>
+  </section>
 </BaseLayout>

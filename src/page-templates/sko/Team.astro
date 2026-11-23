@@ -1,13 +1,15 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
+import type { TeamMember } from '~/lib/content/types';
 import { getSiteSettings, getTeam } from '~/lib/content';
 import { ctaActions, tStrict } from '~/lib/skeleton-content';
-import { text } from '~/lib/i18n/utils';
+import { langAttr, pick, text } from '~/lib/i18n/utils';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import { hasImage } from '~/lib/sanity/image';
 import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
-import SkTeam from '~/components/skeleton/SkTeam.astro';
-import SkCta from '~/components/skeleton/SkCta.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
+import BandCta from '~/components/page/BandCta.astro';
 
 interface Props {
   lang: Locale;
@@ -19,94 +21,130 @@ const [settings, team] = await Promise.all([getSiteSettings(), getTeam()]);
 const photo = settings.homeHero?.[0] ?? null;
 const heading = tStrict(lang, 'ourTeam');
 const description = `${heading} — ${text(settings.orgName, lang)}`;
+
+const ids = new Set(team.map((member) => member._id));
+const reportsOf = (id: string) => team.filter((member) => member.reportsTo === id);
+const roots = team.filter((member) => !member.reportsTo || !ids.has(member.reportsTo));
+const [head] = roots.length === 1 ? roots : [];
+const leads = head ? reportsOf(head._id) : roots;
+const leadership = [...(head ? [head] : []), ...leads];
+const fieldTeams = leads
+  .map((lead) => ({ lead, staff: reportsOf(lead._id) }))
+  .filter((entry) => entry.staff.length > 0);
+
+const segmenter = new Intl.Segmenter(lang, { granularity: 'grapheme' });
+const monogram = (name: string | null | undefined) =>
+  (name ?? '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => [...segmenter.segment(word)][0]?.segment ?? '')
+    .join('');
+
+const label = (member: TeamMember) => {
+  const name = pick(member.name, lang);
+  const role = pick(member.role, lang);
+  return { name: name.value, nameLang: langAttr(name), role: role.value, roleLang: langAttr(role) };
+};
 ---
 
 <BaseLayout lang={lang} title={heading} description={description} noindex>
-  <section class="team-hero" data-hero-dark>
+  <PageSolo lang={lang} title={heading} trail={[{ label: heading }]}>
     {
       photo && (
-        <figure class="team-hero__photo">
-          <ResponsiveImage image={photo} lang={lang} keep eager sizes="100vw" aspect="3/2" />
+        <figure slot="media" class="pg-solo__media">
+          <ResponsiveImage image={photo} lang={lang} keep eager sizes="100vw" aspect="21/9" />
         </figure>
       )
     }
-    <div class="team-hero__shade" aria-hidden="true"></div>
-    <div class="team-hero__text">
-      <Breadcrumbs lang={lang} trail={[{ label: heading }]} />
-      <h1 class="sk-h1">{heading}</h1>
-    </div>
-  </section>
+  </PageSolo>
 
   {
-    team.length > 0 && (
-      <section class="team-structure" id="structure">
-        <div class="sk-wrap">
-          <h2 class="sk-h2">{tStrict(lang, 'orgStructure')}</h2>
-          <SkTeam lang={lang} team={team} />
+    leadership.length > 0 && (
+      <section class="pg-section">
+        <div class="pg-wrap">
+          <SectionHead
+            eyebrow={tStrict(lang, 'orgStructure')}
+            heading={tStrict(lang, 'teamLeadership')}
+          />
+          <div class="pg-grid pg-grid--3">
+            {leadership.map((member) => {
+              const info = label(member);
+              return (
+                <div class="pg-person">
+                  <span class="pg-avatar" aria-hidden="true">
+                    {hasImage(member.photo) ? (
+                      <ResponsiveImage
+                        image={member.photo}
+                        lang={lang}
+                        alt=""
+                        keep
+                        aspect="1/1"
+                        sizes="52px"
+                      />
+                    ) : (
+                      monogram(info.name)
+                    )}
+                  </span>
+                  <div>
+                    <b lang={info.nameLang}>{info.name}</b>
+                    {info.role && <span lang={info.roleLang}>{info.role}</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
     )
   }
 
-  <SkCta
+  {
+    fieldTeams.length > 0 && (
+      <section class="pg-section pg-section--tint">
+        <div class="pg-wrap">
+          <SectionHead heading={tStrict(lang, 'teamFieldTeams')} />
+          <div class="pg-teams">
+            {fieldTeams.map(({ lead, staff }) => {
+              const info = label(lead);
+              return (
+                <div class="pg-team">
+                  {info.role && (
+                    <span class="pg-kicker" lang={info.roleLang}>
+                      {info.role}
+                    </span>
+                  )}
+                  <b lang={info.nameLang}>{info.name}</b>
+                  <div class="pg-names">
+                    {staff.map((member) => {
+                      const memberInfo = label(member);
+                      return (
+                        <span lang={memberInfo.nameLang}>
+                          {memberInfo.name}
+                          {memberInfo.role && (
+                            <>
+                              {' · '}
+                              <span lang={memberInfo.roleLang} style="display:inline;margin:0">
+                                {memberInfo.role}
+                              </span>
+                            </>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <BandCta
     heading={tStrict(lang, 'ctaAboutTitle')}
     body={tStrict(lang, 'ctaAboutBody')}
     actions={ctaActions(lang)}
   />
 </BaseLayout>
-
-<style>
-  .team-hero {
-    position: relative;
-    isolation: isolate;
-    min-height: clamp(480px, 82vh, 840px);
-    background: var(--color-blue-900);
-    overflow: hidden;
-  }
-  .team-hero__photo {
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-    margin: 0;
-  }
-  .team-hero__photo :global(img) {
-    object-position: 50% 90%;
-  }
-  .team-hero__shade {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background:
-      linear-gradient(to bottom, rgb(11 27 48 / 0.82), rgb(11 27 48 / 0) 42%),
-      linear-gradient(to bottom, rgb(11 27 48 / 0) 62%, var(--color-blue-900) 100%);
-  }
-  .team-hero__text {
-    box-sizing: border-box;
-    max-width: 1240px;
-    margin: 0 auto;
-    padding: calc(var(--header-h) + clamp(20px, 3vw, 40px)) 20px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-  }
-  .team-hero__text :global(nav),
-  .team-hero__text :global(nav a) {
-    color: rgb(255 255 255 / 0.85);
-  }
-  .team-hero__text :global(nav a:hover) {
-    color: #fff;
-  }
-  .team-hero__text :global(.sk-h1) {
-    color: #fff;
-  }
-
-  .team-structure {
-    background: var(--color-blue-900);
-    color: #fff;
-    padding: clamp(24px, 4vw, 56px) 20px clamp(64px, 8vw, 112px);
-  }
-  .team-structure :global(.sk-h2) {
-    color: #fff;
-    margin-bottom: 12px;
-  }
-</style>

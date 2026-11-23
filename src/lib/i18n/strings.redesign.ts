@@ -77,6 +77,34 @@ export const redesignEn = {
   donateThanks: 'Thank you. Every gift, whatever its size, helps a family stay together.',
   donateNoCards: 'SKO never asks for card details on this website.',
 
+  // --- About page -----------------------------------------------------------
+  glanceFounded: 'Founded',
+  glanceRegistered: 'Registered',
+  glanceWhere: 'Where',
+  glanceKhans: 'khans',
+  glanceSangkats: 'sangkats',
+  glanceStatus: 'Status',
+  glanceStatusValue: 'Non-profit, non-political, non-sectarian',
+
+  // --- Programs page --------------------------------------------------------
+  programsApproachKicker: 'One approach',
+  programsApproachTitle: 'The Family Development Program',
+  programsApproachBody: 'Every program below uses the same three steps.',
+  programsStepVisit: 'Visit at home',
+  programsStepVisitBody: 'Social workers see the real conditions.',
+  programsStepGoals: 'Set goals together',
+  programsStepGoalsBody: 'Families identify their own needs and objectives.',
+  programsStepServices: 'Connect to services',
+  programsStepServicesBody: 'Health, education, administrative and economic.',
+  ctaProgramsBody: 'Partners, funders and authorities welcome.',
+  programMethod: 'Method',
+  programMethodValue: 'Family Development Program',
+  programHowTitle: 'How it works',
+
+  // --- Team page ------------------------------------------------------------
+  teamLeadership: 'Leadership',
+  teamFieldTeams: 'Field teams',
+
   // --- Footer ---------------------------------------------------------------
   footerGetInvolvedHeading: 'Get involved',
   footerOurWorkHeading: 'Our work',

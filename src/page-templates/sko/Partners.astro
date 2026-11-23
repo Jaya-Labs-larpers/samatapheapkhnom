@@ -5,13 +5,12 @@ import { stripInlineLinks } from '~/lib/inline-links';
 import { partnersJsonLd } from '~/lib/seo/page-schema';
 import { ctaActions, tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
 import EmptyState from '~/components/content/EmptyState.astro';
-import PartnerWall from '~/components/content/PartnerWall.astro';
-import SkHero from '~/components/skeleton/SkHero.astro';
-import SkSection from '~/components/skeleton/SkSection.astro';
-import SkSplit from '~/components/skeleton/SkSplit.astro';
-import SkCta from '~/components/skeleton/SkCta.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
+import BandCta from '~/components/page/BandCta.astro';
+import { hasImage } from '~/lib/sanity/image';
 
 interface Props {
   lang: Locale;
@@ -37,30 +36,63 @@ const partnerList = partnersJsonLd({ name: title, partners });
 ---
 
 <BaseLayout lang={lang} title={title} description={description} noindex jsonLd={partnerList}>
-  <SkHero title={heading} intro={tStrict(lang, 'introPartners')} actions={[]}>
-    <Breadcrumbs slot="before" lang={lang} trail={[{ label: heading }]} />
-  </SkHero>
+  <PageSolo
+    lang={lang}
+    title={heading}
+    intro={tStrict(lang, 'introPartners')}
+    trail={[{ label: heading }]}
+  />
 
   {
     partners.length === 0 ? (
-      <SkSection>
-        <EmptyState message={tStrict(lang, 'emptyGeneric')} />
-      </SkSection>
+      <section class="pg-section">
+        <div class="pg-wrap">
+          <EmptyState message={tStrict(lang, 'emptyGeneric')} />
+        </div>
+      </section>
     ) : (
       groups.map((group, index) => (
-        <SkSplit
-          heading={categoryLabels[group]?.[lang] ?? group}
-          tone={index % 2 === 1 ? 'tint' : 'default'}
-        >
-          <PartnerWall
-            lang={lang}
-            partners={partners.filter((partner) => (partner.category ?? 'other') === group)}
-            columns={3}
-          />
-        </SkSplit>
+        <section class:list={['pg-section', index % 2 === 0 && 'pg-section--tint']}>
+          <div class="pg-wrap">
+            <SectionHead heading={categoryLabels[group]?.[lang] ?? group} />
+            <ul class="pg-logos">
+              {partners
+                .filter((partner) => (partner.category ?? 'other') === group)
+                .map((partner) => {
+                  const Tag = partner.url ? 'a' : 'div';
+                  return (
+                    <li>
+                      <Tag
+                        class="pg-logo"
+                        {...(partner.url
+                          ? { href: partner.url, rel: 'noopener noreferrer', target: '_blank' }
+                          : {})}
+                      >
+                        {hasImage(partner.logo) ? (
+                          <>
+                            <span class="sr-only-focusable">{partner.name}</span>
+                            <ResponsiveImage
+                              image={partner.logo}
+                              lang={lang}
+                              alt=""
+                              aspect="5/3"
+                              sizes="180px"
+                              blurUp={false}
+                            />
+                          </>
+                        ) : (
+                          <b>{partner.name}</b>
+                        )}
+                      </Tag>
+                    </li>
+                  );
+                })}
+            </ul>
+          </div>
+        </section>
       ))
     )
   }
 
-  <SkCta heading={tStrict(lang, 'ctaPartnersTitle')} actions={ctaActions(lang)} />
+  <BandCta heading={tStrict(lang, 'ctaPartnersTitle')} actions={ctaActions(lang)} />
 </BaseLayout>

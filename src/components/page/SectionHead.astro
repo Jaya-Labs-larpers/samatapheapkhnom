@@ -1,0 +1,33 @@
+---
+import type { SkAction } from '~/lib/skeleton-content';
+
+interface Props {
+  heading: string;
+  headingLang?: string;
+  eyebrow?: string;
+  intro?: string | null;
+  more?: SkAction | null;
+  id?: string;
+}
+
+const { heading, headingLang, eyebrow, intro, more, id } = Astro.props;
+---
+
+<div class="pg-head" id={id}>
+  <div>
+    {eyebrow && <span class="pg-kicker">{eyebrow}</span>}
+    <h2 class="pg-h2" lang={headingLang}>{heading}</h2>
+  </div>
+  {
+    (intro || more) && (
+      <div class="pg-head__aside">
+        {intro && <p>{intro}</p>}
+        {more && (
+          <a class="pg-link" href={more.href}>
+            {more.label} <span aria-hidden="true">→</span>
+          </a>
+        )}
+      </div>
+    )
+  }
+</div>

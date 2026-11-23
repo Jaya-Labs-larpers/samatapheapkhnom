@@ -1,0 +1,34 @@
+---
+import type { SkAction } from '~/lib/skeleton-content';
+
+interface Props {
+  heading: string;
+  body?: string | null;
+  actions: SkAction[];
+}
+
+const { heading, body, actions } = Astro.props;
+---
+
+<section class="pg-section">
+  <div class="pg-wrap">
+    <div class="pg-band">
+      <div>
+        <h2 class="pg-band__title">{heading}</h2>
+        {body && <p class="pg-band__text">{body}</p>}
+      </div>
+      <div class="pg-band__actions">
+        {
+          actions.map((action, index) => (
+            <a
+              class:list={['pg-btn', index > 0 && 'pg-btn--outline']}
+              href={action.href}
+            >
+              {action.label}
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
