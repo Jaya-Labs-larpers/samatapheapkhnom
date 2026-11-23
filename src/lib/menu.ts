@@ -79,24 +79,55 @@ export function initMenus(): void {
   const mobileClose = document.querySelector<HTMLButtonElement>('[data-mobile-close]');
   const desktop = window.matchMedia(DESKTOP);
 
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let lastFocused: HTMLElement | null = null;
 
+  let closeTimer = 0;
   const setMobile = (open: boolean, restoreFocus = true) => {
     if (!mobilePanel || !mobileOpen) return;
-    if (mobilePanel.hidden !== open) return;
-    mobilePanel.hidden = !open;
+    if (open === (mobileOpen.getAttribute('aria-expanded') === 'true')) return;
+    window.clearTimeout(closeTimer);
     mobileOpen.setAttribute('aria-expanded', String(open));
     document.documentElement.toggleAttribute('data-menu-open', open);
     if (open) {
+      mobilePanel.hidden = false;
+      void mobilePanel.offsetWidth;
+      mobilePanel.dataset.state = 'open';
       lastFocused = document.activeElement as HTMLElement | null;
-      mobileClose?.focus();
-    } else if (restoreFocus) {
-      (lastFocused ?? mobileOpen).focus();
+      mobileClose?.focus({ preventScroll: true });
+    } else {
+      delete mobilePanel.dataset.state;
+      closeTimer = window.setTimeout(
+        () => {
+          mobilePanel.hidden = true;
+          groups.forEach((group) => setGroup(group, false));
+        },
+        reduceMotion.matches ? 100 : 160,
+      );
+      if (restoreFocus) (lastFocused ?? mobileOpen).focus();
     }
   };
 
+  const groups = Array.from(document.querySelectorAll<HTMLElement>('[data-mgroup]'));
+  const setGroup = (group: HTMLElement, open: boolean) => {
+    group.toggleAttribute('data-open', open);
+    group.querySelector('[data-mgroup-toggle]')?.setAttribute('aria-expanded', String(open));
+    group
+      .querySelectorAll<HTMLAnchorElement>('.mmenu__sublink')
+      .forEach((link) => (link.tabIndex = open ? 0 : -1));
+  };
+  groups.forEach((group) => {
+    group.querySelector('[data-mgroup-toggle]')?.addEventListener('click', () => {
+      const open = !group.hasAttribute('data-open');
+      groups.forEach((other) => setGroup(other, other === group && open));
+    });
+  });
+
   mobileOpen?.addEventListener('click', () => setMobile(true));
   mobileClose?.addEventListener('click', () => setMobile(false));
+  mobilePanel?.addEventListener('click', (event) => {
+    if (event.target === mobilePanel) setMobile(false);
+  });
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
@@ -104,7 +135,9 @@ export function initMenus(): void {
       return;
     }
     if (event.key !== 'Tab' || !mobilePanel || mobilePanel.hidden) return;
-    const items = Array.from(mobilePanel.querySelectorAll<HTMLElement>(FOCUSABLE));
+    const items = Array.from(mobilePanel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+      (el) => el.tabIndex >= 0,
+    );
     const first = items[0];
     const last = items[items.length - 1];
     if (!first || !last) return;
