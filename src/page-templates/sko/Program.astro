@@ -1,7 +1,7 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
 import type { LocaleBlocks, PortableBlock, Program } from '~/lib/content/types';
-import { getPrograms, getStories } from '~/lib/content';
+import { getPartners, getPrograms, getStories } from '~/lib/content';
 import { ACTIVITY_LIMITS, blockText } from '~/lib/content/sections';
 import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
 import { resolveSeo } from '~/lib/seo';
@@ -23,7 +23,11 @@ interface Props {
 
 const { lang, program } = Astro.props;
 
-const [programs, stories] = await Promise.all([getPrograms(), getStories()]);
+const [programs, partners, stories] = await Promise.all([
+  getPrograms(),
+  getPartners(),
+  getStories(),
+]);
 
 const title = pick(program.title, lang);
 const summary = pick(program.summary, lang);
@@ -198,7 +202,7 @@ const service = serviceJsonLd({
     </div>
   </section>
 
-  <SectionedBody lang={lang} body={body} limits={ACTIVITY_LIMITS} />
+  <SectionedBody lang={lang} body={body} limits={ACTIVITY_LIMITS} partners={partners} />
 
   {
     story && (

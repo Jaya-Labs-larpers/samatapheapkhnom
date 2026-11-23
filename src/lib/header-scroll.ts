@@ -34,7 +34,10 @@ export function initHeaderScroll(): void {
     const box = probe.getBoundingClientRect();
     const dark = contentIsDark(header, box.left + box.width / 2, box.top + box.height / 2);
     if (dark === null) {
-      if (retries++ < 60) schedule();
+      if (retries++ < 60) {
+        schedule();
+        return;
+      }
       return;
     }
     retries = 0;
@@ -59,6 +62,10 @@ export function initHeaderScroll(): void {
   };
 
   update();
-  window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', schedule, { passive: true });
+  const retry = () => {
+    retries = 0;
+    schedule();
+  };
+  window.addEventListener('scroll', retry, { passive: true });
+  window.addEventListener('resize', retry, { passive: true });
 }

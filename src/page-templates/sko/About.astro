@@ -90,7 +90,7 @@ const initials = (value: string) => {
 };
 
 const registration = pick(settings.registration, lang);
-const since = stats.find((stat) => stat._id === 'stat-since') ?? stats[0];
+const since = stats.find((stat) => stat._id === 'stat-since');
 const khans = stats.find((stat) => stat._id === 'stat-khans');
 const sangkats = stats.find((stat) => stat._id === 'stat-sangkats');
 const glance = [
@@ -152,7 +152,7 @@ chips.push(
   <SectionedBody lang={lang} body={page?.body} only={group.sections} />
 
   {
-    (isOverview || isLeadership) && quote.value && (
+    (isOverview || isLeadership) && (quote.value || (isLeadership && director.message)) && (
       <section class="pg-section pg-section--tint">
         <div class="pg-wrap">
           <div class="pg-quote">
@@ -172,7 +172,7 @@ chips.push(
             </div>
             <div>
               <span class="pg-kicker">{tStrict(lang, 'directorMessage')}</span>
-              <blockquote lang={langAttr(quote)}>{quote.value}</blockquote>
+              {quote.value && <blockquote lang={langAttr(quote)}>{quote.value}</blockquote>}
               <cite>
                 <b lang={langAttr(name)}>{name.value}</b>
                 {role.value && (

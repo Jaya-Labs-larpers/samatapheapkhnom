@@ -131,10 +131,10 @@ test('on desktop the logo starts white over the dark column, before the header s
   );
 });
 
-test('switching pages softly crossfades what differs in the header instead of snapping', async () => {
+test('switching pages swaps the header instantly so the old ink never ghosts over a dark hero', async () => {
   const global = await read('src/styles/global.css');
-  assert.match(global, /::view-transition-old\(site-header\) \{\s*animation: page-exit/);
-  assert.match(global, /::view-transition-new\(site-header\) \{\s*animation: page-enter/);
+  assert.match(global, /::view-transition-old\(site-header\) \{\s*animation: none;\s*opacity: 0;/);
+  assert.match(global, /::view-transition-new\(site-header\) \{\s*animation: none;/);
 });
 
 test('"What can we help with?" offers the six agreed choices, each in both languages', async () => {
