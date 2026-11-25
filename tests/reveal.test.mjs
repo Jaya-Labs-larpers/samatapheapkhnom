@@ -19,11 +19,16 @@ const compiled = ts.transpileModule(source, {
 function load({ observer = true } = {}) {
   const observers = [];
   const timers = [];
+  const delays = [];
   const context = {
     exports: {},
     window: { innerHeight: 800, matchMedia: () => ({ matches: false }) },
     document: {},
-    setTimeout: (work) => timers.push(work),
+    setTimeout: (work, ms) => {
+      timers.push(work);
+      delays.push(ms);
+      return timers.length;
+    },
     clearTimeout: (id) => id && (timers[id - 1] = () => {}),
     IntersectionObserver: observer
       ? class {
@@ -57,14 +62,15 @@ function load({ observer = true } = {}) {
       : undefined,
   };
   vm.runInNewContext(compiled, context);
-  return { reveal: context.exports, observers, timers };
+  return { reveal: context.exports, observers, timers, delays };
 }
 
-function box(top) {
+function box(top, { dataset = {}, classes = [] } = {}) {
   const props = {};
   return {
     top,
-    dataset: {},
+    dataset,
+    classList: { contains: (name) => classes.includes(name) },
     props,
     style: {
       setProperty: (name, value) => (props[name] = value),
@@ -113,35 +119,46 @@ test("a box shows on entry, staggered with its row, then hands its styles back",
   assert.ok(boxes.every((b) => b.dataset.reveal === undefined));
 });
 
-test("a box that scrolls off the bottom is set aside and reveals again", () => {
+test("plays once: a shown box is never set aside again", () => {
   const { reveal, observers } = load();
-  const onScreen = box(300);
-  reveal.revealOnEntry({
-    root: rootOf(onScreen),
-    viewportHeight: 800,
-    reducedMotion: false,
-  });
-  const [arrival, departure] = observers;
-  assert.equal(onScreen.dataset.reveal, undefined);
-
-  departure.leave(900, onScreen);
-  assert.equal(onScreen.dataset.reveal, "pending");
-  assert.ok(arrival.watching.has(onScreen));
-
-  arrival.enter(onScreen);
-  assert.equal(onScreen.dataset.reveal, "shown");
+  const below = box(1200);
+  reveal.revealOnEntry({ root: rootOf(below), viewportHeight: 800, reducedMotion: false });
+  assert.equal(observers.length, 1, "only the arrival observer");
+  observers[0].enter(below);
+  assert.equal(below.dataset.reveal, "shown");
+  assert.equal(observers[0].watching.size, 0);
 });
 
-test("a box that scrolls off the top stays as it is", () => {
+test("an explicit data-reveal-delay replaces the row stagger", () => {
   const { reveal, observers } = load();
-  const onScreen = box(300);
+  const first = box(1200, { dataset: { revealDelay: "450" } });
+  const second = box(1200);
+  reveal.revealOnEntry({ root: rootOf(first, second), viewportHeight: 800, reducedMotion: false });
+  observers[0].enter(first, second);
+  assert.equal(first.props["--reveal-delay"], "450ms");
+  assert.equal(second.props["--reveal-delay"], "90ms");
+});
+
+test("a clip reveal holds its transition for the 1500ms unfold", () => {
+  const { reveal, observers, delays } = load();
+  const media = box(1200, { classes: ["clip-reveal"] });
+  reveal.revealOnEntry({ root: rootOf(media), viewportHeight: 800, reducedMotion: false });
+  observers[0].enter(media);
+  assert.equal(delays.at(-1), 1500 + 50);
+});
+
+test("on phones only boxes that opt in are animated", () => {
+  const { reveal } = load();
+  const plain = box(1200);
+  const opted = box(1200, { dataset: { revealMobile: "true" } });
   reveal.revealOnEntry({
-    root: rootOf(onScreen),
+    root: rootOf(plain, opted),
     viewportHeight: 800,
     reducedMotion: false,
+    phone: true,
   });
-  observers[1].leave(-400, onScreen);
-  assert.equal(onScreen.dataset.reveal, undefined);
+  assert.equal(plain.dataset.reveal, undefined);
+  assert.equal(opted.dataset.reveal, "pending");
 });
 
 test("reduced motion, or no IntersectionObserver, leaves every box alone", () => {
