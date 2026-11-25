@@ -9,11 +9,19 @@ const compiled = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText;
 
-function wanted({ flag, reduced }) {
+function wanted({ flag, reduced, desktop = true, touchOnly = false }) {
   const context = {
     exports: {},
     document: { documentElement: { dataset: flag ? { smoothScroll: flag } : {} } },
-    window: { matchMedia: () => ({ matches: reduced }) },
+    window: {
+      matchMedia: (query) => ({
+        matches: query.includes('reduce')
+          ? reduced
+          : query.includes('pointer')
+            ? touchOnly
+            : desktop,
+      }),
+    },
   };
   vm.runInNewContext(compiled, context);
   return context.exports.smoothScrollWanted();
@@ -25,6 +33,14 @@ test('smooth scrolling runs only when the page asks for it and motion is allowed
 
 test('a visitor who prefers reduced motion keeps native scrolling', () => {
   assert.equal(wanted({ flag: 'on', reduced: true }), false);
+});
+
+test('off below 62rem, as on easehealth.com', () => {
+  assert.equal(wanted({ flag: 'on', reduced: false, desktop: false }), false);
+});
+
+test('off on touch-only devices, whose native scrolling is already smooth', () => {
+  assert.equal(wanted({ flag: 'on', reduced: false, touchOnly: true }), false);
 });
 
 test('the PUBLIC_SMOOTH_SCROLL switch turns it off', () => {

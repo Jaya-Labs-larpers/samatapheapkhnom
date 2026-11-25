@@ -1,6 +1,8 @@
 import type Lenis from 'lenis';
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+const DESKTOP = '(min-width: 62rem)';
+const TOUCH_ONLY = '(hover: none) and (pointer: coarse)';
 const MODIFIERS = ['metaKey', 'ctrlKey', 'shiftKey', 'altKey'] as const;
 
 let lenis: Lenis | null = null;
@@ -9,7 +11,9 @@ let observer: MutationObserver | null = null;
 
 export const smoothScrollWanted = (): boolean =>
   document.documentElement.dataset.smoothScroll === 'on' &&
-  !window.matchMedia(REDUCED_MOTION).matches;
+  !window.matchMedia(REDUCED_MOTION).matches &&
+  window.matchMedia(DESKTOP).matches &&
+  !window.matchMedia(TOUCH_ONLY).matches;
 
 const headerHeight = (): number =>
   document.querySelector<HTMLElement>('header.site-header')?.offsetHeight ?? 0;
@@ -60,8 +64,11 @@ async function start(): Promise<void> {
 
 export function initSmoothScroll(): void {
   void start();
-  const reduced = window.matchMedia(REDUCED_MOTION);
-  reduced.addEventListener('change', () => (reduced.matches ? teardown() : void start()));
+  for (const query of [REDUCED_MOTION, DESKTOP, TOUCH_ONLY]) {
+    window
+      .matchMedia(query)
+      .addEventListener('change', () => (smoothScrollWanted() ? void start() : teardown()));
+  }
   window.addEventListener('pagehide', teardown);
   window.addEventListener('pageshow', (event) => event.persisted && void start());
 }
