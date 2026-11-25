@@ -57,7 +57,6 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
   <div class="hdr__bar">
     <a href={localizePath('/', lang)} class="hdr__brand">
       <Logo variant="full" height={82} title={orgName} class="hdr__logo" />
-      <Logo variant="reversed" height={82} title={orgName} class="hdr__logo" />
     </a>
 
     <nav class="hdr__nav" aria-label={t(lang, 'navPrimaryLabel')}>
@@ -266,11 +265,11 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
 
 <script>
   import { initDropdowns, initMenus } from '~/lib/menu';
-  import { initHeaderScroll } from '~/lib/header-scroll';
+  import { initHeaderMotion } from '~/lib/header-motion';
 
   initMenus();
   initDropdowns();
-  initHeaderScroll();
+  initHeaderMotion();
 </script>
 
 <style>
@@ -280,11 +279,9 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     z-index: 40;
     box-sizing: border-box;
     height: var(--header-h);
-    background: transparent;
-    border-bottom: 0;
-    padding: var(--safe-top) clamp(16px, 3vw, 24px) 0;
-    /* One ink for the whole bar, set once per page (see the dark-hero rule
-       below). Nothing here recolours element by element on scroll. */
+    background: #fff;
+    border-bottom: 1px solid var(--color-line);
+    padding: var(--safe-top) clamp(16px, 2.5vw, 40px) 0;
     --hdr-fg: var(--color-blue-800);
     --hdr-line: var(--color-line-strong);
     --hdr-ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -292,21 +289,18 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     --hdr-pill-fg: #fff;
     --hdr-pill-hover: var(--color-blue-800);
     --hdr-soft: var(--color-blue-50);
-    --hdr-scrolled: rgb(255 255 255 / 0.82);
     /* One height for the link group, the language toggle and the Contact pill. */
     --hdr-control-h: 40px;
     color: var(--hdr-fg);
     font-family: var(--font-sans);
   }
-  /* Once the page moves, only the link group takes a faint frosted surface so
-     the links stay legible; the logo and the actions keep floating. A page
-     whose top is split light/dark (data-nav-solid) keeps it from the start. */
-  .hdr[data-scrolled] .hdr__nav,
-  :global(:root:has(main > [data-nav-solid]:first-child)) .hdr__nav {
-    background: var(--hdr-scrolled);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    backdrop-filter: blur(20px) saturate(1.4);
-    box-shadow: 0 0 0 1px var(--hdr-line);
+  .hdr[data-hidden] {
+    pointer-events: none;
+  }
+  @media (scripting: enabled) and (min-width: 75rem) and (prefers-reduced-motion: no-preference) {
+    .hdr:not([data-loaded]) {
+      visibility: hidden;
+    }
   }
   .hdr__bar {
     max-width: 1360px;
@@ -514,7 +508,6 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
   }
   @media (prefers-reduced-motion: reduce) {
     .hdr__nav,
-    .hdr::before,
     .hdr__link::after,
     .hdr__pill,
     .hdr__tools :global(.lang-toggle__link),
@@ -573,9 +566,6 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     padding: 0;
   }
 
-  .hdr :global(.logo--reversed) {
-    display: none;
-  }
   .hdr__tools :global(.lang-toggle) {
     gap: 2px;
     padding: 3px;
@@ -606,83 +596,6 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     color: var(--hdr-fg);
     font-weight: 600;
     opacity: 1;
-  }
-
-  /* The logo and actions float with no surface behind them, so the ink follows
-     whatever is under the bar: header-scroll.ts sets data-tone from the content
-     beneath it. Before that runs, a page opening on a dark hero starts white
-     and every other page starts dark blue. */
-  :global(:root:has(main > [data-hero-dark]:first-child)) .hdr:not([data-tone]),
-  .hdr[data-tone='dark'] {
-    --hdr-fg: #fff;
-    --hdr-line: rgb(255 255 255 / 0.28);
-    --hdr-soft: rgb(255 255 255 / 0.18);
-    --hdr-scrolled: rgb(14 21 51 / 0.8);
-  }
-  :global(:root:has(main > [data-hero-dark]:first-child)) .hdr::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto;
-    height: 140%;
-    z-index: -1;
-    pointer-events: none;
-    background: linear-gradient(to bottom, rgb(18 16 14 / 0.3), rgb(18 16 14 / 0));
-    transition: opacity 400ms var(--hdr-ease);
-  }
-  :global(:root:has(main > [data-hero-dark]:first-child)) .hdr[data-scrolled]::before {
-    opacity: 0;
-  }
-  :global(:root:has(main > [data-hero-dark]:first-child))
-    .hdr:not([data-tone])
-    .hdr__bar
-    :global(.logo--full),
-  .hdr[data-tone='dark'] .hdr__bar :global(.logo--full) {
-    display: none;
-  }
-  :global(:root:has(main > [data-hero-dark]:first-child))
-    .hdr:not([data-tone])
-    .hdr__bar
-    :global(.logo--reversed),
-  .hdr[data-tone='dark'] .hdr__bar :global(.logo--reversed) {
-    display: block;
-  }
-  .hdr[data-brand-tone='dark'] .hdr__bar :global(.logo--full),
-  .hdr[data-brand-tone='light'] .hdr__bar :global(.logo--reversed) {
-    display: none;
-  }
-  .hdr[data-brand-tone='dark'] .hdr__bar :global(.logo--reversed),
-  .hdr[data-brand-tone='light'] .hdr__bar :global(.logo--full) {
-    display: block;
-  }
-  /* Over the contact page's dark column the logo starts white, so the first
-     paint, and the page-switch snapshot taken of it, already match what
-     header-scroll.ts settles on. */
-  @media (min-width: 56rem) {
-    :global(:root:has(main > [data-nav-solid]:first-child))
-      .hdr:not([data-brand-tone])
-      .hdr__bar
-      :global(.logo--full) {
-      display: none;
-    }
-    :global(:root:has(main > [data-nav-solid]:first-child))
-      .hdr:not([data-brand-tone])
-      .hdr__bar
-      :global(.logo--reversed) {
-      display: block;
-    }
-  }
-
-  @media (min-width: 75rem) {
-    .hdr__nav {
-      box-sizing: border-box;
-      height: var(--hdr-control-h);
-      padding-inline: 8px;
-      border-radius: 999px;
-      background: transparent;
-      transition:
-        background-color 400ms var(--hdr-ease),
-        box-shadow 400ms var(--hdr-ease);
-    }
   }
 
   .mega__pill {

@@ -159,23 +159,10 @@ const seo = resolveSeo(null, lang, {
 </BaseLayout>
 
 <style>
-  :global(:root:has(main > .story-opening) .site-header) {
-    margin-bottom: calc(var(--header-h) * -1);
-  }
-
-  :global(:root:has(main > .story-opening) .site-header :is(.hdr__nav, .lang-toggle)) {
-    background: var(--hdr-scrolled);
-    backdrop-filter: blur(20px) saturate(1.4);
-  }
-
-  :global(:root:has(main > .story-opening) .site-header .hdr__nav) {
-    box-shadow: 0 0 0 1px var(--hdr-line);
-  }
-
   .story-opening {
     display: grid;
     grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);
-    min-height: 100svh;
+    min-height: calc(100svh - var(--header-h));
     background: #f6f3eb;
     color: var(--color-ink-900);
   }
@@ -183,7 +170,7 @@ const seo = resolveSeo(null, lang, {
   .story-opening__copy {
     --copy-pad: clamp(36px, 5vw, 88px);
     align-self: center;
-    padding: calc(var(--header-h) + var(--copy-pad)) var(--copy-pad) var(--copy-pad);
+    padding: var(--copy-pad);
   }
 
   .story-opening h1 {
@@ -242,7 +229,6 @@ const seo = resolveSeo(null, lang, {
 
     .story-opening__copy {
       padding: 2rem clamp(20px, 5vw, 40px);
-      padding-top: calc(var(--header-h) + 2rem);
     }
 
     .story-opening__photo {

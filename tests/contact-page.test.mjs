@@ -100,18 +100,11 @@ test('each contact row is labelled with an existing string', () => {
   }
 });
 
-test('dark column is one flat colour and runs up behind the header logo', async () => {
+test('dark column is one flat colour and starts below the solid header', () => {
   const split = css.slice(css.indexOf('.contact-split {'), css.indexOf('.contact-info {'));
   assert.doesNotMatch(split, /gradient/);
-  assert.match(split, /margin-top: calc\(var\(--header-h\) \* -1\)/);
-  const scroll = await read('src/lib/header-scroll.ts');
-  assert.match(scroll, /brandTone/);
-});
-
-test('the nav keeps its frosted surface from the first paint over the split', async () => {
-  const header = await read('src/components/layout/Header.astro');
-  assert.match(page, /contact-split[^"]*" data-nav-solid/);
-  assert.match(header, /\[data-nav-solid\]:first-child\)\) \.hdr__nav/);
+  assert.doesNotMatch(split, /var\(--header-h\) \* -1/);
+  assert.doesNotMatch(page, /data-nav-solid/);
 });
 
 test('header has no "Get involved": it led to the same contact page as "Contact us"', async () => {
@@ -121,14 +114,6 @@ test('header has no "Get involved": it led to the same contact page as "Contact 
     nav.indexOf('export const mobileNav'),
   );
   assert.doesNotMatch(mainNav, /navGetInvolved/);
-});
-
-test('on desktop the logo starts white over the dark column, before the header script runs', async () => {
-  const header = await read('src/components/layout/Header.astro');
-  assert.match(
-    header,
-    /@media \(min-width: 56rem\) \{\s*:global\(:root:has\(main > \[data-nav-solid\]:first-child\)\)\s*\.hdr:not\(\[data-brand-tone\]\)/,
-  );
 });
 
 test('switching pages swaps the header instantly so the old ink never ghosts over a dark hero', async () => {

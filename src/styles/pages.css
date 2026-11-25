@@ -79,7 +79,7 @@
     flex-direction: column;
     justify-content: center;
     box-sizing: border-box;
-    padding-block: calc(var(--header-h) + clamp(1rem, 2vw, 2rem)) clamp(2.5rem, 4vw, 4rem);
+    padding-block: clamp(2.5rem, 4vw, 4rem);
     padding-inline-end: var(--gutter-right);
     padding-inline-start: max(
       var(--gutter-left),
@@ -130,19 +130,6 @@
     margin: 0;
     overflow: hidden;
     background: var(--color-blue-900);
-  }
-  .pg-hero__media::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto;
-    z-index: 3;
-    height: calc(var(--header-h) * 1.75);
-    background: linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--color-blue-900) 85%, transparent),
-      transparent
-    );
-    pointer-events: none;
   }
   .pg-hero__media > .blur-up,
   .pg-hero__media > .media-placeholder {
@@ -198,7 +185,7 @@
 
   /* --- Solid hero -------------------------------------------------------- */
   .pg-solo {
-    padding-block: calc(var(--header-h) + clamp(1rem, 2vw, 2rem)) clamp(2.25rem, 3vw, 3.5rem);
+    padding-block: clamp(2.25rem, 3vw, 3.5rem);
     background: var(--color-blue-900);
     color: var(--color-canvas);
   }
@@ -1103,7 +1090,7 @@
     }
     .pg-hero__panel {
       padding-inline: var(--gutter-left) var(--gutter-right);
-      padding-block: calc(var(--header-h) + 1rem) 2.5rem;
+      padding-block: 2rem 2.5rem;
     }
     .pg-hero__media {
       min-height: 0;

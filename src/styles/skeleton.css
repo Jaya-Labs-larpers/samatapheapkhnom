@@ -61,7 +61,7 @@
     align-items: center;
     box-sizing: border-box;
     min-height: calc(100svh - var(--header-h));
-    padding: calc(var(--header-h) + clamp(16px, 4vh, 48px)) 20px clamp(40px, 7vh, 88px);
+    padding: clamp(32px, 6vh, 72px) 20px clamp(40px, 7vh, 88px);
     background: var(--color-blue-900);
     color: rgb(255 255 255 / 0.88);
     font-family: var(--font-sans);

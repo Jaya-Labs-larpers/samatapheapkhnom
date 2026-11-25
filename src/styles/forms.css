@@ -514,14 +514,9 @@
     text-underline-offset: 0.2em;
   }
   @media (min-width: 56rem) {
-    /* Runs up under the see-through header, so the dark column starts at the
-       top of the window, behind the logo. The dark is a real background (not a
-       pseudo-element) because header-scroll.ts reads background colours to pick
-       the logo's tone. */
     .contact-split {
       --split-pad-x: clamp(2rem, 4vw, 4.5rem);
-      margin-top: calc(var(--header-h) * -1);
-      min-height: 100svh;
+      min-height: calc(100svh - var(--header-h));
       background: var(--color-blue-900);
       grid-template-columns: 42% minmax(0, 1fr);
       grid-template-rows: auto 1fr;
@@ -530,7 +525,7 @@
         'info form';
     }
     .contact-split__title {
-      padding: calc(var(--header-h) + var(--split-pad-top)) var(--split-pad-x) 2rem
+      padding: var(--split-pad-top) var(--split-pad-x) 2rem
         var(--gutter-left);
       color: #fff;
     }
@@ -551,7 +546,7 @@
       flex-direction: column;
       justify-content: center;
       background: var(--color-surface);
-      padding: calc(var(--header-h) + var(--split-pad-top)) var(--gutter-right) var(--split-pad-top)
+      padding: var(--split-pad-top) var(--gutter-right) var(--split-pad-top)
         var(--split-pad-x);
     }
     .contact-split__form > .form-panel {
