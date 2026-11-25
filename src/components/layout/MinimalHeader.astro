@@ -33,12 +33,13 @@ const home = localizePath('/', lang);
 <style>
   .mhdr {
     box-sizing: border-box;
-    padding: var(--safe-top) clamp(16px, 3vw, 24px) 0;
+    padding: var(--safe-top) clamp(1rem, 2.5vw, 2.25rem) 0;
+    background: #fff;
     border-bottom: 1px solid var(--color-line);
     font-family: var(--font-sans);
   }
   .mhdr__bar {
-    max-width: 1360px;
+    max-width: 90.5rem;
     height: 100%;
     margin: 0 auto;
     display: flex;
@@ -83,9 +84,9 @@ const home = localizePath('/', lang);
       font-size: 20px;
     }
   }
-  @media (min-width: 64rem) {
+  @media (min-width: 62rem) {
     .mhdr :global(.mhdr__logo) {
-      height: 64px;
+      height: 60px;
     }
   }
   @media (prefers-reduced-motion: reduce) {

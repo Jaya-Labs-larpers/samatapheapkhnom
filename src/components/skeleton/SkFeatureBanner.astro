@@ -19,7 +19,7 @@ const { lang, image, title, titleLang, action, keep = false } = Astro.props;
 {
   image && title && (
     <section class="banner">
-      <div class="banner__media">
+      <div class="banner__media clip-reveal">
         <ResponsiveImage image={image} lang={lang} alt="" sizes="100vw" keep={keep} />
       </div>
       <div class="banner__text">

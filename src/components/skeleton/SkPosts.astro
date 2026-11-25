@@ -28,7 +28,7 @@ const placeholders = Math.max(0, n - items.length);
       items.map((item) => (
         <article class="sk-card">
           {(keep ? Boolean(item.image) : item.image !== undefined) && (
-            <div class="sk-media sk-card__media" style="aspect-ratio:3/2">
+            <div class="sk-media sk-card__media clip-reveal" style="aspect-ratio:3/2">
               <ResponsiveImage
                 image={item.image}
                 lang={lang}

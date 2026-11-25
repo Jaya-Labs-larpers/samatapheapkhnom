@@ -1,7 +1,8 @@
 /**
  * Content rises into place as it comes into view, once. Two looks share this
- * lifecycle: `.reveal` boxes rise 30px and fade in; `.clip-reveal` media
- * unfold from their top-left corner (clip, scale and fade, see global.css).
+ * lifecycle: `.reveal` boxes and section headings rise 30px and fade in;
+ * `.clip-reveal` media unfold from their top-left corner (clip, scale and
+ * fade, see global.css).
  *
  * A box is only ever set aside while it is fully below the bottom edge of the
  * window, so the visitor never watches one disappear. Boxes already in view
@@ -18,6 +19,8 @@ export const CLIP_MS = 1500;
 export const STAGGER_MS = 90;
 const STAGGER_CAP = 4;
 const PHONE = '(width < 62rem)';
+/** Section headings rise on their own unless a revealing box already carries them. */
+const TARGETS = '.reveal, .clip-reveal, main h2:not(.sr-only, .load-rise)';
 
 interface Options {
   root?: ParentNode;
@@ -34,8 +37,10 @@ export function revealOnEntry({
 }: Options = {}): void {
   if (reducedMotion || typeof IntersectionObserver !== 'function') return;
 
-  const boxes = Array.from(root.querySelectorAll<HTMLElement>('.reveal, .clip-reveal')).filter(
-    (box) => !phone || box.dataset.revealMobile === 'true',
+  const boxes = Array.from(root.querySelectorAll<HTMLElement>(TARGETS)).filter(
+    (box) =>
+      (!phone || box.dataset.revealMobile === 'true') &&
+      !box.parentElement?.closest('.reveal, .clip-reveal, .load-rise, .load-clip'),
   );
   if (boxes.length === 0) return;
 
@@ -46,9 +51,10 @@ export function revealOnEntry({
         const box = entry.target as HTMLElement;
         arrival.unobserve(box);
         const explicit = Number(box.dataset.revealDelay);
-        const delay = Number.isFinite(explicit) && box.dataset.revealDelay
-          ? explicit
-          : Math.min(index, STAGGER_CAP) * STAGGER_MS;
+        const delay =
+          Number.isFinite(explicit) && box.dataset.revealDelay
+            ? explicit
+            : Math.min(index, STAGGER_CAP) * STAGGER_MS;
         const length =
           Number(box.dataset.revealMs) ||
           (box.classList.contains('clip-reveal') ? CLIP_MS : REVEAL_MS);
@@ -56,10 +62,13 @@ export function revealOnEntry({
         box.dataset.reveal = 'shown';
         // Hand the box back to its own styles afterwards, so a card's hover
         // transitions are not overridden by the reveal's.
-        setTimeout(() => {
-          delete box.dataset.reveal;
-          box.style.removeProperty('--reveal-delay');
-        }, delay + length + 50);
+        setTimeout(
+          () => {
+            delete box.dataset.reveal;
+            box.style.removeProperty('--reveal-delay');
+          },
+          delay + length + 50,
+        );
       });
     },
     // Starts once a box is properly on screen, not while it is still hidden

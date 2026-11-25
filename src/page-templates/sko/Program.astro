@@ -150,7 +150,7 @@ const service = serviceJsonLd({
               </div>
             )}
             {program.cardImage && (
-              <div class="pg-bento__photo">
+              <div class="pg-bento__photo clip-reveal">
                 <ResponsiveImage
                   image={program.cardImage}
                   lang={lang}
@@ -242,7 +242,7 @@ const service = serviceJsonLd({
               const card = programCard(entry, lang, tStrict(lang, 'learnMore'));
               return (
                 <article class="pg-card">
-                  <div class="pg-card__media">
+                  <div class="pg-card__media clip-reveal">
                     {card.image && (
                       <ResponsiveImage
                         image={card.image}

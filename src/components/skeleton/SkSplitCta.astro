@@ -15,12 +15,14 @@ interface Props {
 }
 
 const { lang, heading, body, actions, image, card = false, keep = false } = Astro.props;
+const tile = card ? actions[0] : undefined;
+const buttons = tile ? actions.slice(1) : actions;
 ---
 
 <section class:list={['sk-cta-split', card && 'sk-cta-split--card']}>
   {
     image && (
-      <div class="sk-cta-split__media">
+      <div class="sk-cta-split__media clip-reveal">
         <ResponsiveImage
           image={image}
           lang={lang}
@@ -33,20 +35,44 @@ const { lang, heading, body, actions, image, card = false, keep = false } = Astr
     )
   }
   <div class="sk-cta-split__panel">
-    <h2 class="sk-h2">{heading}</h2>
-    {body && <p class="sk-lead">{body}</p>}
+    <div class="sk-cta-split__copy">
+      <h2 class="sk-h2">{heading}</h2>
+      {body && <p class="sk-lead">{body}</p>}
+      {
+        buttons.length > 0 && (
+          <div class="sk-actions">
+            {buttons.map((action) => (
+              <a
+                href={action.href}
+                class:list={[
+                  'sk-btn',
+                  tile || action !== actions[0] ? 'sk-btn--ghost' : 'sk-btn--light',
+                ]}
+              >
+                {action.label}
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </div>
     {
-      actions.length > 0 && (
-        <div class="sk-actions">
-          {actions.map((action, index) => (
-            <a
-              href={action.href}
-              class:list={['sk-btn', index === 0 ? 'sk-btn--light' : 'sk-btn--ghost']}
-            >
-              {action.label}
-            </a>
-          ))}
-        </div>
+      tile && (
+        <a href={tile.href} class="btn-tile sk-cta-split__tile clip-reveal" data-reveal-delay="300">
+          <span>{tile.label}</span>
+          <svg
+            class="btn-tile__arrow"
+            viewBox="0 0 42 38"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 19h36M22 3l17 16-17 16" />
+          </svg>
+        </a>
       )
     }
   </div>
@@ -83,5 +109,23 @@ const { lang, heading, body, actions, image, card = false, keep = false } = Astr
   }
   .sk-cta-split--card .sk-h2 {
     max-width: 22ch;
+  }
+  .sk-cta-split__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .sk-cta-split--card .sk-cta-split__panel {
+    display: grid;
+    gap: clamp(24px, 4vw, 48px);
+  }
+  .sk-cta-split__tile {
+    align-self: end;
+  }
+  @media (min-width: 64rem) {
+    .sk-cta-split--card .sk-cta-split__panel {
+      grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+      align-items: end;
+    }
   }
 </style>

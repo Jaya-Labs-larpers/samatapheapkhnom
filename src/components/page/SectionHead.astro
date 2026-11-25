@@ -15,12 +15,12 @@ const { heading, headingLang, eyebrow, intro, more, id } = Astro.props;
 
 <div class="pg-head" id={id}>
   <div>
-    {eyebrow && <span class="pg-kicker">{eyebrow}</span>}
-    <h2 class="pg-h2" lang={headingLang}>{heading}</h2>
+    {eyebrow && <span class="pg-kicker reveal">{eyebrow}</span>}
+    <h2 class="pg-h2 reveal" lang={headingLang} data-reveal-delay="150">{heading}</h2>
   </div>
   {
     (intro || more) && (
-      <div class="pg-head__aside">
+      <div class="pg-head__aside reveal" data-reveal-delay="300">
         {intro && <p>{intro}</p>}
         {more && (
           <a class="pg-link" href={more.href}>

@@ -90,13 +90,13 @@ const seo = resolveSeo(null, lang, {
   {opening && photo ? (
     <header class="story-opening">
       <div class="story-opening__copy">
-        <h1>{opening.title}</h1>
-        <div class="story-opening__intro">
+        <h1 class="load-rise" data-reveal-mobile="true" style="--load-delay:300ms">{opening.title}</h1>
+        <div class="story-opening__intro load-rise" data-reveal-mobile="true" style="--load-delay:450ms">
           {opening.intro.map((paragraph) => <p>{paragraph}</p>)}
         </div>
       </div>
       <figure>
-        <div class="story-opening__photo">
+        <div class="story-opening__photo load-clip" data-reveal-mobile="true" style="--load-delay:300ms">
           <ResponsiveImage image={photo} lang={lang} keep eager sizes="(min-width: 800px) 55vw, 100vw" />
         </div>
         {caption.value && <figcaption lang={langAttr(caption)}>{caption.value}</figcaption>}

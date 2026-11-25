@@ -189,11 +189,11 @@ main {
   --clip-move: 1500ms;
   --clip-fade: 1150ms;
 }
-.reveal[data-reveal='pending'] {
+[data-reveal='pending']:not(.clip-reveal) {
   opacity: 0;
   translate: 0 var(--reveal-rise);
 }
-.reveal[data-reveal='shown'] {
+[data-reveal='shown']:not(.clip-reveal) {
   transition:
     opacity var(--reveal-fade) ease var(--reveal-delay, 0ms),
     translate var(--reveal-move) var(--ease-settle) var(--reveal-delay, 0ms);
@@ -203,7 +203,7 @@ main {
   clip-path: inset(0 10% 10% 0);
   scale: 0.9;
 }
-.clip-reveal[data-reveal='pending'] > :is(img, picture, video) {
+.clip-reveal[data-reveal='pending'] > :is(img, picture, video, .blur-up) {
   scale: 1.1111;
 }
 .clip-reveal[data-reveal='shown'] {
@@ -213,7 +213,7 @@ main {
     opacity var(--clip-fade) var(--ease-fade-in) var(--reveal-delay, 0ms),
     scale var(--clip-move) var(--ease-settle) var(--reveal-delay, 0ms);
 }
-.clip-reveal[data-reveal='shown'] > :is(img, picture, video) {
+.clip-reveal[data-reveal='shown'] > :is(img, picture, video, .blur-up) {
   transition: scale var(--clip-move) var(--ease-settle) var(--reveal-delay, 0ms);
 }
 
@@ -257,7 +257,7 @@ main {
       load-fade var(--clip-fade) var(--ease-fade-in) var(--load-delay, 0ms) both,
       load-grow var(--clip-move) var(--ease-settle) var(--load-delay, 0ms) both;
   }
-  .load-clip > :is(img, picture, video) {
+  .load-clip > :is(img, picture, video, .blur-up) {
     animation: load-shrink var(--clip-move) var(--ease-settle) var(--load-delay, 0ms) both;
   }
 }

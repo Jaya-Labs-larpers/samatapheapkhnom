@@ -9,7 +9,6 @@ import { impactProjectsAvailable, impactProjectsPath } from '~/lib/impact-pages'
 import { donateHref } from '~/lib/skeleton-content';
 import LanguageToggle from './LanguageToggle.astro';
 import Logo from '~/components/Logo.astro';
-import ButterflyGlyph from '~/components/media/ButterflyGlyph.astro';
 import { hasImage, imageUrl } from '~/lib/sanity/image';
 
 interface Props {
@@ -44,7 +43,8 @@ const dropdownLinks = (item: (typeof mainNav)[number]) => {
           label,
           href: localizePath(`/programs/${program.slug}`, lang),
           summary: pick(program.summary, lang).value || undefined,
-          image: photo && hasImage(photo) ? (imageUrl(photo, { width: 640 }) ?? undefined) : undefined,
+          image:
+            photo && hasImage(photo) ? (imageUrl(photo, { width: 640 }) ?? undefined) : undefined,
         },
       ];
     });
@@ -133,7 +133,13 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
                             >
                               <span class="dd__top" aria-hidden="true">
                                 <span class="dd__icon">
-                                  <ButterflyGlyph class="dd__glyph" />
+                                  <img
+                                    src="/images/butterfly.svg"
+                                    alt=""
+                                    width="24"
+                                    height="10"
+                                    class="dd__glyph"
+                                  />
                                 </span>
                                 <span class="dd__line">
                                   <svg
@@ -158,8 +164,8 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
                       </ul>
                       {withPhotos && (
                         <div class="dd__media" data-swap-media aria-hidden="true">
-                          <img alt="" decoding="async" class="dd__photo" />
-                          <img alt="" decoding="async" class="dd__photo" />
+                          <img alt="" width="640" height="480" decoding="async" class="dd__photo" />
+                          <img alt="" width="640" height="480" decoding="async" class="dd__photo" />
                         </div>
                       )}
                     </div>
@@ -483,7 +489,7 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     border-radius: var(--radius-md);
     background: var(--color-blue-50);
   }
-  .dd__icon :global(.dd__glyph) {
+  .dd__glyph {
     width: 1.5rem;
     height: auto;
   }

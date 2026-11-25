@@ -52,7 +52,12 @@ const label = (member: TeamMember) => {
   <PageSolo lang={lang} title={heading} trail={[{ label: heading }]}>
     {
       photo && (
-        <figure slot="media" class="pg-solo__media">
+        <figure
+          slot="media"
+          class="pg-solo__media load-clip"
+          data-reveal-mobile="true"
+          style="--load-delay:450ms"
+        >
           <ResponsiveImage image={photo} lang={lang} keep eager sizes="100vw" aspect="21/9" />
         </figure>
       )

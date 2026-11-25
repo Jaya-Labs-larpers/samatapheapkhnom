@@ -65,11 +65,12 @@ function load({ observer = true } = {}) {
   return { reveal: context.exports, observers, timers, delays };
 }
 
-function box(top, { dataset = {}, classes = [] } = {}) {
+function box(top, { dataset = {}, classes = [], insideReveal = false } = {}) {
   const props = {};
   return {
     top,
     dataset,
+    parentElement: { closest: () => (insideReveal ? {} : null) },
     classList: { contains: (name) => classes.includes(name) },
     props,
     style: {
@@ -159,6 +160,23 @@ test("on phones only boxes that opt in are animated", () => {
   });
   assert.equal(plain.dataset.reveal, undefined);
   assert.equal(opted.dataset.reveal, "pending");
+});
+
+test("section headings rise too, unless a revealing box already carries them", () => {
+  const { reveal } = load();
+  let selector = "";
+  const lone = box(1200);
+  const carried = box(1200, { insideReveal: true });
+  const root = {
+    querySelectorAll: (query) => {
+      selector = query;
+      return [lone, carried];
+    },
+  };
+  reveal.revealOnEntry({ root, viewportHeight: 800, reducedMotion: false });
+  assert.match(selector, /main h2/);
+  assert.equal(lone.dataset.reveal, "pending");
+  assert.equal(carried.dataset.reveal, undefined);
 });
 
 test("reduced motion, or no IntersectionObserver, leaves every box alone", () => {

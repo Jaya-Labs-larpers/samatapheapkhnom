@@ -18,7 +18,7 @@ const { items } = Astro.props;
       <div class="pg-wrap">
         <dl class="pg-glance__grid">
           {items.map((item) => (
-            <div class="pg-glance__item">
+            <div class="pg-glance__item reveal">
               <dt>{item.label}</dt>
               <dd lang={item.valueLang}>{item.value}</dd>
             </div>

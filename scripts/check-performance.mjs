@@ -21,7 +21,7 @@ export const BUDGETS = {
   /** The largest inline <svg> a page may carry (icons are well under this). */
   inlineSvgChars: 6_000,
   /** The site stylesheet, gzipped. */
-  cssGzipBytes: 16_500,
+  cssGzipBytes: 17_000,
   /** Render-blocking stylesheets per page: the site's, plus a page's own. */
   stylesheetsPerPage: 2,
   /**
@@ -29,7 +29,7 @@ export const BUDGETS = {
    * and smooth scrolling (Lenis, ~5.4 KB, its own lazily loaded chunk) with the scroll-driven
    * text, scrub and step scripts.
    */
-  jsGzipBytes: 12_000,
+  jsGzipBytes: 13_000,
   /** Fonts preloaded per page: more starves the LCP image of bandwidth. */
   fontPreloads: 3,
 };

@@ -61,7 +61,7 @@ const collection = collectionPageJsonLd({
             {lead && (
               <article class="pg-feature">
                 {lead.image && (
-                  <div class="pg-feature__media">
+                  <div class="pg-feature__media clip-reveal">
                     <ResponsiveImage
                       image={lead.image}
                       lang={lang}
@@ -94,7 +94,7 @@ const collection = collectionPageJsonLd({
                 {rest.map((item) => (
                   <article class="pg-card">
                     {item.image && (
-                      <div class="pg-card__media">
+                      <div class="pg-card__media clip-reveal">
                         <ResponsiveImage
                           image={item.image}
                           lang={lang}

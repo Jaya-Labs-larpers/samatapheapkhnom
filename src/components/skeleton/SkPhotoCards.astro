@@ -30,7 +30,7 @@ const { lang, heading, items, more, keep = false } = Astro.props;
         {items.map((item) => (
           <li class="cards__item">
             <a href={item.href} class="cards__card">
-              <div class="cards__media sk-media">
+              <div class="cards__media sk-media clip-reveal">
                 {item.image && (
                   <ResponsiveImage
                     image={item.image}

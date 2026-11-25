@@ -525,8 +525,7 @@
         'info form';
     }
     .contact-split__title {
-      padding: var(--split-pad-top) var(--split-pad-x) 2rem
-        var(--gutter-left);
+      padding: var(--split-pad-top) var(--split-pad-x) 2rem var(--gutter-left);
       color: #fff;
     }
     .contact-split__info {
@@ -546,8 +545,7 @@
       flex-direction: column;
       justify-content: center;
       background: var(--color-surface);
-      padding: var(--split-pad-top) var(--gutter-right) var(--split-pad-top)
-        var(--split-pad-x);
+      padding: var(--split-pad-top) var(--gutter-right) var(--split-pad-top) var(--split-pad-x);
     }
     .contact-split__form > .form-panel {
       max-width: 40rem;
