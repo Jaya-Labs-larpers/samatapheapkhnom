@@ -191,16 +191,18 @@ const { email, phone } = settings;
   }
   .ftr__btn {
     align-self: flex-start;
-    padding: 10px 22px;
-    border-radius: 999px;
+    padding: 0.875rem 1.375rem;
+    border-radius: var(--radius-cta);
     background: var(--color-blue-700);
     color: #fff;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 500;
+    line-height: 1;
     text-decoration: none;
+    transition: background-color var(--duration-ui) var(--ease-ui);
   }
   .ftr__btn:hover {
-    background: var(--color-ink-900);
+    background: var(--color-blue-800);
   }
   .ftr__socials {
     display: flex;

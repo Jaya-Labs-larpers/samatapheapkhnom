@@ -86,13 +86,14 @@ const { lang, image, title, titleLang, action, keep = false } = Astro.props;
     line-height: 1.4;
   }
   .banner__btn {
-    padding: 14px 28px;
-    border-radius: 999px;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-cta);
     background: var(--color-blue-700);
-    font-weight: 600;
+    font-weight: 500;
+    line-height: 1;
     color: #fff;
     text-decoration: none;
-    transition: background-color 360ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: background-color var(--duration-ui) var(--ease-ui);
   }
   .banner__btn:is(:hover, :focus-visible) {
     background: var(--color-blue-800);

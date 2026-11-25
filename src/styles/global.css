@@ -443,23 +443,23 @@ details[open] > summary > .disclosure-icon {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.8125rem 1.375rem;
+    padding: 1rem 1.5rem;
     border: 1px solid transparent;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-cta);
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1;
     text-decoration: none;
     white-space: nowrap;
+    user-select: none;
     cursor: pointer;
     transition:
-      background-color var(--duration-fast) var(--ease-out-soft),
-      border-color var(--duration-fast) var(--ease-out-soft),
-      color var(--duration-fast) var(--ease-out-soft),
-      box-shadow var(--duration-fast) var(--ease-out-soft);
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui),
+      color var(--duration-ui) var(--ease-ui);
   }
   .btn-sm {
-    padding: 0.5625rem 0.9375rem;
+    padding: 0.75rem 1.125rem;
     font-size: 0.875rem;
   }
   .btn-block {
@@ -468,29 +468,32 @@ details[open] > summary > .disclosure-icon {
 
   .btn-primary {
     background: var(--color-blue-700);
+    border-color: var(--color-blue-700);
     color: #fff;
   }
   .btn-primary:hover {
     background: var(--color-blue-800);
-    box-shadow: var(--shadow-md);
+    border-color: var(--color-blue-800);
   }
 
   .btn-secondary {
-    background: #fff;
+    background: transparent;
     color: var(--color-blue-800);
     border-color: var(--color-line-strong);
   }
   .btn-secondary:hover {
-    border-color: var(--color-blue-700);
     background: var(--color-blue-50);
+    border-color: var(--color-blue-200);
   }
 
   .btn-inverse {
-    background: #fff;
-    color: var(--color-blue-900);
+    background: var(--color-blue-700);
+    border-color: var(--color-blue-700);
+    color: #fff;
   }
   .btn-inverse:hover {
-    background: var(--color-sky-50);
+    background: var(--color-blue-800);
+    border-color: var(--color-blue-800);
   }
 
   .btn-inverse-outline {
@@ -501,6 +504,38 @@ details[open] > summary > .disclosure-icon {
   .btn-inverse-outline:hover {
     background: rgb(255 255 255 / 0.1);
     border-color: #fff;
+  }
+
+  /* The large call-to-action tile: label left, arrow right. */
+  .btn-tile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: clamp(2rem, 4vw, 3rem);
+    border-radius: var(--radius-cta);
+    background: var(--color-blue-700);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: clamp(1.25rem, 1rem + 0.8vw, 1.5rem);
+    font-weight: 500;
+    line-height: 1.2;
+    text-decoration: none;
+    transition: background-color var(--duration-ui) var(--ease-ui);
+  }
+  .btn-tile:hover {
+    background: var(--color-blue-800);
+  }
+  .btn-tile__arrow {
+    flex: none;
+    width: 27px;
+    height: 24px;
+  }
+  @media (min-width: 64rem) {
+    .btn-tile__arrow {
+      width: 42px;
+      height: 38px;
+    }
   }
 
   .btn[aria-disabled='true'],

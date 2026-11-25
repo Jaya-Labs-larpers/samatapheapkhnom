@@ -235,11 +235,13 @@ const labels = lang === 'km' ? {
   .bar, .choices, .row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
   .bar p { flex: 1 1 25rem; margin: 0; }
   .choices button {
-    padding: 0.6rem 1.2rem;
+    padding: 0.75rem 1.125rem;
     border: 1px solid var(--color-blue-700);
-    border-radius: 2rem;
-    font-weight: 600;
+    border-radius: var(--radius-cta);
+    font-weight: 500;
+    line-height: 1;
     color: var(--color-blue-700);
+    transition: background-color var(--duration-ui) var(--ease-ui), color var(--duration-ui) var(--ease-ui);
   }
   .choices .solid { color: white; background: var(--color-blue-700); }
   .preferences:not([hidden]) { display: grid; gap: 0.75rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-line-strong); transition: opacity 220ms ease; }

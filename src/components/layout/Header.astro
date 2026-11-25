@@ -542,17 +542,15 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     box-sizing: border-box;
     height: var(--hdr-control-h);
     min-inline-size: 144px;
-    padding: 0 20px;
-    border-radius: 999px;
+    padding: 0 1.25rem;
+    border-radius: var(--radius-cta);
     background: var(--hdr-pill-bg);
     color: var(--hdr-pill-fg);
-    font-weight: 600;
+    font-weight: 500;
     font-size: 15px;
     text-decoration: none;
     white-space: nowrap;
-    transition:
-      background-color 360ms var(--hdr-ease),
-      padding 360ms var(--hdr-ease);
+    transition: background-color var(--duration-ui) var(--ease-ui);
   }
   .hdr__pill:is(:hover, :focus-visible) {
     background: var(--hdr-pill-hover);
@@ -693,16 +691,22 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     color: var(--color-ink-900);
     text-decoration: none;
     font-size: 16px;
-    font-weight: 600;
-    border: 2px solid var(--color-ink-900);
-    border-radius: 999px;
-    padding: 12px 22px;
+    font-weight: 500;
+    line-height: 1;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-cta);
+    padding: 1rem 1.5rem;
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui),
+      color var(--duration-ui) var(--ease-ui);
   }
   .mmenu a:hover {
     color: var(--color-blue-700);
   }
   .mega__pill:hover {
-    border-color: var(--color-blue-700);
+    border-color: var(--color-blue-200);
+    background: var(--color-blue-50);
   }
 
   .mmenu {

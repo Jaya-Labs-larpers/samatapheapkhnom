@@ -212,8 +212,8 @@
     gap: 10px;
     min-height: clamp(46px, 2.6rem + 0.6vw, 54px);
     padding: 0 clamp(26px, 2vw + 16px, 40px);
-    border: 2px solid var(--color-blue-700);
-    border-radius: 10px;
+    border: 1px solid var(--color-blue-700);
+    border-radius: var(--radius-cta);
     background: var(--color-blue-700);
     color: #fff;
     font-size: clamp(15px, 0.85rem + 0.2vw, 17px);
@@ -562,28 +562,18 @@
     letter-spacing: -0.035em;
   }
   .sk-hero--home .sk-btn {
-    min-height: 55px;
-    padding: 0 28px;
-    background: var(--color-blue-700);
-    color: #fff;
-    font-size: 20px;
-    font-weight: 500;
-    letter-spacing: -0.005em;
-  }
-  .sk-hero--home .sk-btn:hover {
-    background: var(--color-blue-800);
-  }
-  .sk-hero--home .sk-btn::after {
-    content: none;
+    padding: 1.125rem 1.75rem;
+    font-size: 18px;
   }
   .sk-hero--home .sk-btn--outline {
+    border-color: rgb(255 255 255 / 0.85);
     background: transparent;
     color: #fff;
-    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.85);
   }
   .sk-hero--home .sk-btn--outline:hover {
-    background: #fff;
-    color: var(--color-ink-900);
+    border-color: #fff;
+    background: rgb(255 255 255 / 0.12);
+    color: #fff;
   }
   .sk-hero--home .sk-eyebrow {
     color: rgb(255 255 255 / 0.8);
@@ -603,49 +593,61 @@
     color: var(--color-ink-600);
   }
   .sk-btn {
-    min-height: 50px;
-    padding: 0 22px;
-    border: 0;
-    border-radius: 999px;
-    background: var(--color-ink-900);
+    min-height: 0;
+    padding: 1rem 1.5rem;
+    border: 1px solid var(--color-blue-700);
+    border-radius: var(--radius-cta);
+    background: var(--color-blue-700);
     color: #fff;
     font-size: 16px;
-    font-weight: 400;
+    font-weight: 500;
+    line-height: 1;
     letter-spacing: -0.01em;
     text-transform: none;
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui),
+      color var(--duration-ui) var(--ease-ui);
   }
   .sk-btn::after {
-    content: '→';
-    font-size: 15px;
+    content: none;
   }
   .sk-btn:hover {
-    border: 0;
-    background: var(--color-blue-700);
+    border-color: var(--color-blue-800);
+    background: var(--color-blue-800);
   }
   .sk-btn--outline {
+    border-color: var(--color-line-strong);
     background: transparent;
-    color: var(--color-ink-900);
-    box-shadow: inset 0 0 0 1.5px var(--color-ink-900);
+    color: var(--color-blue-800);
+    box-shadow: none;
   }
   .sk-btn--outline:hover {
-    background: var(--color-ink-900);
-    color: #fff;
+    border-color: var(--color-blue-200);
+    background: var(--color-blue-50);
+    color: var(--color-blue-800);
   }
-  .sk-section--dark .sk-btn--outline {
-    box-shadow: inset 0 0 0 1.5px #fff;
+  .sk-section--dark .sk-btn--outline,
+  .sk-cta-split .sk-btn--ghost {
+    border-color: rgb(255 255 255 / 0.7);
+    background: transparent;
+    color: #fff;
+    box-shadow: none;
+  }
+  .sk-section--dark .sk-btn--outline:hover,
+  .sk-cta-split .sk-btn--ghost:hover {
+    border-color: #fff;
+    background: rgb(255 255 255 / 0.12);
     color: #fff;
   }
   .sk-cta-split .sk-btn--light {
+    border-color: var(--color-blue-700);
     background: var(--color-blue-700);
     color: #fff;
   }
   .sk-cta-split .sk-btn--light:hover {
+    border-color: var(--color-blue-800);
     background: var(--color-blue-800);
-  }
-  .sk-cta-split .sk-btn--ghost {
-    background: transparent;
-    color: #fff;
-    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.85);
   }
   .sk-link {
     font-size: 16px;

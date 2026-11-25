@@ -158,12 +158,21 @@ const tabbed = tabs.length > 1;
   .events__go {
     grid-column: 2;
     justify-self: start;
-    padding: 8px 18px;
-    border: 1px solid var(--color-ink-900);
-    border-radius: 999px;
+    padding: 0.75rem 1.125rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-cta);
     font-size: 0.9375rem;
     font-weight: 500;
-    color: var(--color-ink-900);
+    line-height: 1;
+    color: var(--color-blue-800);
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui),
+      color var(--duration-ui) var(--ease-ui);
+  }
+  .events__go:is(:hover, :focus-visible) {
+    border-color: var(--color-blue-200);
+    background: var(--color-blue-50);
   }
   @media (min-width: 40rem) {
     .events__row {

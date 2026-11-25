@@ -138,16 +138,21 @@ const headline = pick(settings.tagline, lang);
     align-items: center;
     min-height: 52px;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 500;
     font-size: 17px;
-    border-radius: 4px;
+    line-height: 1;
+    border: 1px solid var(--color-blue-700);
+    border-radius: var(--radius-cta);
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui),
+      color var(--duration-ui) var(--ease-ui);
   }
   .hero__btn--solid {
     background: var(--color-blue-700);
     color: #fff;
   }
   .hero__btn--outline {
-    border: 1.5px solid var(--color-blue-700);
     color: var(--color-blue-700);
   }
   .hero__btn:hover {

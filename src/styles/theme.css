@@ -165,6 +165,8 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+  /* Every call-to-action button: a rounded rectangle, never a pill. */
+  --radius-cta: 1rem;
 
   /* ---------------------------------------------------------------------
      SHADOWS — deliberately weak. On a white site, a 1px line does the work
@@ -180,6 +182,8 @@
      MOTION — short, and entirely optional
      --------------------------------------------------------------------- */
   --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-ui: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --duration-ui: 300ms;
   --duration-fast: 140ms;
   --duration-base: 220ms;
   --duration-slow: 340ms;

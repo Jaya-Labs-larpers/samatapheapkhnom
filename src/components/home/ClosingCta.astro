@@ -82,16 +82,21 @@ const { lang } = Astro.props;
   }
   .cta__btn {
     text-decoration: none;
-    padding: 14px 24px;
-    border-radius: 8px;
-    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border: 1px solid var(--color-blue-700);
+    border-radius: var(--radius-cta);
+    font-weight: 500;
+    line-height: 1;
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui),
+      color var(--duration-ui) var(--ease-ui);
   }
   .cta__btn--solid {
     background: var(--color-blue-700);
     color: #fff;
   }
   .cta__btn--outline {
-    border: 1.5px solid var(--color-blue-700);
     color: var(--color-blue-700);
   }
   .cta__btn:hover {
