@@ -219,7 +219,8 @@
     --gutter-left: max(var(--spacing-gutter), var(--safe-left));
     --gutter-right: max(var(--spacing-gutter), var(--safe-right));
 
-    --header-h: calc(68px + var(--safe-top));
+    /* easehealth.com's bar: 5.625rem below 992px, 6rem above, on an 88% root. */
+    --header-h: calc(79px + var(--safe-top));
 
     /*
      * THE MEASURE — one column width for every piece of running text on the
@@ -245,14 +246,9 @@
       --text-h4: 1.0625rem;
     }
   }
-  @media (width >= 40rem) {
+  @media (width >= 62rem) {
     :root {
-      --header-h: calc(80px + var(--safe-top));
-    }
-  }
-  @media (width >= 64rem) {
-    :root {
-      --header-h: calc(92px + var(--safe-top));
+      --header-h: calc(84px + var(--safe-top));
     }
   }
 

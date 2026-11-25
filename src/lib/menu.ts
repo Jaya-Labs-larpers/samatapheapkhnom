@@ -1,4 +1,4 @@
-/** Full-screen phone menu: Esc closes, focus is trapped inside and restored on close. */
+/** Phone menu under the bar: its menu button toggles it, Esc closes, focus stays inside. */
 const FOCUSABLE = 'a[href], button:not([disabled])';
 const DESKTOP = '(min-width: 75rem)';
 
@@ -32,11 +32,11 @@ export function initDropdowns(): void {
   items.forEach((item) => {
     item.addEventListener('pointerenter', (event) => {
       if (event.pointerType === 'touch') return;
-      later(item, () => open(item), 60);
+      later(item, () => open(item), 0);
     });
     item.addEventListener('pointerleave', (event) => {
       if (event.pointerType === 'touch') return;
-      later(item, () => set(item, false), 160);
+      later(item, () => set(item, false), 300);
     });
     toggleOf(item)?.addEventListener('click', () => {
       if (item.hasAttribute('data-open')) set(item, false);
@@ -76,7 +76,6 @@ export function initDropdowns(): void {
 export function initMenus(): void {
   const mobileOpen = document.querySelector<HTMLButtonElement>('[data-mobile-open]');
   const mobilePanel = document.querySelector<HTMLElement>('[data-mobile-panel]');
-  const mobileClose = document.querySelector<HTMLButtonElement>('[data-mobile-close]');
   const desktop = window.matchMedia(DESKTOP);
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -88,13 +87,14 @@ export function initMenus(): void {
     if (open === (mobileOpen.getAttribute('aria-expanded') === 'true')) return;
     window.clearTimeout(closeTimer);
     mobileOpen.setAttribute('aria-expanded', String(open));
+    const label = open ? mobileOpen.dataset.labelClose : mobileOpen.dataset.labelOpen;
+    if (label) mobileOpen.setAttribute('aria-label', label);
     document.documentElement.toggleAttribute('data-menu-open', open);
     if (open) {
       mobilePanel.hidden = false;
       void mobilePanel.offsetWidth;
       mobilePanel.dataset.state = 'open';
       lastFocused = document.activeElement as HTMLElement | null;
-      mobileClose?.focus({ preventScroll: true });
     } else {
       delete mobilePanel.dataset.state;
       closeTimer = window.setTimeout(
@@ -102,9 +102,9 @@ export function initMenus(): void {
           mobilePanel.hidden = true;
           groups.forEach((group) => setGroup(group, false));
         },
-        reduceMotion.matches ? 100 : 160,
+        reduceMotion.matches ? 100 : 400,
       );
-      if (restoreFocus) (lastFocused ?? mobileOpen).focus();
+      if (restoreFocus && lastFocused !== mobileOpen) (lastFocused ?? mobileOpen).focus();
     }
   };
 
@@ -123,8 +123,9 @@ export function initMenus(): void {
     });
   });
 
-  mobileOpen?.addEventListener('click', () => setMobile(true));
-  mobileClose?.addEventListener('click', () => setMobile(false));
+  mobileOpen?.addEventListener('click', () =>
+    setMobile(mobileOpen.getAttribute('aria-expanded') !== 'true'),
+  );
   mobilePanel?.addEventListener('click', (event) => {
     if (event.target === mobilePanel) setMobile(false);
   });
@@ -135,9 +136,12 @@ export function initMenus(): void {
       return;
     }
     if (event.key !== 'Tab' || !mobilePanel || mobilePanel.hidden) return;
-    const items = Array.from(mobilePanel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-      (el) => el.tabIndex >= 0,
-    );
+    const items = [
+      ...(mobileOpen ? [mobileOpen] : []),
+      ...Array.from(mobilePanel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (el) => el.tabIndex >= 0,
+      ),
+    ];
     const first = items[0];
     const last = items[items.length - 1];
     if (!first || !last) return;

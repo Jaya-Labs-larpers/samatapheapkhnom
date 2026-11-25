@@ -583,45 +583,6 @@ details[open] > summary > .disclosure-icon {
     transform: scale(0.98);
   }
 
-  /*
-   * Navigation underline. A *reveal*: the rule grows from the left rather than
-   * the background swapping in, which is quieter and reads as a place marker
-   * rather than a button.
-   */
-  .nav-link {
-    position: relative;
-    border-radius: var(--radius-sm);
-    padding: 0.75rem 0.9375rem;
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1;
-    text-decoration: none;
-    color: var(--color-ink-700);
-    transition: color var(--duration-fast) var(--ease-out-soft);
-  }
-  .nav-link::after {
-    content: '';
-    position: absolute;
-    inset-inline: 0.9375rem;
-    bottom: 0.25rem;
-    height: 2px;
-    border-radius: 2px;
-    background: var(--color-blue-700);
-    transform: scaleX(0);
-    transform-origin: left center;
-    transition: transform var(--duration-base) var(--ease-out-soft);
-  }
-  .nav-link:hover {
-    color: var(--color-blue-800);
-  }
-  .nav-link:hover::after,
-  .nav-link[aria-current]::after {
-    transform: scaleX(1);
-  }
-  .nav-link[aria-current] {
-    color: var(--color-blue-800);
-  }
-
   /* --- Surfaces ----------------------------------------------------------- */
   .card {
     display: flex;
