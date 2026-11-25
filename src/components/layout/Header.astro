@@ -10,6 +10,7 @@ import { donateHref } from '~/lib/skeleton-content';
 import LanguageToggle from './LanguageToggle.astro';
 import Logo from '~/components/Logo.astro';
 import ButterflyGlyph from '~/components/media/ButterflyGlyph.astro';
+import { hasImage, imageUrl } from '~/lib/sanity/image';
 
 interface Props {
   lang: Locale;
@@ -37,11 +38,13 @@ const dropdownLinks = (item: (typeof mainNav)[number]) => {
     return programs.flatMap((program) => {
       const label = pick(program.title, lang).value;
       if (!label) return [];
+      const photo = program.cardImage ?? program.image;
       return [
         {
           label,
           href: localizePath(`/programs/${program.slug}`, lang),
           summary: pick(program.summary, lang).value || undefined,
+          image: photo && hasImage(photo) ? (imageUrl(photo, { width: 640 }) ?? undefined) : undefined,
         },
       ];
     });
@@ -50,6 +53,7 @@ const dropdownLinks = (item: (typeof mainNav)[number]) => {
     .filter((section) => !section.path || !hiddenPaths.has(section.path))
     .map((section) => ({
       summary: undefined as string | undefined,
+      image: undefined as string | undefined,
       label: t(lang, section.key),
       href: section.path
         ? localizePath(section.path, lang)
@@ -73,6 +77,7 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
         mainNav.map((item, index) => {
           const links = dropdownLinks(item);
           const menuId = `dd-${index}`;
+          const withPhotos = links.some((link) => link.image);
           return (
             <div class="hdr__item" data-nav-item>
               <a
@@ -116,11 +121,16 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
                     </svg>
                   </button>
                   <div class="dd" id={menuId} data-dd>
-                    <div class="dd__inner">
+                    <div class:list={['dd__inner', withPhotos && 'dd__inner--media']}>
                       <ul class="dd__grid">
                         {links.map((link) => (
                           <li>
-                            <a href={link.href} class="dd__link" tabindex="-1">
+                            <a
+                              href={link.href}
+                              class="dd__link"
+                              tabindex="-1"
+                              data-swap-src={link.image}
+                            >
                               <span class="dd__top" aria-hidden="true">
                                 <span class="dd__icon">
                                   <ButterflyGlyph class="dd__glyph" />
@@ -146,6 +156,12 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
                           </li>
                         ))}
                       </ul>
+                      {withPhotos && (
+                        <div class="dd__media" data-swap-media aria-hidden="true">
+                          <img alt="" decoding="async" class="dd__photo" />
+                          <img alt="" decoding="async" class="dd__photo" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </>
@@ -260,10 +276,12 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
 <script>
   import { initDropdowns, initMenus } from '~/lib/menu';
   import { initHeaderMotion } from '~/lib/header-motion';
+  import { initNavImageSwap } from '~/lib/nav-image-swap';
 
   initMenus();
   initDropdowns();
   initHeaderMotion();
+  initNavImageSwap();
 </script>
 
 <style>
@@ -407,6 +425,33 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     background: #fff;
     box-shadow: 0 4px 12px rgb(14 21 51 / 0.05);
     white-space: normal;
+  }
+  .dd__inner--media {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    gap: 2.25rem;
+  }
+  .dd__inner--media .dd__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dd__media {
+    position: relative;
+    overflow: hidden;
+    min-height: 12rem;
+    border-radius: var(--radius-lg);
+    background: var(--color-blue-50);
+  }
+  .dd__photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 400ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .dd__photo:global(.is-visible) {
+    opacity: 1;
   }
   .dd__grid {
     display: grid;
