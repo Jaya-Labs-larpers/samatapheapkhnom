@@ -71,9 +71,10 @@
   }
   .sk-hero__media {
     position: absolute;
-    inset: 0;
+    inset: calc(-1 * var(--header-h)) 0 0;
     z-index: -1;
     overflow: hidden;
+    background-color: inherit;
   }
   .sk-hero__media::after {
     content: '';

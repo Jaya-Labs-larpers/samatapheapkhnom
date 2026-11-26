@@ -74,8 +74,8 @@ header.site-header {
   height: var(--header-h);
 }
 
-/* How much of the top of the window the header covers right now: sticky
-   columns sit this far down, and close the gap when the header scrolls away. */
+/* How much of the top of the window the header covers: sticky columns sit
+   this far down. */
 :root {
   --header-offset: var(--header-h);
 }
@@ -124,19 +124,14 @@ main {
     opacity: 0;
   }
 }
-@keyframes page-exit {
-  to {
-    opacity: 0;
-  }
-}
 
 /*
- * Asymmetric: the outgoing page leaves quickly, the incoming one eases in.
- * Only a crossfade: nothing on either page can be clicked while a transition
- * runs, so it stays short.
+ * The outgoing page stays opaque underneath while the incoming one fades in
+ * over it: fading both lets the white canvas flash through. Nothing on either
+ * page can be clicked while a transition runs, so it stays short.
  */
 ::view-transition-old(page-content) {
-  animation: page-exit 60ms ease-out both;
+  animation: none;
 }
 ::view-transition-new(page-content) {
   animation: page-enter 100ms var(--ease-out-soft) both;
@@ -166,17 +161,6 @@ main {
   object-fit: cover;
 }
 
-/* --- Reveal (easehealth.com's motion) ---------------------------------------
- * Content rises 30px and fades in as it comes into view, once (.reveal), and
- * media unfold from their top-left corner (.clip-reveal). ~/lib/reveal only
- * sets aside what is fully below the window, so nothing visible is hidden,
- * and does nothing under reduced motion. `translate`/`scale` rather than
- * `transform`, so a card's hover lift is untouched; the transition is removed
- * again once it has played.
- *
- * Above the fold the same looks play on load as CSS animations instead
- * (.load-rise, .load-clip), staggered with --load-delay. Phones only animate
- * what opts in with data-reveal-mobile. */
 :root {
   --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-pop: cubic-bezier(0.34, 1.3, 0.64, 1);
@@ -217,54 +201,15 @@ main {
   transition: scale var(--clip-move) var(--ease-settle) var(--reveal-delay, 0ms);
 }
 
-@keyframes load-fade {
+@keyframes header-slide-down {
   from {
-    opacity: 0;
+    translate: 0 -100%;
   }
 }
-@keyframes load-up {
-  from {
-    translate: 0 var(--reveal-rise);
-  }
-}
-@keyframes load-unfold {
-  from {
-    clip-path: inset(0 10% 10% 0);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-@keyframes load-grow {
-  from {
-    scale: 0.9;
-  }
-}
-@keyframes load-shrink {
-  from {
-    scale: 1.1111;
-  }
-}
+
 @media (prefers-reduced-motion: no-preference) {
-  .load-rise {
-    animation:
-      load-fade var(--reveal-fade) ease var(--load-delay, 0ms) both,
-      load-up var(--reveal-move) var(--ease-settle) var(--load-delay, 0ms) both;
-  }
-  .load-clip {
-    animation:
-      load-unfold var(--clip-move) var(--ease-unfold) var(--load-delay, 0ms) both,
-      load-fade var(--clip-fade) var(--ease-fade-in) var(--load-delay, 0ms) both,
-      load-grow var(--clip-move) var(--ease-settle) var(--load-delay, 0ms) both;
-  }
-  .load-clip > :is(img, picture, video, .blur-up) {
-    animation: load-shrink var(--clip-move) var(--ease-settle) var(--load-delay, 0ms) both;
-  }
-}
-@media (width < 62rem) {
-  :is(.load-rise, .load-clip):not([data-reveal-mobile='true']),
-  .load-clip:not([data-reveal-mobile='true']) > * {
-    animation: none;
+  .site-header[data-home]:not([data-skip-intro]) {
+    animation: header-slide-down 800ms var(--ease-reveal) backwards;
   }
 }
 
@@ -566,38 +511,6 @@ details[open] > summary > .disclosure-icon {
   .btn-inverse-outline:hover {
     background: rgb(255 255 255 / 0.1);
     border-color: #fff;
-  }
-
-  /* The large call-to-action tile: label left, arrow right. */
-  .btn-tile {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
-    padding: clamp(2rem, 4vw, 3rem);
-    border-radius: var(--radius-cta);
-    background: var(--color-blue-700);
-    color: #fff;
-    font-family: var(--font-sans);
-    font-size: clamp(1.25rem, 1rem + 0.8vw, 1.5rem);
-    font-weight: 500;
-    line-height: 1.2;
-    text-decoration: none;
-    transition: background-color var(--duration-ui) var(--ease-ui);
-  }
-  .btn-tile:hover {
-    background: var(--color-blue-800);
-  }
-  .btn-tile__arrow {
-    flex: none;
-    width: 27px;
-    height: 24px;
-  }
-  @media (min-width: 64rem) {
-    .btn-tile__arrow {
-      width: 42px;
-      height: 38px;
-    }
   }
 
   .btn[aria-disabled='true'],

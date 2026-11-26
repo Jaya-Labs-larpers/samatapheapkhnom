@@ -3,87 +3,102 @@ const FOCUSABLE = 'a[href], button:not([disabled])';
 const DESKTOP = '(min-width: 75rem)';
 
 export function initDropdowns(): void {
-  const items = Array.from(document.querySelectorAll<HTMLElement>('[data-nav-item]')).filter(
-    (item) => item.querySelector('[data-dd]'),
-  );
   const desktop = window.matchMedia(DESKTOP);
-  const timers = new WeakMap<HTMLElement, number>();
+  let active: HTMLElement | null = null;
+  let dismiss: (() => void) | undefined;
+  let closeTimer = 0;
+  let pinned = false;
 
-  const toggleOf = (item: HTMLElement) => item.querySelector<HTMLButtonElement>('[data-dd-toggle]');
-  const linksOf = (item: HTMLElement) =>
-    Array.from(item.querySelectorAll<HTMLAnchorElement>('.dd__link'));
+  document.querySelectorAll<HTMLElement>('[data-nav-item]').forEach((item) => {
+    const toggle = item.querySelector<HTMLButtonElement>('[data-dd-toggle]');
+    const panel = item.querySelector<HTMLElement>('[data-dd]');
+    if (!toggle || !panel) return;
+    const links = Array.from(item.querySelectorAll<HTMLAnchorElement>('.dd__link'));
 
-  const set = (item: HTMLElement, open: boolean) => {
-    window.clearTimeout(timers.get(item));
-    item.toggleAttribute('data-open', open);
-    toggleOf(item)?.setAttribute('aria-expanded', String(open));
-    linksOf(item).forEach((link) => (link.tabIndex = open ? 0 : -1));
-  };
-  const open = (item: HTMLElement) => {
-    if (!desktop.matches) return;
-    items.forEach((other) => other !== item && set(other, false));
-    set(item, true);
-  };
-  const later = (item: HTMLElement, fn: () => void, ms: number) => {
-    window.clearTimeout(timers.get(item));
-    timers.set(item, window.setTimeout(fn, ms));
-  };
+    const close = () => {
+      window.clearTimeout(closeTimer);
+      item.removeAttribute('data-open');
+      toggle.setAttribute('aria-expanded', 'false');
+      panel.inert = true;
+      active = null;
+      dismiss = undefined;
+      pinned = false;
+    };
 
-  items.forEach((item) => {
+    const open = () => {
+      if (!desktop.matches) return;
+      window.clearTimeout(closeTimer);
+      if (active === item) return;
+      dismiss?.();
+      active = item;
+      dismiss = close;
+      item.setAttribute('data-open', '');
+      toggle.setAttribute('aria-expanded', 'true');
+      panel.inert = false;
+    };
+
     item.addEventListener('pointerenter', (event) => {
-      if (event.pointerType === 'touch') return;
-      later(item, () => open(item), 0);
+      if (event.pointerType !== 'touch') open();
     });
     item.addEventListener('pointerleave', (event) => {
-      if (event.pointerType === 'touch') return;
-      later(item, () => set(item, false), 300);
+      if (event.pointerType === 'touch' || active !== item || pinned) return;
+      closeTimer = window.setTimeout(() => {
+        if (!panel.querySelector(':focus-visible')) close();
+      }, 300);
     });
-    toggleOf(item)?.addEventListener('click', () => {
-      if (item.hasAttribute('data-open')) set(item, false);
-      else open(item);
-    });
-    item.addEventListener('focusin', (event) => {
-      if ((event.target as HTMLElement).matches(':focus-visible')) open(item);
+    toggle.addEventListener('click', (event) => {
+      if (!desktop.matches) return;
+      if (active === item && (pinned || event.detail === 0)) {
+        close();
+      } else {
+        open();
+        pinned = true;
+      }
     });
     item.addEventListener('focusout', (event) => {
-      const next = event.relatedTarget as Node | null;
-      if (!next || !item.contains(next)) set(item, false);
+      if (active === item && !item.contains(event.relatedTarget as Node | null)) close();
     });
     item.addEventListener('keydown', (event) => {
-      if (!item.hasAttribute('data-open')) return;
-      const links = linksOf(item);
+      if (!desktop.matches) return;
       const at = links.indexOf(document.activeElement as HTMLAnchorElement);
-      if (event.key === 'Escape') {
-        set(item, false);
-        (toggleOf(item) ?? item.querySelector<HTMLElement>('a'))?.focus();
+      if (event.key === 'Escape' && active === item) {
+        event.preventDefault();
+        toggle.focus({ preventScroll: true });
+        close();
       } else if (event.key === 'ArrowDown') {
         event.preventDefault();
+        open();
         links[Math.min(at + 1, links.length - 1)]?.focus();
       } else if (event.key === 'ArrowUp' && at >= 0) {
         event.preventDefault();
-        (at === 0 ? toggleOf(item) : links[at - 1])?.focus();
+        (at === 0 ? toggle : links[at - 1])?.focus();
       }
     });
-    linksOf(item).forEach((link) => link.addEventListener('click', () => set(item, false)));
+    panel.addEventListener('click', (event) => {
+      if ((event.target as Element).closest('.dd__link') && active === item) close();
+    });
   });
 
   document.addEventListener('pointerdown', (event) => {
-    items.forEach((item) => !item.contains(event.target as Node) && set(item, false));
+    if (!active?.contains(event.target as Node)) dismiss?.();
   });
-  desktop.addEventListener('change', () => items.forEach((item) => set(item, false)));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !event.defaultPrevented) dismiss?.();
+  });
+  desktop.addEventListener('change', () => dismiss?.());
+  window.addEventListener('pagehide', () => dismiss?.());
 }
 
 export function initMenus(): void {
   const mobileOpen = document.querySelector<HTMLButtonElement>('[data-mobile-open]');
   const mobilePanel = document.querySelector<HTMLElement>('[data-mobile-panel]');
+  if (!mobileOpen || !mobilePanel) return;
   const desktop = window.matchMedia(DESKTOP);
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let lastFocused: HTMLElement | null = null;
 
   let closeTimer = 0;
   const setMobile = (open: boolean, restoreFocus = true) => {
-    if (!mobilePanel || !mobileOpen) return;
     if (open === (mobileOpen.getAttribute('aria-expanded') === 'true')) return;
     window.clearTimeout(closeTimer);
     mobileOpen.setAttribute('aria-expanded', String(open));
@@ -91,20 +106,22 @@ export function initMenus(): void {
     if (label) mobileOpen.setAttribute('aria-label', label);
     document.documentElement.toggleAttribute('data-menu-open', open);
     if (open) {
+      mobilePanel.inert = false;
       mobilePanel.hidden = false;
       void mobilePanel.offsetWidth;
       mobilePanel.dataset.state = 'open';
-      lastFocused = document.activeElement as HTMLElement | null;
+      mobilePanel.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
     } else {
+      if (restoreFocus) mobileOpen.focus({ preventScroll: true });
+      mobilePanel.inert = true;
       delete mobilePanel.dataset.state;
       closeTimer = window.setTimeout(
         () => {
           mobilePanel.hidden = true;
           groups.forEach((group) => setGroup(group, false));
         },
-        reduceMotion.matches ? 100 : 400,
+        reduceMotion.matches ? 0 : 400,
       );
-      if (restoreFocus && lastFocused !== mobileOpen) (lastFocused ?? mobileOpen).focus();
     }
   };
 
@@ -123,21 +140,22 @@ export function initMenus(): void {
     });
   });
 
-  mobileOpen?.addEventListener('click', () =>
+  mobileOpen.addEventListener('click', () =>
     setMobile(mobileOpen.getAttribute('aria-expanded') !== 'true'),
   );
-  mobilePanel?.addEventListener('click', (event) => {
+  mobilePanel.addEventListener('click', (event) => {
     if (event.target === mobilePanel) setMobile(false);
+    else if ((event.target as Element).closest('a[href]')) setMobile(false, false);
   });
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
-      if (mobilePanel && !mobilePanel.hidden) setMobile(false);
+      setMobile(false);
       return;
     }
-    if (event.key !== 'Tab' || !mobilePanel || mobilePanel.hidden) return;
+    if (event.key !== 'Tab' || mobilePanel.inert) return;
     const items = [
-      ...(mobileOpen ? [mobileOpen] : []),
+      mobileOpen,
       ...Array.from(mobilePanel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
         (el) => el.tabIndex >= 0,
       ),
@@ -155,4 +173,5 @@ export function initMenus(): void {
   });
 
   desktop.addEventListener('change', () => setMobile(false, false));
+  window.addEventListener('pagehide', () => setMobile(false, false));
 }

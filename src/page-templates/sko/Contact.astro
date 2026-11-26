@@ -38,11 +38,11 @@ const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: titl
   orgJsonLd={{ openingHoursSpecification: officeOpeningHours }}
 >
   <div class="contact-split contact-desk">
-    <h1 class="contact-split__title load-rise" data-reveal-mobile="true" style="--load-delay:300ms">
+    <h1 class="contact-split__title">
       {tStrict(lang, 'contactUs')}
     </h1>
 
-    <div class="contact-split__form load-rise" data-reveal-mobile="true" style="--load-delay:450ms">
+    <div class="contact-split__form">
       <ContactForm lang={lang} id="form-contact" />
     </div>
 

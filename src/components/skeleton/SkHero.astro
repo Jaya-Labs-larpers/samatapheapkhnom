@@ -46,31 +46,17 @@ const {
         {image && <ResponsiveImage image={image} lang={lang} eager sizes="100vw" keep={keep} />}
       </div>
       <div class="sk-wrap sk-hero__text">
-        {eyebrow && (
-          <p class="sk-eyebrow load-rise" data-reveal-mobile="true" style="--load-delay:150ms">
-            {eyebrow}
-          </p>
-        )}
-        <h1
-          class="sk-h1 load-rise"
-          lang={titleLang}
-          data-reveal-mobile="true"
-          style="--load-delay:300ms"
-        >
+        {eyebrow && <p class="sk-eyebrow">{eyebrow}</p>}
+        <h1 class="sk-h1" lang={titleLang}>
           {title}
         </h1>
         {intro && (
-          <p
-            class="sk-lead inline-links load-rise"
-            lang={introLang}
-            data-reveal-mobile="true"
-            style="--load-delay:450ms"
-          >
+          <p class="sk-lead inline-links" lang={introLang}>
             <InlineLinks text={intro} />
           </p>
         )}
         {actions && (
-          <div class="load-rise" data-reveal-mobile="true" style="--load-delay:600ms">
+          <div>
             <SkButtons actions={actions} />
           </div>
         )}
@@ -81,35 +67,21 @@ const {
     <SkSection tone="tint">
       <div class="sk-hero__text">
         <slot name="before" />
-        {eyebrow && (
-          <p class="sk-eyebrow load-rise" data-reveal-mobile="true" style="--load-delay:150ms">
-            {eyebrow}
-          </p>
-        )}
-        <h1
-          class="sk-h1 load-rise"
-          lang={titleLang}
-          data-reveal-mobile="true"
-          style="--load-delay:300ms"
-        >
+        {eyebrow && <p class="sk-eyebrow">{eyebrow}</p>}
+        <h1 class="sk-h1" lang={titleLang}>
           {title}
         </h1>
         {intro === undefined ? (
           <SkLines n={2} />
         ) : (
           intro && (
-            <p
-              class="sk-lead inline-links load-rise"
-              lang={introLang}
-              data-reveal-mobile="true"
-              style="--load-delay:450ms"
-            >
+            <p class="sk-lead inline-links" lang={introLang}>
               <InlineLinks text={intro} />
             </p>
           )
         )}
         {actions ? (
-          <div class="load-rise" data-reveal-mobile="true" style="--load-delay:600ms">
+          <div>
             <SkButtons actions={actions} />
           </div>
         ) : (

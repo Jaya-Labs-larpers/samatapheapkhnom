@@ -81,19 +81,10 @@ const programTitle = pick(activity.program?.title, lang);
         )
       }
     </p>
-    <h1
-      class="sk-h1 load-rise"
-      style="max-width:none;--load-delay:300ms"
-      lang={langAttr(title)}
-      data-reveal-mobile="true"
-    >
+    <h1 class="sk-h1" style="max-width:none" lang={langAttr(title)}>
       {heading}
     </h1>
-    <div
-      class="sk-media load-clip"
-      style="aspect-ratio:16/9;--load-delay:450ms"
-      data-reveal-mobile="true"
-    >
+    <div class="sk-media" style="aspect-ratio:16/9">
       <ResponsiveImage
         image={activity.coverImage}
         lang={lang}

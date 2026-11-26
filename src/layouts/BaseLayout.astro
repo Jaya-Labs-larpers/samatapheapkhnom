@@ -65,7 +65,11 @@ const preloadFonts =
 ---
 
 <!doctype html>
-<html lang={htmlLang[lang]} data-smooth-scroll={smoothScrollEnabled ? 'on' : undefined}>
+<html
+  lang={htmlLang[lang]}
+  translate="no"
+  data-smooth-scroll={smoothScrollEnabled ? 'on' : undefined}
+>
   <head>
     <meta charset="utf-8" />
     {
@@ -79,6 +83,7 @@ const preloadFonts =
     <meta http-equiv="Content-Security-Policy" content="__CSP_POLICY__" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="google" content="notranslate" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
@@ -129,7 +134,6 @@ const preloadFonts =
       jsonLd={jsonLd}
       orgJsonLd={orgJsonLd}
     />
-
   </head>
   <body class="bg-white" data-cf-token={(!minimal && cfAnalyticsToken) || undefined}>
     <a
@@ -159,20 +163,24 @@ const preloadFonts =
 
       import { whenSettled } from '~/lib/lazy';
 
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        revealOnEntry();
-        initScrollMotion();
-      }));
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          revealOnEntry();
+          initScrollMotion();
+        }),
+      );
 
       const token = document.body.dataset.cfToken;
       if (token) {
-        const loadBeacon = () => whenSettled(() => {
-          const script = document.createElement('script');
-          script.src = 'https://static.cloudflareinsights.com/beacon.min.js';
-          script.dataset.cfBeacon = JSON.stringify({ token });
-          document.head.append(script);
-        });
-        if ('prerendering' in document && document.prerendering) document.addEventListener('prerenderingchange', loadBeacon, { once: true });
+        const loadBeacon = () =>
+          whenSettled(() => {
+            const script = document.createElement('script');
+            script.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+            script.dataset.cfBeacon = JSON.stringify({ token });
+            document.head.append(script);
+          });
+        if ('prerendering' in document && document.prerendering)
+          document.addEventListener('prerenderingchange', loadBeacon, { once: true });
         else loadBeacon();
       }
     </script>

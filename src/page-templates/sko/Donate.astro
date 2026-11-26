@@ -42,23 +42,13 @@ const receipt = settings.email ? t(lang, 'donateReceipt').split('{email}') : nul
 >
   <SkSection tone="tint">
     <div class="donate__intro">
-      <p class="sk-eyebrow load-rise" data-reveal-mobile="true" style="--load-delay:150ms">
+      <p class="sk-eyebrow">
         {t(lang, 'donate')}
       </p>
-      <h1
-        class="sk-h1 load-rise"
-        lang={tLang(lang, 'donateTitle')}
-        data-reveal-mobile="true"
-        style="--load-delay:300ms"
-      >
+      <h1 class="sk-h1" lang={tLang(lang, 'donateTitle')}>
         {t(lang, 'donateTitle')}
       </h1>
-      <p
-        class="sk-lead load-rise"
-        lang={tLang(lang, 'donateIntro')}
-        data-reveal-mobile="true"
-        style="--load-delay:450ms"
-      >
+      <p class="sk-lead" lang={tLang(lang, 'donateIntro')}>
         {t(lang, 'donateIntro')}
       </p>
     </div>

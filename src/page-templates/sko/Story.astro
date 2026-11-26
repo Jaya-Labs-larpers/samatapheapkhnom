@@ -26,16 +26,25 @@ const body = pick(story.body, lang);
 const programTitle = pick(story.program?.title, lang);
 const photo = !story.useSilhouette && hasImage(story.photo) ? story.photo : null;
 
-const opening = story._id === 'story-1' ? {
-  en: {
-    title: 'Why Sok Vanny speaks up about birth certificates',
-    intro: ['In Andoung 6, getting birth certificates helped Sok Vanny enroll her grandchildren in school.', 'Now she helps her neighbors understand why those papers matter.'],
-  },
-  km: {
-    title: 'ហេតុអ្វីបានជា Sok Vanny លើកឡើងពីសារៈសំខាន់នៃសំបុត្រកំណើត',
-    intro: ['នៅសហគមន៍អណ្ដូង ៦ សំបុត្រកំណើតបានជួយឱ្យ Sok Vanny ចុះឈ្មោះចៅៗរបស់គាត់ចូលរៀន។', 'សព្វថ្ងៃ គាត់ជួយអ្នកជិតខាងឱ្យយល់ពីសារៈសំខាន់នៃឯកសារទាំងនេះ។'],
-  },
-}[lang] : null;
+const opening =
+  story._id === 'story-1'
+    ? {
+        en: {
+          title: 'Why Sok Vanny speaks up about birth certificates',
+          intro: [
+            'In Andoung 6, getting birth certificates helped Sok Vanny enroll her grandchildren in school.',
+            'Now she helps her neighbors understand why those papers matter.',
+          ],
+        },
+        km: {
+          title: 'ហេតុអ្វីបានជា Sok Vanny លើកឡើងពីសារៈសំខាន់នៃសំបុត្រកំណើត',
+          intro: [
+            'នៅសហគមន៍អណ្ដូង ៦ សំបុត្រកំណើតបានជួយឱ្យ Sok Vanny ចុះឈ្មោះចៅៗរបស់គាត់ចូលរៀន។',
+            'សព្វថ្ងៃ គាត់ជួយអ្នកជិតខាងឱ្យយល់ពីសារៈសំខាន់នៃឯកសារទាំងនេះ។',
+          ],
+        },
+      }[lang]
+    : null;
 const caption = pick(photo?.alt, lang);
 
 /*
@@ -87,34 +96,44 @@ const seo = resolveSeo(null, lang, {
   ogImage={seo.ogImage}
   noindex
 >
-  {opening && photo ? (
-    <header class="story-opening">
-      <div class="story-opening__copy">
-        <h1 class="load-rise" data-reveal-mobile="true" style="--load-delay:300ms">{opening.title}</h1>
-        <div class="story-opening__intro load-rise" data-reveal-mobile="true" style="--load-delay:450ms">
-          {opening.intro.map((paragraph) => <p>{paragraph}</p>)}
+  {
+    opening && photo ? (
+      <header class="story-opening">
+        <div class="story-opening__copy">
+          <h1>{opening.title}</h1>
+          <div class="story-opening__intro">
+            {opening.intro.map((paragraph) => (
+              <p>{paragraph}</p>
+            ))}
+          </div>
         </div>
-      </div>
-      <figure>
-        <div class="story-opening__photo load-clip" data-reveal-mobile="true" style="--load-delay:300ms">
-          <ResponsiveImage image={photo} lang={lang} keep eager sizes="(min-width: 800px) 55vw, 100vw" />
-        </div>
-        {caption.value && <figcaption lang={langAttr(caption)}>{caption.value}</figcaption>}
-      </figure>
-    </header>
-  ) : (
-  <SkHero
-    home={Boolean(photo)}
-    keep
-    lang={lang}
-    image={photo}
-    eyebrow={t(lang, 'typeStory')}
-    title={name}
-    intro={role.value ?? null}
-    introLang={langAttr(role)}
-    actions={[]}
-  />
-  )}
+        <figure>
+          <div class="story-opening__photo">
+            <ResponsiveImage
+              image={photo}
+              lang={lang}
+              keep
+              eager
+              sizes="(min-width: 800px) 55vw, 100vw"
+            />
+          </div>
+          {caption.value && <figcaption lang={langAttr(caption)}>{caption.value}</figcaption>}
+        </figure>
+      </header>
+    ) : (
+      <SkHero
+        home={Boolean(photo)}
+        keep
+        lang={lang}
+        image={photo}
+        eyebrow={t(lang, 'typeStory')}
+        title={name}
+        intro={role.value ?? null}
+        introLang={langAttr(role)}
+        actions={[]}
+      />
+    )
+  }
 
   <article class="story">
     <div class="story__reading">
@@ -134,7 +153,12 @@ const seo = resolveSeo(null, lang, {
     {
       (context.length > 0 || (story.program && programTitle.value)) && (
         <aside class="story__context">
-          {context.length > 0 && <RichText blocks={{ [programBody.lang]: formatParagraphs(context, programBody.lang) }} lang={lang} />}
+          {context.length > 0 && (
+            <RichText
+              blocks={{ [programBody.lang]: formatParagraphs(context, programBody.lang) }}
+              lang={lang}
+            />
+          )}
           {story.program && programTitle.value && (
             <a
               class="sk-link"

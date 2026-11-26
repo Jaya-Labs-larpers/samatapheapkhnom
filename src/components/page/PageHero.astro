@@ -45,40 +45,20 @@ const {
   <div class="pg-hero__grid">
     <div class="pg-hero__panel">
       <Breadcrumbs lang={lang} trail={trail} />
-      {
-        eyebrow && (
-          <span
-            class="pg-kicker pg-hero__eyebrow load-rise"
-            data-reveal-mobile="true"
-            style="--load-delay:150ms"
-          >
-            {eyebrow}
-          </span>
-        )
-      }
-      <h1
-        class="pg-hero__title load-rise"
-        lang={titleLang}
-        data-reveal-mobile="true"
-        style="--load-delay:300ms"
-      >
+      {eyebrow && <span class="pg-kicker pg-hero__eyebrow">{eyebrow}</span>}
+      <h1 class="pg-hero__title" lang={titleLang}>
         {title}
       </h1>
       {
         intro && (
-          <p
-            class="pg-hero__lead load-rise"
-            lang={introLang}
-            data-reveal-mobile="true"
-            style="--load-delay:450ms"
-          >
+          <p class="pg-hero__lead" lang={introLang}>
             <InlineLinks text={intro} />
           </p>
         )
       }
       {
         chips.length > 0 && (
-          <ul class="pg-chips load-rise" data-reveal-mobile="true" style="--load-delay:600ms">
+          <ul class="pg-chips">
             {chips.map((chip) => (
               <li>
                 <a class="pg-chip" href={chip.href}>
@@ -91,7 +71,7 @@ const {
       }
       {
         actions.length > 0 && (
-          <div class="pg-actions load-rise" data-reveal-mobile="true" style="--load-delay:600ms">
+          <div class="pg-actions">
             {actions.map((action, index) => (
               <a class:list={['pg-btn', index > 0 && 'pg-btn--ghost']} href={action.href}>
                 {action.label}
@@ -104,11 +84,7 @@ const {
     </div>
     {
       image && (
-        <figure
-          class="pg-hero__media load-clip"
-          data-reveal-mobile="true"
-          style="--load-delay:300ms"
-        >
+        <figure class="pg-hero__media">
           <ResponsiveImage image={image} lang={lang} eager sizes="(min-width: 64rem) 50vw, 100vw" />
           {caption && (
             <figcaption class="pg-caption" lang={captionLang}>

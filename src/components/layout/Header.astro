@@ -9,7 +9,6 @@ import { impactProjectsAvailable, impactProjectsPath } from '~/lib/impact-pages'
 import { donateHref } from '~/lib/skeleton-content';
 import LanguageToggle from './LanguageToggle.astro';
 import Logo from '~/components/Logo.astro';
-import { hasImage, imageUrl } from '~/lib/sanity/image';
 
 interface Props {
   lang: Locale;
@@ -36,24 +35,12 @@ const dropdownLinks = (item: (typeof mainNav)[number]) => {
   if (item.programs) {
     return programs.flatMap((program) => {
       const label = pick(program.title, lang).value;
-      if (!label) return [];
-      const photo = program.cardImage ?? program.image;
-      return [
-        {
-          label,
-          href: localizePath(`/programs/${program.slug}`, lang),
-          summary: pick(program.summary, lang).value || undefined,
-          image:
-            photo && hasImage(photo) ? (imageUrl(photo, { width: 640 }) ?? undefined) : undefined,
-        },
-      ];
+      return label ? [{ label, href: localizePath(`/programs/${program.slug}`, lang) }] : [];
     });
   }
   return (item.sections ?? [])
     .filter((section) => !section.path || !hiddenPaths.has(section.path))
     .map((section) => ({
-      summary: undefined as string | undefined,
-      image: undefined as string | undefined,
       label: t(lang, section.key),
       href: section.path
         ? localizePath(section.path, lang)
@@ -63,21 +50,39 @@ const dropdownLinks = (item: (typeof mainNav)[number]) => {
     }));
 };
 const isCurrent = (path: string) => current === path || current.startsWith(`${path}/`);
-const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
+const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
 ---
 
-<header class="hdr site-header" data-header>
+<header class="hdr site-header" data-header data-home={current === '/' ? '' : undefined}>
+  <script is:inline>
+    // Inline so the bar is marked before it first paints.
+    try {
+      const bar = document.currentScript.parentElement;
+      if (bar.hasAttribute('data-home')) {
+        if (sessionStorage.getItem('sko-header-intro')) bar.setAttribute('data-skip-intro', '');
+        sessionStorage.setItem('sko-header-intro', '1');
+      }
+    } catch {}
+  </script>
   <div class="hdr__bar">
     <a href={localizePath('/', lang)} class="hdr__brand">
-      <Logo variant="full" height={64} title={orgName} class="hdr__logo" />
+      <Logo variant="full" height={74} title={orgName} class="hdr__logo" />
+      {
+        current === '/' && (
+          <Logo
+            variant="reversed"
+            height={74}
+            title={orgName}
+            class="hdr__logo hdr__logo--reversed"
+          />
+        )
+      }
     </a>
 
     <nav class="hdr__nav" aria-label={t(lang, 'navPrimaryLabel')}>
       {
-        mainNav.map((item, index) => {
-          const links = dropdownLinks(item);
+        navGroups.map(({ item, links }, index) => {
           const menuId = `dd-${index}`;
-          const withPhotos = links.some((link) => link.image);
           return (
             <div class="hdr__item" data-nav-item>
               <a
@@ -120,54 +125,30 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
                       <path d="m6 9 6 6 6-6" />
                     </svg>
                   </button>
-                  <div class="dd" id={menuId} data-dd>
-                    <div class:list={['dd__inner', withPhotos && 'dd__inner--media']}>
-                      <ul class="dd__grid">
-                        {links.map((link) => (
-                          <li>
-                            <a
-                              href={link.href}
-                              class="dd__link"
-                              tabindex="-1"
-                              data-swap-src={link.image}
-                            >
-                              <span class="dd__top" aria-hidden="true">
-                                <span class="dd__icon">
-                                  <img
-                                    src="/images/butterfly.svg"
-                                    alt=""
-                                    width="24"
-                                    height="10"
-                                    class="dd__glyph"
-                                  />
-                                </span>
-                                <span class="dd__line">
-                                  <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                  >
-                                    <path d="M5 12h14M13 6l6 6-6 6" />
-                                  </svg>
-                                </span>
-                              </span>
-                              <span class="dd__title">{link.label}</span>
-                              {link.summary && <span class="dd__summary">{link.summary}</span>}
+                  <div class="dd" id={menuId} data-dd inert>
+                    <div class="dd__inner">
+                      <ul class="dd__list">
+                        {links.map((link, i) => (
+                          <li style={`--i:${i}`}>
+                            <a href={link.href} class="dd__link">
+                              <span>{link.label}</span>
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="m9 6 6 6-6 6" />
+                              </svg>
                             </a>
                           </li>
                         ))}
                       </ul>
-                      {withPhotos && (
-                        <div class="dd__media" data-swap-media aria-hidden="true">
-                          <img alt="" width="640" height="480" decoding="async" class="dd__photo" />
-                          <img alt="" width="640" height="480" decoding="async" class="dd__photo" />
-                        </div>
-                      )}
                     </div>
                   </div>
                 </>
@@ -213,10 +194,11 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     aria-label={t(lang, 'menu')}
     data-mobile-panel
     hidden
+    inert
   >
     <nav class="mmenu__body" aria-label={t(lang, 'navPrimaryLabel')}>
       {
-        mobileGroups.map(({ item, links }, index) => (
+        navGroups.map(({ item, links }, index) => (
           <div class="mmenu__group" data-mgroup>
             <div class="mmenu__row">
               <a
@@ -282,12 +264,10 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
 <script>
   import { initDropdowns, initMenus } from '~/lib/menu';
   import { initHeaderMotion } from '~/lib/header-motion';
-  import { initNavImageSwap } from '~/lib/nav-image-swap';
 
   initMenus();
   initDropdowns();
   initHeaderMotion();
-  initNavImageSwap();
 </script>
 
 <style>
@@ -297,20 +277,19 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     z-index: 40;
     box-sizing: border-box;
     height: var(--header-h);
-    padding: var(--safe-top) clamp(1rem, 2.5vw, 2.25rem) 0;
+    --hdr-gutter: clamp(1rem, 2.5vw, 2.25rem);
+    padding: var(--safe-top) max(var(--hdr-gutter), var(--safe-right)) 0
+      max(var(--hdr-gutter), var(--safe-left));
     background: #fff;
     border-bottom: 1px solid var(--color-line);
-    color: var(--color-blue-800);
+    --hdr-ink: #000;
+    color: var(--hdr-ink);
     font-family: var(--font-sans);
     --hdr-control-h: 40px;
-  }
-  .hdr[data-hidden] {
-    pointer-events: none;
-  }
-  @media (scripting: enabled) and (min-width: 75rem) and (prefers-reduced-motion: no-preference) {
-    .hdr:not([data-loaded]) {
-      visibility: hidden;
-    }
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui),
+      color var(--duration-ui) var(--ease-ui);
   }
   .hdr__bar {
     max-width: 90.5rem;
@@ -325,13 +304,18 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     display: flex;
     align-items: center;
     min-width: 0;
-    flex-shrink: 0;
+    margin-inline-start: clamp(0.25rem, 0.75vw, 0.875rem);
     text-decoration: none;
   }
   .hdr :global(.hdr__logo) {
     display: block;
-    height: 52px;
+    height: 64px;
     width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  .hdr :global(.hdr__logo--reversed) {
+    display: none;
   }
 
   /* --- Links ------------------------------------------------------------- */
@@ -341,12 +325,13 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     white-space: nowrap;
   }
   .hdr__item {
+    position: relative;
     display: flex;
     align-items: center;
     height: var(--hdr-control-h);
     padding-inline: 0.25rem;
     border-radius: var(--radius-md);
-    transition: background-color 400ms ease;
+    transition: background-color var(--duration-ui) var(--ease-ui);
   }
   .hdr__item[data-open] {
     background: var(--color-blue-50);
@@ -396,144 +381,100 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     cursor: pointer;
   }
   .hdr__chev svg {
-    transition: transform 400ms ease;
+    transition: transform 360ms var(--ease-reveal);
   }
   .hdr__chev[aria-expanded='true'] svg {
     transform: rotate(180deg);
   }
 
-  /* --- Drop-down panel: a card under the whole bar, fading in ------------ */
   .dd {
+    --hdr-ink: #000;
     position: absolute;
     top: 100%;
-    inset-inline: 0;
-    padding: 1.5rem clamp(1rem, 2.5vw, 2.25rem) 0;
-    opacity: 0;
+    inset-inline-start: 0;
+    z-index: 2;
+    width: clamp(18rem, 23vw, 22rem);
+    padding-top: calc((var(--header-h) - var(--safe-top) - var(--hdr-control-h)) / 2 + 0.25rem);
+    display: grid;
+    grid-template-rows: 0fr;
     visibility: hidden;
     pointer-events: none;
     transition:
-      opacity 400ms ease,
-      visibility 0s linear 400ms;
+      grid-template-rows 420ms var(--ease-reveal),
+      visibility 0s linear 420ms;
   }
   .hdr__item[data-open] > .dd {
-    opacity: 1;
+    z-index: 3;
+    grid-template-rows: 1fr;
     visibility: visible;
     pointer-events: auto;
     transition-delay: 0s;
   }
   .dd__inner {
-    box-sizing: border-box;
-    max-width: 78.75rem;
-    margin: 0 auto;
-    padding: 2.25rem;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-cta);
-    background: #fff;
-    box-shadow: 0 4px 12px rgb(14 21 51 / 0.05);
-    white-space: normal;
-  }
-  .dd__inner--media {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 17rem;
-    gap: 2.25rem;
-  }
-  .dd__inner--media .dd__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .dd__media {
-    position: relative;
+    min-height: 0;
     overflow: hidden;
-    min-height: 12rem;
     border-radius: var(--radius-lg);
-    background: var(--color-blue-50);
-  }
-  .dd__photo {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    background: #fff;
+    box-shadow:
+      0 4px 24px rgb(14 21 51 / 0.12),
+      0 16px 32px -16px rgb(14 21 51 / 0.28);
+    /* Fades out with the collapse: a zero-height box still draws its edges. */
     opacity: 0;
-    transition: opacity 400ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity 200ms ease;
   }
-  .dd__photo:global(.is-visible) {
+  .hdr__item[data-open] > .dd > .dd__inner {
     opacity: 1;
   }
-  .dd__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-    gap: 2rem 2.25rem;
+  .dd__list {
+    max-height: min(26rem, calc(100vh - var(--header-h) - 1rem));
+    max-height: min(26rem, calc(100dvh - var(--header-h) - 1rem));
     margin: 0;
     padding: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     list-style: none;
+  }
+  .dd__list li {
+    opacity: 0;
+    translate: 0 -0.5rem;
+    transition:
+      opacity 200ms ease,
+      translate 200ms ease;
+  }
+  .hdr__item[data-open] .dd__list li {
+    opacity: 1;
+    translate: 0 0;
+    transition-delay: calc(90ms + var(--i) * 45ms);
   }
   .dd__link {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    color: var(--color-ink-900);
-    text-decoration: none;
-  }
-  .dd__top {
-    display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 3rem;
+    padding: 0.75rem 1rem;
+    color: var(--hdr-ink);
+    font-weight: 600;
+    line-height: 1.4;
+    text-decoration: none;
+    white-space: normal;
+    transition: background-color var(--duration-fast) var(--ease-out-soft);
   }
-  .dd__icon {
+  .dd__link span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .dd__link svg {
     flex: none;
-    display: grid;
-    place-items: center;
-    width: 2.5rem;
-    aspect-ratio: 1;
-    border-radius: var(--radius-md);
+    color: var(--color-blue-700);
+  }
+  .dd__link:is(:hover, :focus-visible) {
     background: var(--color-blue-50);
   }
-  .dd__glyph {
-    width: 1.5rem;
-    height: auto;
+  .dd__link:focus-visible {
+    outline: 2px solid var(--color-blue-700);
+    outline-offset: -2px;
   }
-  .dd__line {
-    position: relative;
-    flex: 1;
-    height: 0;
-    margin-inline-end: 8px;
-    border-top: 1px dashed var(--color-line-strong);
-    color: var(--color-line-strong);
-    transition:
-      border-color var(--duration-ui) var(--ease-ui),
-      color var(--duration-ui) var(--ease-ui);
-  }
-  .dd__line svg {
-    position: absolute;
-    top: 50%;
-    right: -8px;
-    translate: 0 -50%;
-    background: #fff;
-  }
-  .dd__title {
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.3;
-    transition: color var(--duration-ui) var(--ease-ui);
-  }
-  .dd__summary {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--color-ink-400);
-  }
-  .dd__link:is(:hover, :focus-visible) .dd__title {
-    color: var(--color-blue-700);
-  }
-  .dd__link:is(:hover, :focus-visible) .dd__line {
-    border-color: var(--color-blue-200);
-    color: var(--color-blue-700);
-  }
-
   /* --- Tools: language switch, call to action, menu button ---------------- */
   .hdr__tools {
     display: flex;
@@ -580,7 +521,7 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     padding: 0;
     border: 0;
     background: none;
-    color: var(--color-ink-900);
+    color: var(--hdr-ink);
     cursor: pointer;
   }
   .hdr__burger-line {
@@ -602,8 +543,6 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
   }
 
   .hdr__tools :global(.lang-toggle) {
-    gap: 2px;
-    padding: 3px;
     border-color: var(--color-line-strong);
   }
   .hdr__toggle-desktop :global(.lang-toggle) {
@@ -612,14 +551,17 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
   }
   .hdr__tools :global(.lang-toggle__link) {
     display: inline-flex;
+    flex: 1;
     align-items: center;
     padding: 0 12px;
-    border-radius: var(--radius-md);
     color: inherit;
     opacity: 0.72;
     transition:
       background-color var(--duration-ui) var(--ease-ui),
       opacity var(--duration-ui) var(--ease-ui);
+  }
+  .hdr__toggle-phone :global(.lang-toggle__link) {
+    min-block-size: 42px;
   }
   .hdr__tools :global(.lang-toggle__link:hover) {
     opacity: 1;
@@ -638,7 +580,7 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     overflow-y: auto;
     overscroll-behavior: contain;
     background: #fff;
-    color: var(--color-ink-600);
+    color: var(--hdr-ink);
     opacity: 0;
     visibility: hidden;
     transition:
@@ -664,7 +606,7 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     flex: 1;
     min-height: 44px;
     padding: 1rem 0;
-    color: var(--color-ink-900);
+    color: var(--hdr-ink);
     font-size: 19px;
     font-weight: 600;
     text-decoration: none;
@@ -701,7 +643,7 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     min-height: 44px;
     padding: 0.625rem 0 0.625rem 1rem;
     border-bottom: 1px solid var(--color-line);
-    color: var(--color-ink-600);
+    color: var(--hdr-ink);
     font-size: 16px;
     font-weight: 500;
     text-decoration: none;
@@ -721,7 +663,7 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     padding: 1rem 1.5rem;
     border: 1px solid var(--color-line-strong);
     border-radius: var(--radius-cta);
-    color: var(--color-blue-800);
+    color: var(--hdr-ink);
     font-size: 16px;
     font-weight: 500;
     line-height: 1;
@@ -748,7 +690,59 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
     overflow: hidden;
   }
 
+  /* Home, while over the hero photo: no surface, white ink.
+     Without scripts the bar would never turn white again, so it starts white. */
+  @media (scripting: enabled) {
+    :global(html:not([data-menu-open])) .hdr[data-home]:not([data-solid]) {
+      --hdr-ink: #fff;
+      border-bottom-color: transparent;
+      background: linear-gradient(rgb(18 16 14 / 0.65), rgb(18 16 14 / 0.3) 65%, rgb(18 16 14 / 0))
+        border-box;
+    }
+    :global(html:not([data-menu-open])) .hdr[data-home]:not([data-solid]) :global(.hdr__logo) {
+      display: none;
+    }
+    :global(html:not([data-menu-open]))
+      .hdr[data-home]:not([data-solid])
+      :global(.hdr__logo--reversed) {
+      display: block;
+    }
+    :global(html:not([data-menu-open])) .hdr[data-home]:not([data-solid]) .hdr__link {
+      text-shadow: 0 1px 8px rgb(0 0 0 / 0.35);
+    }
+    :global(html:not([data-menu-open])) .hdr[data-home]:not([data-solid]) .hdr__item[data-open] {
+      background: rgb(255 255 255 / 0.18);
+    }
+    :global(html:not([data-menu-open]))
+      .hdr[data-home]:not([data-solid])
+      .hdr__tools
+      :global(.lang-toggle) {
+      border-color: rgb(255 255 255 / 0.7);
+    }
+    :global(html:not([data-menu-open]))
+      .hdr[data-home]:not([data-solid])
+      .hdr__tools
+      :global(.lang-toggle__link.is-current) {
+      background: rgb(255 255 255 / 0.22);
+    }
+    :global(html:not([data-menu-open]))
+      .hdr[data-home]:not([data-solid])
+      .hdr__bar
+      > a:focus-visible,
+    :global(html:not([data-menu-open]))
+      .hdr[data-home]:not([data-solid])
+      .hdr__bar
+      :is(.hdr__link, .hdr__chev, .hdr__pill, .hdr__burger):focus-visible,
+    :global(html:not([data-menu-open]))
+      .hdr[data-home]:not([data-solid])
+      .hdr__tools
+      :global(.lang-toggle__link:focus-visible) {
+      outline-color: #fff;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    .hdr,
     .hdr *,
     .mmenu,
     .dd {
@@ -759,7 +753,7 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
 
   @media (width < 30rem) {
     .hdr :global(.hdr__logo) {
-      height: 44px;
+      height: 56px;
     }
     .hdr__tools {
       gap: 0.375rem;
@@ -782,7 +776,7 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
 
   @media (min-width: 62rem) {
     .hdr :global(.hdr__logo) {
-      height: 60px;
+      height: 72px;
     }
     .hdr__pill {
       padding: 0 1.25rem;
@@ -791,6 +785,9 @@ const mobileGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }
   }
 
   @media (min-width: 75rem) {
+    .hdr :global(.hdr__logo) {
+      height: 74px;
+    }
     .hdr__toggle-phone,
     .hdr__burger,
     .mmenu {

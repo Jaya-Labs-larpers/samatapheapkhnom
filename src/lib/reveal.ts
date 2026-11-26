@@ -20,7 +20,7 @@ export const STAGGER_MS = 90;
 const STAGGER_CAP = 4;
 const PHONE = '(width < 62rem)';
 /** Section headings rise on their own unless a revealing box already carries them. */
-const TARGETS = '.reveal, .clip-reveal, main h2:not(.sr-only, .load-rise)';
+const TARGETS = '.reveal, .clip-reveal, main h2:not(.sr-only)';
 
 interface Options {
   root?: ParentNode;
@@ -40,7 +40,7 @@ export function revealOnEntry({
   const boxes = Array.from(root.querySelectorAll<HTMLElement>(TARGETS)).filter(
     (box) =>
       (!phone || box.dataset.revealMobile === 'true') &&
-      !box.parentElement?.closest('.reveal, .clip-reveal, .load-rise, .load-clip'),
+      !box.parentElement?.closest('.reveal, .clip-reveal'),
   );
   if (boxes.length === 0) return;
 
