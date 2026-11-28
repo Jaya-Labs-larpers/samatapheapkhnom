@@ -51,7 +51,6 @@ export const siteUrl = (str(env.PUBLIC_SITE_URL) || 'http://localhost:4321').rep
 
 export const turnstileSiteKey = str(env.PUBLIC_TURNSTILE_SITE_KEY);
 export const cfAnalyticsToken = str(env.PUBLIC_CF_ANALYTICS_TOKEN);
-export const gtmId = isProductionDeployment ? 'GTM-MSXSCPTS' : '';
 
 /* --- Build-time reporting -------------------------------------------------- */
 

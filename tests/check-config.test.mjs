@@ -33,6 +33,25 @@ test("presence rows report names and never include values", () => {
   );
 });
 
+test("production checks the cron secrets; the rehearsal, which runs no crons, does not", () => {
+  const set = [
+    "TURNSTILE_SECRET_KEY",
+    "RESEND_API_KEY",
+    "MAIL_FROM",
+    "CONTACT_TO_EMAIL",
+    "PARTNER_TO_EMAIL",
+  ].map((name) => ({ name }));
+  const missing = (environment) =>
+    workerSecretRows(set, environment)
+      .filter(({ status }) => status !== "PASS")
+      .map(({ name }) => name);
+  assert.deepEqual(missing("production"), [
+    "Cloudflare production DEPLOY_HOOK_URL",
+    "Cloudflare production ALERT_TO_EMAIL",
+  ]);
+  assert.deepEqual(missing("rehearsal"), []);
+});
+
 test("ruleset and Production policy require an active default-branch rule and only main", () => {
   assert.equal(
     rulesetRow(

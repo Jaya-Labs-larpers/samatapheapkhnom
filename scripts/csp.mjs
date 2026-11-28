@@ -13,18 +13,14 @@ const BASE_DIRECTIVES = [
   "object-src 'none'",
   "form-action 'self'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https://cdn.sanity.io https://*.google-analytics.com https://*.googletagmanager.com",
+  "img-src 'self' data: https://cdn.sanity.io",
   "font-src 'self'",
-  "connect-src 'self' https://cloudflareinsights.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
-  'frame-src https://challenges.cloudflare.com https://www.googletagmanager.com',
+  "connect-src 'self' https://cloudflareinsights.com",
+  'frame-src https://challenges.cloudflare.com',
   'upgrade-insecure-requests',
 ];
 
-const SCRIPT_HOSTS = [
-  'https://challenges.cloudflare.com',
-  'https://static.cloudflareinsights.com',
-  'https://*.googletagmanager.com',
-];
+const SCRIPT_HOSTS = ['https://challenges.cloudflare.com', 'https://static.cloudflareinsights.com'];
 
 // Chrome enforces script-src against inline application/ld+json and speculationrules
 // blocks as well as executable scripts; content must match verbatim before hashing.

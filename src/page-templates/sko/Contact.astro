@@ -3,6 +3,7 @@ import type { Locale } from '~/lib/i18n/config';
 import { getSiteSettings } from '~/lib/content';
 import { langAttr, pick } from '~/lib/i18n/utils';
 import { stripInlineLinks } from '~/lib/inline-links';
+import { safeHref } from '~/lib/safe-href';
 import { contactPageJsonLd, officeOpeningHours } from '~/lib/seo/page-schema';
 import { donateHref, tStrict } from '~/lib/skeleton-content';
 import { donatePageLive } from '~/config/donation';
@@ -17,6 +18,7 @@ interface Props {
 const { lang } = Astro.props;
 
 const settings = await getSiteSettings();
+const mapHref = safeHref(settings.mapUrl);
 const address = pick(settings.address, lang);
 const hours = pick(settings.officeHours, lang);
 const heading = tStrict(lang, 'pageContact');
@@ -123,9 +125,9 @@ const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: titl
                 <span class="contact-info__address" lang={langAttr(address)}>
                   {address.value}
                 </span>
-                {settings.mapUrl && (
+                {mapHref && (
                   <a
-                    href={settings.mapUrl}
+                    href={mapHref}
                     class="contact-info__action"
                     rel="noopener noreferrer"
                     target="_blank"

@@ -1,4 +1,4 @@
-import { defineConfig } from 'sanity';
+import { defineConfig, isDev } from 'sanity';
 import { structureTool } from 'sanity/structure';
 import { visionTool } from '@sanity/vision';
 
@@ -14,7 +14,7 @@ export default defineConfig({
   projectId,
   dataset,
 
-  plugins: [structureTool({ structure }), visionTool()],
+  plugins: [structureTool({ structure }), ...(isDev ? [visionTool()] : [])],
 
   schema: {
     types: schemaTypes,

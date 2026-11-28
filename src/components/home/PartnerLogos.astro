@@ -4,6 +4,7 @@ import type { Locale } from '~/lib/i18n/config';
 import type { Partner } from '~/lib/content/types';
 import { localizePath, t, tLang } from '~/lib/i18n/utils';
 import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import { safeHref } from '~/lib/safe-href';
 
 interface Props {
   lang: Locale;
@@ -24,8 +25,8 @@ const ordered = [...partners].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
         <ul class="partners__grid">
           {ordered.map((partner) => (
             <li>
-              {partner.url ? (
-                <a href={partner.url} class="partners__logo" rel="noopener">
+              {safeHref(partner.url) ? (
+                <a href={safeHref(partner.url)} class="partners__logo" rel="noopener">
                   {partner.logo ? (
                     <ResponsiveImage
                       image={partner.logo}

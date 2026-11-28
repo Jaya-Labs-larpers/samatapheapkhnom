@@ -1174,12 +1174,12 @@ export const pages: Page[] = [
     },
     body: blocks(
       [
-        'Cloudflare Web Analytics works without cookies. Where optional Google analytics tags are enabled, you can accept or decline them in Cookie settings at the bottom of the page. Your choice is saved in this browser.',
+        'This website sets no cookies. Analytics is provided by Cloudflare Web Analytics, which is cookieless and does not track individuals across sites. There is no advertising or tracking of any kind.',
         'When you send a message through a form on this site, the details you type are emailed to SKO and are not stored on the website or in any database. A Cloudflare Turnstile check runs to block automated spam. Your IP address is not stored; a hashed value is used briefly to limit repeated submissions.',
         '[NEEDS SKO] Add how long SKO keeps emailed enquiries, and who to contact about personal data.',
       ],
       [
-        'Cloudflare Web Analytics ដំណើរការដោយមិនប្រើខូគី។ អ្នកអាចយល់ព្រម ឬបដិសេធការវិភាគជាជម្រើសរបស់ Google តាមរយៈការកំណត់ខូគីនៅខាងក្រោមទំព័រ។ ជម្រើសរបស់អ្នកត្រូវបានរក្សាទុកក្នុងកម្មវិធីរុករកនេះ។',
+        'គេហទំព័រនេះមិនប្រើខូគីទេ។ ការវិភាគស្ថិតិផ្តល់ដោយ Cloudflare Web Analytics ដែលមិនប្រើខូគី និងមិនតាមដានបុគ្គលឆ្លងកាត់គេហទំព័រផ្សេងៗ។ គ្មានការផ្សាយពាណិជ្ជកម្ម ឬការតាមដានណាមួយឡើយ។',
         'នៅពេលអ្នកផ្ញើសារតាមទម្រង់នៅលើគេហទំព័រនេះ ព័ត៌មានដែលអ្នកវាយបញ្ចូលត្រូវបានផ្ញើទៅ SKO តាមអ៊ីមែល ហើយមិនត្រូវបានរក្សាទុកនៅលើគេហទំព័រទេ។',
       ],
     ),

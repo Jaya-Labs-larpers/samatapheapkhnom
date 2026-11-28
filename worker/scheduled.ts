@@ -46,7 +46,10 @@ async function uptime(env: Env, log: Log): Promise<string | undefined> {
 
 async function rebuild(env: Env): Promise<string | undefined> {
   if (!env.DEPLOY_HOOK_URL) return 'DEPLOY_HOOK_URL is not set';
-  const response = await fetch(env.DEPLOY_HOOK_URL, { method: 'POST' });
+  const response = await fetch(env.DEPLOY_HOOK_URL, {
+    method: 'POST',
+    signal: AbortSignal.timeout(10_000),
+  });
   if (!response.ok) return `the deploy hook returned ${response.status}`;
 }
 
@@ -57,7 +60,7 @@ async function newestPublish(env: Env): Promise<string | null> {
     `https://${env.SANITY_PROJECT_ID}.api.sanity.io/v${env.SANITY_API_VERSION ?? '2026-01-01'}` +
     `/data/query/${env.SANITY_DATASET ?? 'production'}` +
     `?query=${encodeURIComponent(query)}&perspective=published`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   if (!response.ok) throw new Error(`Sanity returned ${response.status}`);
   const { result } = (await response.json()) as { result: string | null };
   return result;

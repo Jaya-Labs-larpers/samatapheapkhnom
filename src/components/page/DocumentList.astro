@@ -2,6 +2,7 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { Report } from '~/lib/content/types';
 import { formatFileSize, pick, t } from '~/lib/i18n/utils';
+import { isDirectFileHref, safeHref } from '~/lib/safe-href';
 
 interface Props {
   lang: Locale;
@@ -29,14 +30,17 @@ const typeLabels: Record<string, Record<Locale, string>> = {
       const size = formatFileSize(file?.size);
       const meta = [typeLabel, fileLanguage, size].filter(Boolean).join(' · ');
       const cover = [typeLabel ?? t(lang, 'download'), report.year].filter(Boolean).join(' ');
-      const Tag = file?.url ? 'a' : 'span';
+      const href = safeHref(file?.url);
+      const Tag = href ? 'a' : 'span';
 
       return (
         <li class="pg-doc">
           <Tag
             class="pg-doc__link"
-            {...(file?.url
-              ? { href: file.url, download: '' }
+            {...(href
+              ? isDirectFileHref(href)
+                ? { href, download: '' }
+                : { href, target: '_blank', rel: 'noopener noreferrer' }
               : { 'aria-disabled': 'true' })}
           >
             <span class="pg-doc__cover" aria-hidden="true">
