@@ -3,6 +3,7 @@ import type { Locale } from '~/lib/i18n/config';
 import type { Report } from '~/lib/content/types';
 import { formatFileSize, pick, t } from '~/lib/i18n/utils';
 import { hasInlineLinks } from '~/lib/inline-links';
+import { isDirectFileHref, safeHref } from '~/lib/safe-href';
 import InlineLinks from './InlineLinks.astro';
 
 interface Props {
@@ -34,13 +35,17 @@ const typeLabels: Record<string, Record<Locale, string>> = {
       const typeLabel = report.type ? typeLabels[report.type]?.[lang] : null;
       const size = formatFileSize(file?.size);
       const meta = [typeLabel, fileLanguage, size].filter(Boolean).join(' · ');
+      const href = safeHref(file?.url);
+      const direct = href ? isDirectFileHref(href) : false;
 
       return (
         <li class="border-b border-[color:var(--color-line-subtle)] last:border-b-0">
           <a
-            href={file?.url ?? '#'}
-            download={file?.url ? '' : undefined}
-            aria-disabled={file?.url ? undefined : 'true'}
+            href={href ?? '#'}
+            download={direct ? '' : undefined}
+            target={href && !direct ? '_blank' : undefined}
+            rel={href && !direct ? 'noopener noreferrer' : undefined}
+            aria-disabled={href ? undefined : 'true'}
             class="flex items-center gap-4.5 px-5.5 py-4.5 no-underline transition-colors hover:bg-[color:var(--color-blue-50)]"
           >
             <span

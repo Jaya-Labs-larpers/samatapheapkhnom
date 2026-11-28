@@ -2,6 +2,7 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { Partner } from '~/lib/content/types';
 import { hasImage, imageDimensions, imageSrcSet, imageUrl } from '~/lib/sanity/image';
+import { safeHref } from '~/lib/safe-href';
 
 interface Props {
   lang: Locale;
@@ -45,13 +46,14 @@ const seconds = half.length * 5;
         {[0, 1].map((copy) =>
           half.map(({ partner, scale, src, srcset, width, height, sizes }, index) => {
             const hidden = copy === 1 || index >= logos.length;
-            const Tag = partner.url ? 'a' : 'span';
+            const href = safeHref(partner.url);
+            const Tag = href ? 'a' : 'span';
             return (
               <li class="partner-marquee__item" aria-hidden={hidden ? 'true' : undefined}>
                 <Tag
-                  {...(partner.url
+                  {...(href
                     ? {
-                        href: partner.url,
+                        href,
                         rel: 'noopener noreferrer',
                         target: '_blank',
                         tabindex: hidden ? -1 : undefined,

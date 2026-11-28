@@ -3,8 +3,7 @@ import type { Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
 import { localizePath, t, text } from '~/lib/i18n/utils';
 import { footerColumns } from '~/lib/nav';
-import { gtmId } from '~/lib/config';
-import CookieSettings from './CookieSettings.astro';
+import { safeHref } from '~/lib/safe-href';
 import LanguageToggle from './LanguageToggle.astro';
 import SocialIcon, { type SocialPlatform } from '~/components/design/SocialIcon.astro';
 import Logo from '~/components/Logo.astro';
@@ -27,7 +26,9 @@ const socialLabels = {
 const socials = (Object.keys(socialLabels) as SocialPlatform[]).map((platform) => ({
   platform,
   label: t(lang, socialLabels[platform]),
-  url: settings.socials?.find((social) => social.platform.toLowerCase() === platform)?.url ?? '#',
+  url:
+    safeHref(settings.socials?.find((social) => social.platform.toLowerCase() === platform)?.url) ??
+    '#',
 }));
 const year = new Date().getFullYear();
 const orgName = text(settings.orgName, lang);
@@ -100,7 +101,6 @@ const { email, phone } = settings;
     <div class="ftr__legal">
       <span>© {year} {orgName}</span>
       <a href={localizePath('/privacy', lang)} class="ftr__legal-link">{t(lang, 'navPrivacy')}</a>
-      <CookieSettings lang={lang} containerId={gtmId} />
       <span class="ftr__lang">
         <LanguageToggle lang={lang} pathname={pathname} variant="footer" />
       </span>

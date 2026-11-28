@@ -13,6 +13,7 @@
 import type { Locale } from './i18n/config';
 import { pick, text } from './i18n/utils';
 import { hasImage } from './sanity/image';
+import { isExternalHref, safeHref } from './safe-href';
 import type {
   PortableBlock,
   PortableCalloutBlock,
@@ -50,9 +51,11 @@ export function renderSpans(block: PortableTextBlock): string {
       let html = esc(span.text ?? '');
       for (const mark of span.marks ?? []) {
         const def = markDefs.find((entry) => entry._key === mark);
-        if (def?._type === 'link' && def.href) {
-          const href = esc(def.href);
-          const external = /^https?:\/\//i.test(def.href);
+        if (def?._type === 'link') {
+          const safe = safeHref(def.href, { mailto: true, tel: true });
+          if (!safe) continue;
+          const href = esc(safe);
+          const external = isExternalHref(safe);
           const attrs = external ? ' target="_blank" rel="noopener noreferrer"' : '';
           html = `<a href="${href}"${attrs}>${html}${external ? '<span aria-hidden="true"> ↗</span>' : ''}</a>`;
           continue;

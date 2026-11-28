@@ -242,6 +242,7 @@ test('production rejects test secrets and incomplete inbox/KV configuration befo
     CONTACT_TO_EMAIL: 'info@ngo.org',
     PARTNER_TO_EMAIL: 'partners@ngo.org',
     RATE_LIMIT_KV: { get: async () => '0', put: async () => {} },
+    SITE_URL: 'https://www.ngo.org',
   };
   for (const production of [
     {
@@ -251,6 +252,9 @@ test('production rejects test secrets and incomplete inbox/KV configuration befo
     { ...configured, PARTNER_TO_EMAIL: '' },
     { ...configured, MAIL_FROM: 'noreply@example.org' },
     { ...configured, RATE_LIMIT_KV: undefined },
+    { ...configured, SITE_URL: undefined },
+    { ...configured, SITE_URL: 'http://www.ngo.org' },
+    { ...configured, SITE_URL: 'not a url' },
   ]) {
     const response = await onRequest({
       request: request(JSON.stringify(valid)),
@@ -264,7 +268,8 @@ test('production rejects test secrets and incomplete inbox/KV configuration befo
 test('complete production settings preserve valid general enquiry delivery', async (t) => {
   let mail;
   t.mock.method(globalThis, 'fetch', async (url, options) => {
-    if (String(url).includes('siteverify')) return Response.json({ success: true });
+    if (String(url).includes('siteverify'))
+      return Response.json({ success: true, hostname: 'www.ngo.org', action: 'contact' });
     assert.ok(options.signal instanceof AbortSignal);
     mail = JSON.parse(options.body);
     return Response.json({ id: 'mail-id' });
@@ -277,13 +282,91 @@ test('complete production settings preserve valid general enquiry delivery', asy
     CONTACT_TO_EMAIL: 'info@ngo.org',
     PARTNER_TO_EMAIL: 'partners@ngo.org',
     RATE_LIMIT_KV: { get: async () => '0', put: async () => {} },
+    SITE_URL: 'https://www.ngo.org',
   };
   const response = await onRequest({
-    request: request(JSON.stringify(valid)),
+    request: request(JSON.stringify(valid), { Origin: 'https://www.ngo.org' }),
     env: configured,
   });
   assert.equal(response.status, 200);
   assert.deepEqual(mail.to, ['info@ngo.org']);
+});
+
+const production = {
+  PUBLIC_DEPLOYMENT_ENV: 'production',
+  TURNSTILE_SECRET_KEY: '0x-test-secret-for-unit-test',
+  RESEND_API_KEY: 're_unit_test',
+  MAIL_FROM: 'SKO <website@ngo.org>',
+  CONTACT_TO_EMAIL: 'info@ngo.org',
+  PARTNER_TO_EMAIL: 'partners@ngo.org',
+  RATE_LIMIT_KV: { get: async () => '0', put: async () => {} },
+  SITE_URL: 'https://www.ngo.org',
+};
+
+test('production rejects Turnstile tokens minted on another hostname or for another action', async (t) => {
+  for (const verdict of [
+    { success: true, hostname: 'sko-website.example.workers.dev', action: 'contact' },
+    { success: true, hostname: 'localhost', action: 'contact' },
+    { success: true, hostname: 'www.ngo.org', action: 'login' },
+    { success: true, hostname: 'www.ngo.org' },
+    { success: true },
+  ]) {
+    let sent = false;
+    t.mock.method(globalThis, 'fetch', async (url) => {
+      if (String(url).includes('siteverify')) return Response.json(verdict);
+      sent = true;
+      return Response.json({ id: 'mail-id' });
+    });
+    const response = await onRequest({ request: request(JSON.stringify(valid)), env: production });
+    assert.equal(response.status, 403, JSON.stringify(verdict));
+    assert.equal((await response.json()).error, 'verification_failed');
+    assert.equal(sent, false);
+    t.mock.restoreAll();
+  }
+});
+
+test('production rejects a cross-origin POST before reading the body or calling services', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => {
+    assert.fail('a cross-origin request must not call services');
+  });
+  for (const origin of ['https://evil.example', 'http://www.ngo.org', 'https://ngo.org', 'null']) {
+    const req = request(JSON.stringify(valid), { Origin: origin });
+    const response = await onRequest({ request: req, env: production });
+    assert.equal(response.status, 403, origin);
+    assert.equal((await response.json()).error, 'forbidden_origin');
+    assert.equal(req.bodyUsed, false);
+  }
+});
+
+test('rate-limit keys are keyed by the secret, not a reversible hash of the IP', async (t) => {
+  const keysFor = async (secret) => {
+    const keys = [];
+    const kv = {
+      get: async () => null,
+      put: async (key) => {
+        keys.push(key);
+      },
+    };
+    t.mock.method(globalThis, 'fetch', async (url) =>
+      Response.json(String(url).includes('siteverify') ? { success: true } : { id: 'mail-id' }),
+    );
+    await onRequest({
+      request: request(JSON.stringify(valid), { 'CF-Connecting-IP': '192.0.2.1' }),
+      env: { ...env, TURNSTILE_SECRET_KEY: secret, RATE_LIMIT_KV: kv },
+    });
+    t.mock.restoreAll();
+    return keys[0].split(':')[1];
+  };
+  const unkeyed = Buffer.from(
+    await crypto.subtle.digest('SHA-256', new TextEncoder().encode('sko:192.0.2.1')),
+  )
+    .subarray(0, 12)
+    .toString('hex');
+  const first = await keysFor('secret-a');
+  assert.match(first, /^[0-9a-f]{24}$/);
+  assert.notEqual(first, unkeyed);
+  assert.notEqual(first, await keysFor('secret-b'));
+  assert.equal(first, await keysFor('secret-a'));
 });
 
 test('service requests have abort deadlines and verification rejection does not send mail', async (t) => {

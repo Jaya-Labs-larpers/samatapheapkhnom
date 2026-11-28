@@ -3,6 +3,7 @@ import type { Locale } from '~/lib/i18n/config';
 import type { Report } from '~/lib/content/types';
 import { formatFileSize, pick, t } from '~/lib/i18n/utils';
 import { hasInlineLinks } from '~/lib/inline-links';
+import { isDirectFileHref, safeHref } from '~/lib/safe-href';
 import InlineLinks from '~/components/content/InlineLinks.astro';
 
 interface Props {
@@ -33,14 +34,17 @@ const typeLabels: Record<string, Record<Locale, string>> = {
       const meta = ['PDF', fileLanguage, size].filter(Boolean).join(' · ');
       const label = [report.year, typeLabel].filter(Boolean).join(' · ');
       const cover = [typeLabel ?? t(lang, 'download'), report.year].filter(Boolean).join(' ');
-      const Tag = file?.url ? 'a' : 'span';
+      const href = safeHref(file?.url);
+      const Tag = href ? 'a' : 'span';
 
       return (
         <li class="pg-doc">
           <Tag
             class="pg-doc__link"
-            {...(file?.url
-              ? { href: file.url, download: '' }
+            {...(href
+              ? isDirectFileHref(href)
+                ? { href, download: '' }
+                : { href, target: '_blank', rel: 'noopener noreferrer' }
               : { 'aria-disabled': 'true' })}
           >
             <span class="pg-doc__cover" aria-hidden="true">
@@ -64,11 +68,7 @@ const typeLabels: Record<string, Record<Locale, string>> = {
               class="pg-doc__summary inline-links"
               lang={summary.isFallback ? summary.lang : undefined}
             >
-              {hasInlineLinks(summary.value) ? (
-                <InlineLinks text={summary.value} />
-              ) : (
-                summary.value
-              )}
+              {hasInlineLinks(summary.value) ? <InlineLinks text={summary.value} /> : summary.value}
             </p>
           )}
         </li>

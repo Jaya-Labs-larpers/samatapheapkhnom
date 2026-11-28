@@ -50,6 +50,10 @@ jobs:
       - name: Audit all dependencies
         run: npm audit --audit-level=moderate
 
+      - name: Audit video dependencies
+        working-directory: video
+        run: npm audit --audit-level=moderate
+
   lighthouse:
     runs-on: ubuntu-latest
     needs: verify
@@ -65,10 +69,10 @@ jobs:
       - run: npm run build
 
       - name: Serve the build
-        run: npx --yes serve dist -l 4321 &
+        run: npx --yes serve@14.2.8 dist -l 4321 &
 
       - name: Wait for the server
-        run: npx --yes wait-on http://127.0.0.1:4321 --timeout 60000
+        run: npx --yes wait-on@9.5.1 http://127.0.0.1:4321 --timeout 60000
 
       # Mobile profile — that is the one that matters for this audience.
       # Thresholds match the definition of done, not Lighthouse's defaults.
@@ -93,7 +97,7 @@ jobs:
             slug=$(echo "$url" | sed -E 's#https?://[^/]+/##; s#/$##; s#/#-#g')
             slug=${slug:-home}
             for i in $(seq 1 "$RUNS"); do
-              npx --yes lighthouse@12 "$url" \
+              npx --yes lighthouse@12.8.2 "$url" \
                 --quiet --chrome-flags="--headless=new --no-sandbox" \
                 --skip-audits=is-crawlable \
                 --output=json --output-path="./lighthouse-reports/${slug}-${i}.json"
@@ -125,7 +129,7 @@ jobs:
       # Keep the raw reports so a red run can be diagnosed, not just re-run.
       - name: Upload Lighthouse reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: lighthouse-reports
           path: lighthouse-reports/
