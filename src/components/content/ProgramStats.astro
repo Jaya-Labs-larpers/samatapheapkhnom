@@ -91,7 +91,8 @@ const em = (text: string) =>
 
 <script>
   import { countUpOnEntry } from '~/lib/count-up';
-  countUpOnEntry();
+  import { onPageLoad } from '~/lib/page-load';
+  onPageLoad(() => countUpOnEntry());
 </script>
 
 <style is:global>

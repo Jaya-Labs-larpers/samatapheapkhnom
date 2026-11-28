@@ -1,45 +1,31 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
-import {
-  getDirectorMessage,
-  getImpactStats,
-  getOrgChart,
-  getPage,
-  getSiteSettings,
-} from '~/lib/content';
-import { hasImage } from '~/lib/sanity/image';
+import { getDirectorMessage, getOrgChart, getPage, getTeam } from '~/lib/content';
 import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
-import { blockText, splitBody } from '~/lib/content/sections';
 import { resolveSeo } from '~/lib/seo';
 import { aboutPageJsonLd } from '~/lib/seo/page-schema';
-import { ctaActions, tStrict } from '~/lib/skeleton-content';
-import { availableAboutGroups, type AboutGroup } from '~/lib/about-groups';
+import { ctaActions, faqItems, tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import RichText from '~/components/content/RichText.astro';
 import SectionedBody from '~/components/content/SectionedBody.astro';
+import DirectorMessage from '~/components/content/DirectorMessage.astro';
 import OrgChart from '~/components/content/OrgChart.astro';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
-import PageHero from '~/components/page/PageHero.astro';
-import GlanceBar from '~/components/page/GlanceBar.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
+import Accordion from '~/components/page/Accordion.astro';
 import BandCta from '~/components/page/BandCta.astro';
+import TeamStructure from '~/components/content/TeamStructure.astro';
 
 interface Props {
   lang: Locale;
-  group?: AboutGroup;
 }
 
-const { lang, group: requested } = Astro.props;
-const groups = await availableAboutGroups(lang);
-const group = groups.find((item) => item.slug === (requested?.slug ?? '')) ?? groups[0]!;
-const isOverview = group.slug === '';
-const isLeadership = group.slug === 'leadership';
+const { lang } = Astro.props;
 
-const [page, director, chart, settings, stats] = await Promise.all([
+const [page, director, chart, team] = await Promise.all([
   getPage('about'),
   getDirectorMessage(),
   getOrgChart(),
-  getSiteSettings(),
-  getImpactStats(),
+  getTeam(),
 ]);
 
 const hasOrgChart =
@@ -48,16 +34,10 @@ const hasOrgChart =
 
 const title = pick(page?.title, lang);
 const intro = pick(page?.intro, lang);
-const aboutTitle = title.value ?? tStrict(lang, 'pageAbout');
-const heading = isOverview ? aboutTitle : tStrict(lang, group.key);
-const sections = splitBody(pick(page?.body, lang).value).sections;
-const sectionDescription = group.sections
-  .flatMap((index) => sections[index]?.blocks ?? [])
-  .map(blockText)
-  .find((text) => text.trim());
-const seo = resolveSeo(isOverview ? page?.seo : null, lang, {
+const heading = title.value ?? tStrict(lang, 'pageAbout');
+const seo = resolveSeo(page?.seo, lang, {
   title: heading,
-  description: (isOverview ? intro.value : sectionDescription) || intro.value || heading,
+  description: intro.value || heading,
   image: page?.heroImage,
 });
 const aboutPage = aboutPageJsonLd({
@@ -66,62 +46,14 @@ const aboutPage = aboutPageJsonLd({
   description: seo.description,
 });
 
-const heroImage = page?.heroImage ?? settings.homeHero?.[0] ?? null;
-const heroCaption = pick(heroImage?.caption ?? heroImage?.alt, lang);
-
-const quote = pick(director.pullQuote, lang);
-const name = pick(director.name, lang);
-const role = pick(director.title, lang);
-const directorPhoto = hasImage(director.photo) ? director.photo : null;
-
-const segmenter = new Intl.Segmenter(lang, { granularity: 'grapheme' });
-const initials = (value: string) => {
-  const words = value.trim().split(/\s+/).filter(Boolean);
-  const parts = words.length > 1 ? [words[0]!, words[words.length - 1]!] : words;
-  return parts
-    .map((word) =>
-      Array.from(segmenter.segment(word))
-        .slice(0, 2)
-        .map((part) => part.segment)
-        .join(''),
-    )
-    .join('')
-    .toUpperCase();
-};
-
-const registration = pick(settings.registration, lang);
-const since = stats.find((stat) => stat._id === 'stat-since');
-const khans = stats.find((stat) => stat._id === 'stat-khans');
-const sangkats = stats.find((stat) => stat._id === 'stat-sangkats');
-const glance = [
-  { label: tStrict(lang, 'glanceFounded'), value: since?.displayValue ?? '' },
-  {
-    label: tStrict(lang, 'glanceRegistered'),
-    value: registration.value?.split('|').slice(0, 2).join(' · ').trim() ?? '',
-    valueLang: langAttr(registration),
-  },
-  {
-    label: tStrict(lang, 'glanceWhere'),
-    value: [
-      khans?.displayValue && `${khans.displayValue} ${tStrict(lang, 'glanceKhans')}`,
-      sangkats?.displayValue && `${sangkats.displayValue} ${tStrict(lang, 'glanceSangkats')}`,
-    ]
-      .filter(Boolean)
-      .join(' · '),
-  },
-  { label: tStrict(lang, 'glanceStatus'), value: tStrict(lang, 'glanceStatusValue') },
-].filter((item) => item.value);
-
-const chips = groups
-  .filter((item) => item.slug !== group.slug)
-  .map((item) => ({
-    label: tStrict(lang, item.key),
-    href: localizePath(item.path, lang),
-  }));
-chips.push(
-  { label: tStrict(lang, 'ourTeam'), href: localizePath('/team', lang) },
-  { label: tStrict(lang, 'navFaq'), href: localizePath('/faq', lang) },
+const hasDirector = Boolean(
+  pick(director.pullQuote, lang).value ||
+  director.message?.en?.length ||
+  director.message?.km?.length,
 );
+
+const faqs = faqItems(page?.faqs, lang);
+const faqMore = tStrict(lang, 'faqMore');
 ---
 
 <BaseLayout
@@ -130,89 +62,60 @@ chips.push(
   description={seo.description}
   ogImage={seo.ogImage}
   noindex
+  darkHero
   jsonLd={aboutPage}
 >
-  <PageHero
+  <PageSolo
+    full
     lang={lang}
     title={heading}
-    titleLang={isOverview ? langAttr(title) : undefined}
-    intro={isOverview ? intro.value : null}
-    introLang={isOverview ? langAttr(intro) : undefined}
-    trail={isOverview
-      ? [{ label: heading }]
-      : [{ label: aboutTitle, path: '/about' }, { label: heading }]}
-    image={heroImage}
-    caption={heroCaption.value}
-    captionLang={langAttr(heroCaption)}
-    chips={chips}
+    titleLang={langAttr(title)}
+    intro={intro.value}
+    introLang={langAttr(intro)}
+    trail={[{ label: heading }]}
   />
 
-  {isOverview && <GlanceBar items={glance} />}
-
-  <SectionedBody lang={lang} body={page?.body} only={group.sections} />
+  <SectionedBody lang={lang} body={page?.body} />
 
   {
-    (isOverview || isLeadership) && (quote.value || (isLeadership && director.message)) && (
+    hasDirector && (
       <section class="pg-section pg-section--tint">
         <div class="pg-wrap">
-          <div class="pg-quote">
-            <div class="pg-quote__photo clip-reveal">
-              {directorPhoto ? (
-                <ResponsiveImage
-                  image={directorPhoto}
-                  lang={lang}
-                  aspect="1"
-                  sizes="(min-width: 40rem) 200px, 40vw"
-                />
-              ) : (
-                <span class="pg-avatar" style="width:100%;height:100%;border-radius:0">
-                  {initials(name.value ?? '')}
-                </span>
-              )}
-            </div>
-            <div>
-              <span class="pg-kicker">{tStrict(lang, 'directorMessage')}</span>
-              {quote.value && <blockquote lang={langAttr(quote)}>{quote.value}</blockquote>}
-              <cite>
-                <b lang={langAttr(name)}>{name.value}</b>
-                {role.value && (
-                  <>
-                    {' · '}
-                    <span lang={langAttr(role)}>{role.value}</span>
-                  </>
-                )}
-              </cite>
-              {isLeadership && (
-                <div class="pg-quote__message">
-                  <RichText blocks={director.message} lang={lang} />
-                </div>
-              )}
-            </div>
-          </div>
+          <SectionHead heading={tStrict(lang, 'directorMessage')} />
+          <DirectorMessage lang={lang} director={director} />
         </div>
       </section>
     )
   }
 
   {
-    isLeadership && hasOrgChart && (
-      <section class="pg-section" id="structure">
+    (hasOrgChart || team.length > 0) && (
+      <section class="pg-section" id="team">
         <div class="pg-wrap">
-          <h2 class="pg-h2">{tStrict(lang, 'orgStructure')}</h2>
-          <OrgChart lang={lang} chart={chart} />
+          <SectionHead heading={tStrict(lang, 'ourTeam')} />
+          <h3 class="pg-h3">{tStrict(lang, 'orgStructure')}</h3>
+          {hasOrgChart && <OrgChart lang={lang} chart={chart} />}
+          {team.length > 0 && (
+            <div style="margin-top:2rem">
+              <TeamStructure lang={lang} team={team} />
+            </div>
+          )}
         </div>
       </section>
     )
   }
 
   {
-    isLeadership && (
-      <section class="pg-section pg-section--tight">
+    faqs.length > 0 && (
+      <section class="pg-section pg-section--tint">
         <div class="pg-wrap">
-          <h2 class="pg-h2">{tStrict(lang, 'ourTeam')}</h2>
-          <a href={localizePath('/team', lang)} class="pg-link" style="margin-top:0.75rem">
-            {tStrict(lang, 'orgStructure')} <span aria-hidden="true">→</span>
-          </a>
+          <SectionHead heading={tStrict(lang, 'faqHeading')} />
+          <Accordion items={faqs} />
+          {faqMore && (
+            <a href={localizePath('/faq', lang)} class="pg-link" style="margin-top:1.5rem">
+              {faqMore} <span aria-hidden="true">→</span>
+            </a>
+          )}
         </div>
       </section>
     )

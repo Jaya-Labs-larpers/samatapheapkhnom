@@ -1,12 +1,8 @@
 ---
-import { htmlLang, locales, type Locale } from '~/lib/i18n/config';
+import { htmlLang, type Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
-import { getPrograms } from '~/lib/content';
-import { localizePath, parsePath, pick, t, text } from '~/lib/i18n/utils';
-import { mainNav } from '~/lib/nav';
-import { aboutSubpages, availableAboutGroups } from '~/lib/about-groups';
-import { impactProjectsAvailable, impactProjectsPath } from '~/lib/impact-pages';
-import { donateHref } from '~/lib/skeleton-content';
+import { localizePath, parsePath, t, text } from '~/lib/i18n/utils';
+import { mainNav, mobileNav } from '~/lib/nav';
 import LanguageToggle from './LanguageToggle.astro';
 import Logo from '~/components/Logo.astro';
 
@@ -14,43 +10,15 @@ interface Props {
   lang: Locale;
   pathname: string;
   settings: SiteSettings;
+  darkHero?: boolean;
 }
 
-const { lang, pathname, settings } = Astro.props;
+const { lang, pathname, settings, darkHero = false } = Astro.props;
 
 const orgName = text(settings.orgName, lang);
 
 const current = parsePath(pathname).path.replace(/\/$/, '') || '/';
-const [programs, aboutGroups, hasImpactProjects] = await Promise.all([
-  getPrograms(),
-  availableAboutGroups(lang),
-  impactProjectsAvailable(lang),
-]);
-const shownAbout = new Set(aboutGroups.map((group) => group.path));
-const hiddenPaths = new Set(
-  aboutSubpages.map((group) => group.path).filter((path) => !shownAbout.has(path)),
-);
-if (!hasImpactProjects) hiddenPaths.add(impactProjectsPath);
-const dropdownLinks = (item: (typeof mainNav)[number]) => {
-  if (item.programs) {
-    return programs.flatMap((program) => {
-      const label = pick(program.title, lang).value;
-      return label ? [{ label, href: localizePath(`/programs/${program.slug}`, lang) }] : [];
-    });
-  }
-  return (item.sections ?? [])
-    .filter((section) => !section.path || !hiddenPaths.has(section.path))
-    .map((section) => ({
-      label: t(lang, section.key),
-      href: section.path
-        ? localizePath(section.path, lang)
-        : current === item.path
-          ? `#${section.id}`
-          : `${localizePath(item.path, lang)}#${section.id}`,
-    }));
-};
 const isCurrent = (path: string) => current === path || current.startsWith(`${path}/`);
-const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
 ---
 
 <header class="hdr site-header" data-header data-home={current === '/' ? '' : undefined}>
@@ -66,96 +34,31 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
   </script>
   <div class="hdr__bar">
     <a href={localizePath('/', lang)} class="hdr__brand">
-      <Logo variant="full" height={74} title={orgName} class="hdr__logo" />
-      {
-        current === '/' && (
-          <Logo
-            variant="reversed"
-            height={74}
-            title={orgName}
-            class="hdr__logo hdr__logo--reversed"
-          />
-        )
-      }
+      <Logo variant="full" height={74} title={orgName} class="hdr__logo" lazy={darkHero} />
+      <Logo
+        variant="reversed"
+        height={74}
+        title={orgName}
+        class="hdr__logo hdr__logo--reversed"
+        lazy={!darkHero}
+      />
     </a>
 
-    <nav class="hdr__nav" aria-label={t(lang, 'navPrimaryLabel')}>
+    <nav class="hdr__nav" aria-label={t(lang, 'mainNavLabel')}>
       {
-        navGroups.map(({ item, links }, index) => {
-          const menuId = `dd-${index}`;
-          return (
-            <div class="hdr__item" data-nav-item>
-              <a
-                href={localizePath(item.path, lang)}
-                class="hdr__link"
-                aria-current={isCurrent(item.path) ? 'page' : undefined}
-              >
-                <span class="hdr__labels">
-                  {locales.map((locale) => (
-                    <span
-                      class:list={['hdr__label', `hdr__label--${locale}`]}
-                      lang={htmlLang[locale]}
-                    >
-                      {t(locale, item.key)}
-                    </span>
-                  ))}
-                </span>
-              </a>
-              {links.length > 0 && (
-                <>
-                  <button
-                    type="button"
-                    class="hdr__chev"
-                    aria-expanded="false"
-                    aria-controls={menuId}
-                    aria-label={`${t(lang, item.key)}: ${t(lang, 'navShowSections')}`}
-                    data-dd-toggle
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.4"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </button>
-                  <div class="dd" id={menuId} data-dd inert>
-                    <div class="dd__inner">
-                      <ul class="dd__list">
-                        {links.map((link, i) => (
-                          <li style={`--i:${i}`}>
-                            <a href={link.href} class="dd__link">
-                              <span>{link.label}</span>
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                aria-hidden="true"
-                              >
-                                <path d="m9 6 6 6-6 6" />
-                              </svg>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })
+        mainNav.map((item) => (
+          <a
+            href={localizePath(item.path, lang)}
+            class="hdr__link"
+            aria-current={isCurrent(item.path) ? 'page' : undefined}
+          >
+            <span class="hdr__label roll" lang={htmlLang[lang]}>
+              <span class="roll__text" data-text={t(lang, item.key)}>
+                {t(lang, item.key)}
+              </span>
+            </span>
+          </a>
+        ))
       }
     </nav>
 
@@ -163,12 +66,14 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
       <span class="hdr__toggle-desktop">
         <LanguageToggle lang={lang} pathname={pathname} />
       </span>
-      <span class="hdr__toggle-phone">
-        <LanguageToggle lang={lang} pathname={pathname} variant="phone" />
+      <span class="hdr__swap">
+        <span class="hdr__toggle-phone" data-menu-extra>
+          <LanguageToggle lang={lang} pathname={pathname} variant="phone" />
+        </span>
+        <a href={localizePath('/contact', lang)} class="hdr__pill">
+          {t(lang, 'contactUs')}
+        </a>
       </span>
-      <a href={localizePath('/contact?topic=partner', lang)} class="hdr__pill"
-        >{t(lang, 'contactUs')}</a
-      >
       <button
         type="button"
         class="hdr__burger"
@@ -196,78 +101,47 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
     hidden
     inert
   >
-    <nav class="mmenu__body" aria-label={t(lang, 'navPrimaryLabel')}>
-      {
-        navGroups.map(({ item, links }, index) => (
-          <div class="mmenu__group" data-mgroup>
-            <div class="mmenu__row">
-              <a
-                href={localizePath(item.path, lang)}
-                class="mmenu__link"
-                aria-current={isCurrent(item.path) ? 'page' : undefined}
-              >
-                {t(lang, item.key)}
-              </a>
-              {links.length > 0 && (
-                <button
-                  type="button"
-                  class="mmenu__toggle"
-                  aria-expanded="false"
-                  aria-controls={`mm-${index}`}
-                  aria-label={`${t(lang, item.key)}: ${t(lang, 'navShowSections')}`}
-                  data-mgroup-toggle
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
+    <div class="mmenu__sheet">
+      <div class="mmenu__scroll">
+        <nav class="mmenu__body" aria-label={t(lang, 'mainNavLabel')}>
+          <ul class="mmenu__list">
+            {
+              mobileNav.map((item) => (
+                <li>
+                  <a
+                    href={localizePath(item.path, lang)}
+                    class="mmenu__link"
+                    aria-current={isCurrent(item.path) ? 'page' : undefined}
                   >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            {links.length > 0 && (
-              <div class="mmenu__sub" id={`mm-${index}`} data-mgroup-panel>
-                <ul class="mmenu__sublist">
-                  {links.map((link) => (
-                    <li>
-                      <a href={link.href} class="mmenu__sublink" tabindex="-1">
-                        {link.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                    {t(lang, item.key)}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+          <div class="mmenu__actions">
+            <a href={localizePath('/contact', lang)} class="mmenu__cta mmenu__cta--solid">
+              {t(lang, 'contactUs')}
+            </a>
+            <a href={localizePath('/contact?topic=volunteer', lang)} class="mmenu__cta">
+              {t(lang, 'navVolunteer')}
+            </a>
           </div>
-        ))
-      }
-      <div class="mmenu__actions">
-        <a href={donateHref(lang)} class="mmenu__cta mmenu__cta--solid">
-          {t(lang, 'donate')}
-        </a>
-        <a href={localizePath('/contact?topic=partner', lang)} class="mmenu__cta">
-          {t(lang, 'contactUs')}
-        </a>
+        </nav>
       </div>
-    </nav>
+    </div>
   </div>
 </header>
 
 <script>
-  import { initDropdowns, initMenus } from '~/lib/menu';
+  import { initMenus } from '~/lib/menu';
   import { initHeaderMotion } from '~/lib/header-motion';
+  import { onPageLoad } from '~/lib/page-load';
 
-  initMenus();
-  initDropdowns();
-  initHeaderMotion();
+  onPageLoad((signal) => {
+    initMenus(signal);
+    initHeaderMotion(signal);
+  });
 </script>
 
 <style>
@@ -277,22 +151,25 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
     z-index: 40;
     box-sizing: border-box;
     height: var(--header-h);
-    --hdr-gutter: clamp(1rem, 2.5vw, 2.25rem);
-    padding: var(--safe-top) max(var(--hdr-gutter), var(--safe-right)) 0
-      max(var(--hdr-gutter), var(--safe-left));
+    padding: var(--safe-top) var(--gutter-right) 0 var(--gutter-left);
     background: #fff;
     border-bottom: 1px solid var(--color-line);
-    --hdr-ink: #000;
+    box-shadow: 0 4px 20px rgb(14 21 51 / 0.04);
+    --hdr-ink: var(--color-ink-900);
     color: var(--hdr-ink);
     font-family: var(--font-sans);
     --hdr-control-h: 40px;
     transition:
       background-color var(--duration-ui) var(--ease-ui),
       border-color var(--duration-ui) var(--ease-ui),
-      color var(--duration-ui) var(--ease-ui);
+      color var(--duration-ui) var(--ease-ui),
+      box-shadow var(--duration-ui) var(--ease-ui);
+  }
+  :global(html[data-astro-transition]) .hdr {
+    transition: none;
   }
   .hdr__bar {
-    max-width: 90.5rem;
+    max-width: var(--container-page);
     height: 100%;
     margin: 0 auto;
     display: flex;
@@ -304,7 +181,6 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
     display: flex;
     align-items: center;
     min-width: 0;
-    margin-inline-start: clamp(0.25rem, 0.75vw, 0.875rem);
     text-decoration: none;
   }
   .hdr :global(.hdr__logo) {
@@ -324,156 +200,69 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
     align-items: center;
     white-space: nowrap;
   }
-  .hdr__item {
+  .hdr__link {
     position: relative;
     display: flex;
     align-items: center;
     height: var(--hdr-control-h);
-    padding-inline: 0.25rem;
-    border-radius: var(--radius-md);
-    transition: background-color var(--duration-ui) var(--ease-ui);
-  }
-  .hdr__item[data-open] {
-    background: var(--color-blue-50);
-  }
-  .hdr__link {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    padding-inline: 0.5rem;
+    padding-inline: 0.75rem;
     color: inherit;
     font-weight: 500;
     text-decoration: none;
-    transition: opacity var(--duration-ui) var(--ease-ui);
+    transition: color var(--duration-fast) var(--ease-out-soft);
+  }
+  /* On the label, not the link: the link is as wide as the longer language. */
+  .hdr__label::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-base) var(--ease-out-soft);
   }
   .hdr__link:hover {
-    opacity: 0.6;
+    color: var(--color-blue-700);
+  }
+  .hdr__link:hover .hdr__label::after {
+    transform: scaleX(1);
+  }
+  /* Text rolls up and a copy rolls in from below, as on the original site. */
+  .roll {
+    display: inline-block;
+    overflow: hidden;
+    margin-block: -0.3em;
+    padding-block: 0.3em;
+    vertical-align: top;
+  }
+  .roll__text {
+    position: relative;
+    display: inline-block;
+    transition: translate 480ms var(--ease-reveal);
+  }
+  .roll__text::after {
+    content: attr(data-text) / '';
+    position: absolute;
+    top: calc(100% + 0.6em);
+    left: 0;
+    white-space: nowrap;
+  }
+  .hdr__link:is(:hover, :focus-visible) .roll__text {
+    translate: 0 calc(-100% - 0.6em);
   }
   .hdr__link[aria-current] {
     font-weight: 600;
   }
-  /* Both languages share one grid cell, so the slot is as wide as the longer
-     label and nothing shifts when the language changes. */
-  .hdr__labels {
-    display: grid;
-    place-items: center;
+  .hdr__link[aria-current] .hdr__label::after {
+    transform: scaleX(1);
   }
   .hdr__label {
-    grid-area: 1 / 1;
-    visibility: hidden;
-    font-size: 16px;
+    position: relative;
+    font-size: 15.5px;
     line-height: 1.2;
-  }
-  :global(html[lang='en']) .hdr__label--en,
-  :global(html[lang='km']) .hdr__label--km {
-    visibility: visible;
-  }
-  .hdr__chev {
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 100%;
-    margin-inline-start: -0.375rem;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: inherit;
-    cursor: pointer;
-  }
-  .hdr__chev svg {
-    transition: transform 360ms var(--ease-reveal);
-  }
-  .hdr__chev[aria-expanded='true'] svg {
-    transform: rotate(180deg);
-  }
-
-  .dd {
-    --hdr-ink: #000;
-    position: absolute;
-    top: 100%;
-    inset-inline-start: 0;
-    z-index: 2;
-    width: clamp(18rem, 23vw, 22rem);
-    padding-top: calc((var(--header-h) - var(--safe-top) - var(--hdr-control-h)) / 2 + 0.25rem);
-    display: grid;
-    grid-template-rows: 0fr;
-    visibility: hidden;
-    pointer-events: none;
-    transition:
-      grid-template-rows 420ms var(--ease-reveal),
-      visibility 0s linear 420ms;
-  }
-  .hdr__item[data-open] > .dd {
-    z-index: 3;
-    grid-template-rows: 1fr;
-    visibility: visible;
-    pointer-events: auto;
-    transition-delay: 0s;
-  }
-  .dd__inner {
-    min-height: 0;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    background: #fff;
-    box-shadow:
-      0 4px 24px rgb(14 21 51 / 0.12),
-      0 16px 32px -16px rgb(14 21 51 / 0.28);
-    /* Fades out with the collapse: a zero-height box still draws its edges. */
-    opacity: 0;
-    transition: opacity 200ms ease;
-  }
-  .hdr__item[data-open] > .dd > .dd__inner {
-    opacity: 1;
-  }
-  .dd__list {
-    max-height: min(26rem, calc(100vh - var(--header-h) - 1rem));
-    max-height: min(26rem, calc(100dvh - var(--header-h) - 1rem));
-    margin: 0;
-    padding: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    list-style: none;
-  }
-  .dd__list li {
-    opacity: 0;
-    translate: 0 -0.5rem;
-    transition:
-      opacity 200ms ease,
-      translate 200ms ease;
-  }
-  .hdr__item[data-open] .dd__list li {
-    opacity: 1;
-    translate: 0 0;
-    transition-delay: calc(90ms + var(--i) * 45ms);
-  }
-  .dd__link {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    min-height: 3rem;
-    padding: 0.75rem 1rem;
-    color: var(--hdr-ink);
-    font-weight: 600;
-    line-height: 1.4;
-    text-decoration: none;
-    white-space: normal;
-    transition: background-color var(--duration-fast) var(--ease-out-soft);
-  }
-  .dd__link span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-  .dd__link svg {
-    flex: none;
-    color: var(--color-blue-700);
-  }
-  .dd__link:is(:hover, :focus-visible) {
-    background: var(--color-blue-50);
-  }
-  .dd__link:focus-visible {
-    outline: 2px solid var(--color-blue-700);
-    outline-offset: -2px;
   }
   /* --- Tools: language switch, call to action, menu button ---------------- */
   .hdr__tools {
@@ -485,24 +274,48 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
   .hdr__toggle-desktop {
     display: none;
   }
+  /* Phone, menu open: the language switch joins the call to action at its size. */
+  .hdr__swap {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 0.375rem;
+  }
+  .hdr__toggle-phone {
+    display: none;
+  }
+  .hdr__toggle-phone :global(.lang-toggle) {
+    flex: 1;
+    box-sizing: border-box;
+    height: 44px;
+    border-radius: var(--radius-cta);
+    font-size: 15px;
+  }
+  :global([data-menu-open]) .hdr__toggle-phone {
+    display: flex;
+    transition: opacity 420ms var(--ease-out-soft);
+    @starting-style {
+      opacity: 0;
+    }
+  }
   .hdr__pill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    height: var(--hdr-control-h);
-    padding: 0 0.875rem;
+    height: 44px;
+    padding: 0 1.25rem;
     border-radius: var(--radius-cta);
     background: var(--color-blue-700);
     color: #fff;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 16px;
+    font-weight: 600;
     line-height: 1;
     text-decoration: none;
     white-space: nowrap;
     transition: background-color var(--duration-ui) var(--ease-ui);
   }
-  .hdr__pill:is(:hover, :focus-visible) {
+  .hdr__pill:hover {
     background: var(--color-blue-800);
   }
   .hdr__pill:focus-visible {
@@ -529,8 +342,8 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
     height: 2px;
     background: currentColor;
     transition:
-      transform 400ms ease,
-      opacity 400ms ease;
+      transform 480ms var(--ease-out-soft),
+      opacity 360ms var(--ease-out-soft);
   }
   .hdr__burger[aria-expanded='true'] .hdr__burger-line:nth-child(1) {
     transform: translate3d(0, 5px, 0) rotate(45deg);
@@ -560,9 +373,6 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
       background-color var(--duration-ui) var(--ease-ui),
       opacity var(--duration-ui) var(--ease-ui);
   }
-  .hdr__toggle-phone :global(.lang-toggle__link) {
-    min-block-size: 42px;
-  }
   .hdr__tools :global(.lang-toggle__link:hover) {
     opacity: 1;
   }
@@ -571,103 +381,100 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
     font-weight: 600;
     opacity: 1;
   }
+  .hdr__tools .hdr__toggle-phone :global(.lang-toggle__link.is-current) {
+    background: var(--color-blue-700);
+    color: #fff;
+  }
 
-  /* --- Phone menu: fills the window under the bar, fading in -------------- */
   .mmenu {
     position: fixed;
     inset: var(--header-h) 0 0;
     z-index: 1;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    background: #fff;
     color: var(--hdr-ink);
-    opacity: 0;
+    background: rgb(14 21 51 / 0);
     visibility: hidden;
-    transition:
-      opacity 400ms ease,
-      visibility 0s linear 400ms;
+    transition: background-color 240ms var(--ease-out-soft), visibility 0s linear 240ms;
   }
   .mmenu[data-state='open'] {
-    opacity: 1;
+    background: rgb(14 21 51 / 0.4);
     visibility: visible;
-    transition-delay: 0s;
+    transition: background-color 480ms var(--ease-out-soft), visibility 0s;
+  }
+  .mmenu__sheet {
+    display: grid;
+    grid-template-rows: 0fr;
+    background: #fff;
+    transition: grid-template-rows 240ms var(--ease-out-soft);
+  }
+  .mmenu[data-state='open'] .mmenu__sheet {
+    grid-template-rows: 1fr;
+    transition-duration: 480ms;
+  }
+  .mmenu__scroll {
+    min-height: 0;
+    max-height: calc(100dvh - var(--header-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
   .mmenu__body {
     display: flex;
     flex-direction: column;
     padding: 0.5rem var(--gutter-right) calc(2rem + var(--safe-bottom)) var(--gutter-left);
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 200ms var(--ease-out-soft), transform 200ms var(--ease-out-soft);
   }
-  .mmenu__row {
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid var(--color-line);
+  .mmenu[data-state='open'] .mmenu__body {
+    opacity: 1;
+    transform: none;
+    transition: opacity 420ms var(--ease-out-soft) 90ms, transform 460ms var(--ease-out-soft) 60ms;
+  }
+  .mmenu__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
   .mmenu__link {
-    flex: 1;
+    display: flex;
+    align-items: center;
     min-height: 44px;
+    border-bottom: 1px solid var(--color-line);
     padding: 1rem 0;
     color: var(--hdr-ink);
     font-size: 19px;
     font-weight: 600;
     text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out-soft);
   }
-  .mmenu__toggle {
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    margin-inline-end: -12px;
-    padding: 0;
-    border: 0;
-    background: none;
+  .mmenu__link[aria-current] {
     color: var(--color-blue-700);
-    cursor: pointer;
-  }
-  .mmenu__toggle[aria-expanded='true'] svg {
-    transform: rotate(180deg);
-  }
-  .mmenu__sub {
-    display: none;
-  }
-  .mmenu__group[data-open] .mmenu__sub {
-    display: block;
-  }
-  .mmenu__sublist {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .mmenu__sublink {
-    display: flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0.625rem 0 0.625rem 1rem;
-    border-bottom: 1px solid var(--color-line);
-    color: var(--hdr-ink);
-    font-size: 16px;
-    font-weight: 500;
-    text-decoration: none;
   }
   .mmenu a:hover {
     color: var(--color-blue-700);
   }
   .mmenu__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.5rem, 2.2vw, 0.75rem);
     margin-top: 1.5rem;
   }
   .mmenu__cta {
     display: inline-flex;
     align-items: center;
-    padding: 1rem 1.5rem;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: clamp(2.75rem, 11vw, 3.375rem);
+    padding: clamp(0.75rem, 2.8vw, 1.125rem) clamp(0.5rem, 2.5vw, 1.5rem);
     border: 1px solid var(--color-line-strong);
     border-radius: var(--radius-cta);
     color: var(--hdr-ink);
-    font-size: 16px;
+    font-size: clamp(0.8125rem, 3.8vw, 1.125rem);
     font-weight: 500;
     line-height: 1;
+    text-align: center;
     text-decoration: none;
+    white-space: nowrap;
     transition:
       background-color var(--duration-ui) var(--ease-ui),
       border-color var(--duration-ui) var(--ease-ui);
@@ -690,103 +497,124 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
     overflow: hidden;
   }
 
-  /* Home, while over the hero photo: no surface, white ink.
-     Without scripts the bar would never turn white again, so it starts white. */
   @media (scripting: enabled) {
-    :global(html:not([data-menu-open])) .hdr[data-home]:not([data-solid]) {
+    .hdr[data-home]:not([data-solid]):has(> .mmenu[hidden]),
+    :global(
+        body:has(
+          #main > [data-hero-dark]:first-child,
+          #main > :first-child > [data-hero-dark]:first-child
+        )
+      )
+      .hdr:not([data-home], [data-solid]):has(> .mmenu[hidden]) {
       --hdr-ink: #fff;
       border-bottom-color: transparent;
+      box-shadow: none;
       background: linear-gradient(rgb(18 16 14 / 0.65), rgb(18 16 14 / 0.3) 65%, rgb(18 16 14 / 0))
         border-box;
-    }
-    :global(html:not([data-menu-open])) .hdr[data-home]:not([data-solid]) :global(.hdr__logo) {
-      display: none;
-    }
-    :global(html:not([data-menu-open]))
-      .hdr[data-home]:not([data-solid])
+
+      :global(.hdr__logo) {
+        display: none;
+      }
       :global(.hdr__logo--reversed) {
-      display: block;
+        display: block;
+      }
+      .hdr__link {
+        text-shadow: 0 1px 8px rgb(0 0 0 / 0.35);
+      }
+      .hdr__link:hover {
+        color: inherit;
+      }
+      .hdr__tools :global(.lang-toggle) {
+        border-color: rgb(255 255 255 / 0.55);
+      }
+      .hdr__tools :global(.lang-toggle__link:not(.is-current):hover) {
+        background: rgb(255 255 255 / 0.14);
+        color: #fff;
+      }
+      .hdr__tools :global(.lang-toggle__link.is-current) {
+        background: rgb(255 255 255 / 0.22);
+      }
+      .hdr__bar > a:focus-visible,
+      .hdr__bar :is(.hdr__link, .hdr__pill, .hdr__burger):focus-visible,
+      .hdr__tools :global(.lang-toggle__link:focus-visible) {
+        outline-color: #fff;
+      }
     }
-    :global(html:not([data-menu-open])) .hdr[data-home]:not([data-solid]) .hdr__link {
-      text-shadow: 0 1px 8px rgb(0 0 0 / 0.35);
-    }
-    :global(html:not([data-menu-open])) .hdr[data-home]:not([data-solid]) .hdr__item[data-open] {
-      background: rgb(255 255 255 / 0.18);
-    }
-    :global(html:not([data-menu-open]))
-      .hdr[data-home]:not([data-solid])
-      .hdr__tools
-      :global(.lang-toggle) {
-      border-color: rgb(255 255 255 / 0.7);
-    }
-    :global(html:not([data-menu-open]))
-      .hdr[data-home]:not([data-solid])
-      .hdr__tools
-      :global(.lang-toggle__link.is-current) {
-      background: rgb(255 255 255 / 0.22);
-    }
-    :global(html:not([data-menu-open]))
-      .hdr[data-home]:not([data-solid])
-      .hdr__bar
-      > a:focus-visible,
-    :global(html:not([data-menu-open]))
-      .hdr[data-home]:not([data-solid])
-      .hdr__bar
-      :is(.hdr__link, .hdr__chev, .hdr__pill, .hdr__burger):focus-visible,
-    :global(html:not([data-menu-open]))
-      .hdr[data-home]:not([data-solid])
-      .hdr__tools
-      :global(.lang-toggle__link:focus-visible) {
-      outline-color: #fff;
+    :global(
+        body:has(
+          #main > [data-hero-dark]:first-child,
+          #main > :first-child > [data-hero-dark]:first-child
+        )
+      )
+      .hdr:not([data-home], [data-solid]):has(> .mmenu[hidden]) {
+      background: var(--color-blue-900);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .hdr,
     .hdr *,
-    .mmenu,
-    .dd {
+    .mmenu {
       transition-duration: 0s !important;
       transition-delay: 0s !important;
     }
   }
 
   @media (width < 30rem) {
+    .hdr {
+      padding-inline: clamp(0.75rem, 4vw, var(--gutter-left))
+        clamp(0.75rem, 4vw, var(--gutter-right));
+    }
+    .hdr__bar {
+      gap: clamp(0.375rem, 2vw, 0.75rem);
+    }
     .hdr :global(.hdr__logo) {
-      height: 56px;
+      height: clamp(38px, 12vw, 54px);
     }
     .hdr__tools {
-      gap: 0.375rem;
+      flex: 1 1 auto;
+      justify-content: flex-end;
+      min-width: 0;
+      gap: clamp(0.25rem, 1.5vw, 0.5rem);
+    }
+    .hdr__swap {
+      flex: 0 1 auto;
+      grid-auto-columns: minmax(0, 1fr);
+      gap: clamp(0.25rem, 1.5vw, 0.375rem);
+      min-width: 0;
+    }
+    :global([data-menu-open]) .hdr__swap {
+      flex: 1 1 auto;
     }
     .hdr__pill {
-      padding: 0 0.625rem;
-      font-size: 13px;
+      height: clamp(36px, 10.5vw, 44px);
+      padding: 0 clamp(0.5rem, 2.8vw, 1.125rem);
+      font-size: clamp(11px, 3.5vw, 15px);
+    }
+    .hdr__toggle-phone :global(.lang-toggle) {
+      width: 100%;
+      height: clamp(36px, 10.5vw, 44px);
+      font-size: clamp(11px, 3.5vw, 15px);
     }
     .hdr__toggle-phone :global(.lang-toggle__link) {
-      min-inline-size: 2.25rem;
-      padding-inline: 8px;
+      min-inline-size: 0;
+      padding-inline: clamp(4px, 1.8vw, 10px);
+    }
+    .hdr__burger {
+      width: clamp(34px, 9.5vw, 44px);
+      margin-inline-end: 0;
+      flex-shrink: 0;
     }
   }
-  /* Narrowest phones: the call to action is also in the menu. */
-  @media (width < 22.5rem) {
-    .hdr__pill {
-      display: none;
+  @media (orientation: landscape) and (height <= 32rem) {
+    .hdr :global(.hdr__logo) {
+      height: 44px;
     }
   }
 
-  @media (min-width: 62rem) {
+  @media (min-width: 64rem) {
     .hdr :global(.hdr__logo) {
-      height: 72px;
-    }
-    .hdr__pill {
-      padding: 0 1.25rem;
-      font-size: 15px;
-    }
-  }
-
-  @media (min-width: 75rem) {
-    .hdr :global(.hdr__logo) {
-      height: 74px;
+      height: clamp(62px, 5vw + 10px, 74px);
     }
     .hdr__toggle-phone,
     .hdr__burger,
@@ -797,13 +625,23 @@ const navGroups = mainNav.map((item) => ({ item, links: dropdownLinks(item) }));
       display: grid;
       grid-template-columns: 1fr auto 1fr;
     }
-    .hdr__tools {
-      justify-self: end;
-      gap: 0.75rem;
-    }
     .hdr__nav {
       display: flex;
-      gap: clamp(0.25rem, 0.8vw, 0.75rem);
+      gap: clamp(0.125rem, 0.8vw, 0.75rem);
+    }
+    .hdr__link {
+      padding-inline: clamp(0.5rem, 1vw - 0.15rem, 0.75rem);
+    }
+    .hdr__label {
+      font-size: clamp(14.5px, 0.8vw + 6px, 15.5px);
+    }
+    .hdr__pill {
+      padding: 0 clamp(1rem, 2vw - 0.25rem, 1.5rem);
+      font-size: clamp(15px, 0.8vw + 6.5px, 16px);
+    }
+    .hdr__tools {
+      justify-self: end;
+      gap: clamp(0.5rem, 1vw - 0.15rem, 0.75rem);
     }
     .hdr__toggle-desktop {
       display: inline-flex;

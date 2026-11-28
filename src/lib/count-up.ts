@@ -124,10 +124,15 @@ export function countUpOnEntry(root: ParentNode = document): void {
     (entries) => {
       for (const entry of entries) {
         const figure = entry.target as HTMLElement;
+        const once = 'countOnce' in figure.dataset;
         if (entry.intersectionRatio >= 0.6) {
-          if (armed.has(figure) && !waiting.has(figure)) startOnceShown(figure);
+          if (armed.has(figure) && !waiting.has(figure)) {
+            startOnceShown(figure);
+            if (once) observer.unobserve?.(figure);
+          }
           continue;
         }
+        if (once) continue;
         const bottom = entry.rootBounds?.bottom ?? window.innerHeight;
         if (!entry.isIntersecting && entry.boundingClientRect.top >= bottom) reset(figure);
       }

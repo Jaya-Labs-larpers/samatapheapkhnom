@@ -62,13 +62,18 @@ async function start(): Promise<void> {
   syncMenuLock();
 }
 
+let initialised = false;
+
 export function initSmoothScroll(): void {
+  if (initialised) return;
+  initialised = true;
   void start();
   for (const query of [REDUCED_MOTION, DESKTOP, TOUCH_ONLY]) {
     window
       .matchMedia(query)
       .addEventListener('change', () => (smoothScrollWanted() ? void start() : teardown()));
   }
+  window.addEventListener('pageswap', () => lenis?.stop());
   window.addEventListener('pagehide', teardown);
   window.addEventListener('pageshow', (event) => event.persisted && void start());
 }

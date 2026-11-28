@@ -42,6 +42,38 @@ const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: titl
       {tStrict(lang, 'contactUs')}
     </h1>
 
+    <div class="contact-quick">
+      {
+        settings.phone && (
+          <a href={tel(settings.phone)} class="contact-quick__chip">
+            <Icon name="phone" size={16} />
+            <span>{tStrict(lang, 'contactCall')}</span>
+          </a>
+        )
+      }
+      {
+        settings.email && (
+          <a href={`mailto:${settings.email}`} class="contact-quick__chip">
+            <Icon name="envelope" size={16} />
+            <span>{tStrict(lang, 'contactEmail')}</span>
+          </a>
+        )
+      }
+      {
+        settings.mapUrl && (
+          <a
+            href={settings.mapUrl}
+            class="contact-quick__chip"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <Icon name="map-pin" size={16} />
+            <span>{tStrict(lang, 'contactVisit')}</span>
+          </a>
+        )
+      }
+    </div>
+
     <div class="contact-split__form">
       <ContactForm lang={lang} id="form-contact" />
     </div>

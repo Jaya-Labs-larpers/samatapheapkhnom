@@ -11,10 +11,9 @@ interface Props {
   actions: SkAction[];
   image?: CmsImage | null;
   card?: boolean;
-  keep?: boolean;
 }
 
-const { lang, heading, body, actions, image, card = false, keep = false } = Astro.props;
+const { lang, heading, body, actions, image, card = false } = Astro.props;
 ---
 
 <section class:list={['sk-cta-split', card && 'sk-cta-split--card']}>
@@ -26,7 +25,6 @@ const { lang, heading, body, actions, image, card = false, keep = false } = Astr
           lang={lang}
           alt=""
           aspect="4/3"
-          keep={keep}
           sizes="(min-width: 64rem) 50vw, 100vw"
         />
       </div>
@@ -60,12 +58,22 @@ const { lang, heading, body, actions, image, card = false, keep = false } = Astr
     isolation: isolate;
     display: block;
     box-sizing: border-box;
-    width: min(100% - 40px, 1281px);
+    width: min(
+      calc(100% - var(--gutter-left) - var(--gutter-right)),
+      calc(var(--container-page) - var(--gutter-left) - var(--gutter-right))
+    );
     min-height: 0;
     margin: clamp(32px, 5vw, 72px) auto;
-    border-radius: 24px;
+    border-radius: var(--radius-2xl);
     overflow: hidden;
-    background: var(--color-ink-900);
+    background:
+      radial-gradient(
+        85% 130% at 92% 0%,
+        color-mix(in srgb, var(--color-blue-700) 28%, transparent),
+        transparent 62%
+      ),
+      var(--color-blue-900);
+    box-shadow: var(--shadow-lg);
   }
   .sk-cta-split--card .sk-cta-split__media {
     position: absolute;
@@ -91,10 +99,22 @@ const { lang, heading, body, actions, image, card = false, keep = false } = Astr
     flex-direction: column;
     gap: 24px;
   }
-  /* Equal columns, so every button is as wide as the others. */
+  /* Equal columns on one line, scaling cleanly to fill available width. */
   .sk-cta-split--card .sk-actions {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: clamp(0.5rem, 2vw, 0.625rem);
     width: min(100%, 24rem);
+  }
+  @media (width < 40rem) {
+    .sk-cta-split--card .sk-actions {
+      width: 100%;
+    }
+    .sk-cta-split--card .sk-btn {
+      width: 100%;
+      padding: clamp(0.625rem, 2.4vw, 0.75rem) clamp(0.5rem, 2.2vw, 1.25rem);
+      font-size: clamp(0.75rem, 3.2vw, 0.9375rem);
+      white-space: nowrap;
+    }
   }
 </style>

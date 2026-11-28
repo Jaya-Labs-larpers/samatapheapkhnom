@@ -7,7 +7,6 @@
  */
 export const redesignEn = {
   // --- Header and menus -----------------------------------------------------
-  navPrimaryLabel: 'Main',
   navWhoWeAre: 'Who we are',
   navApproach: 'Our approach',
   navValues: 'Mission & values',

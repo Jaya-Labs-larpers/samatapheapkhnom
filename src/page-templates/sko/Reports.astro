@@ -23,8 +23,9 @@ const description = tStrict(lang, 'metaReports') || stripInlineLinks(tStrict(lan
 const collection = collectionPageJsonLd({ pathname: Astro.url.pathname, name: title, description });
 ---
 
-<BaseLayout lang={lang} title={title} description={description} noindex jsonLd={collection}>
+<BaseLayout lang={lang} title={title} description={description} noindex darkHero jsonLd={collection}>
   <PageSolo
+    full
     lang={lang}
     title={heading}
     intro={tStrict(lang, 'introReports')}

@@ -29,8 +29,6 @@ interface Props {
    * areas (logos), where the blurred LQIP would show through.
    */
   blurUp?: boolean;
-  /** Always render the real image, never the placeholder: a diagram, or a photo the page is built around. */
-  keep?: boolean;
   class?: string;
 }
 
@@ -43,7 +41,6 @@ const {
   eager = false,
   defer = false,
   blurUp = true,
-  keep = false,
   class: className = '',
 } = Astro.props;
 
@@ -54,11 +51,16 @@ const {
  * real photograph lands, and it is hidden from assistive tech, which has no use
  * for an image that does not exist.
  */
-const isPhoto = blurUp && !keep;
-const present = !isPhoto && hasImage(image);
+const parseFixedPx = (value: string): number | null => {
+  const match = /^(\d+)px$/.exec(value.trim());
+  return match ? Number(match[1]) : null;
+};
+const fixedPx = parseFixedPx(sizes);
+const defaultWidth = fixedPx ? Math.min(1200, Math.max(320, fixedPx * 2)) : 1200;
+const present = hasImage(image);
 const altText = alt ?? (image ? text(image.alt, lang) : '');
 const { width, height } = imageDimensions(image);
-const src = present && image ? imageUrl(image, { width: 1200 }) : null;
+const src = present && image ? imageUrl(image, { width: defaultWidth }) : null;
 const srcset = present && image ? imageSrcSet(image) : null;
 const lqip = image?.lqip ?? null;
 
@@ -167,10 +169,3 @@ const imgStyle = [eager ? lqipStyle : undefined, focusStyle].filter(Boolean).joi
     </div>
   )
 }
-
-<script>
-  import { hydrateDeferredImages, revealWhenLoaded } from '~/lib/lazy';
-
-  revealWhenLoaded();
-  hydrateDeferredImages();
-</script>

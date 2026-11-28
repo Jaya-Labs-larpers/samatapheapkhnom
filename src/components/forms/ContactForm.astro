@@ -246,7 +246,7 @@ const strings = {
 
   declare global {
     interface Window {
-      turnstile?: { reset(container?: Element): void };
+      turnstile?: { reset(container?: Element): void; render(container: Element): void };
     }
   }
 
@@ -263,6 +263,14 @@ const strings = {
     for (const widget of widgets) {
       const column = widget.parentElement?.clientWidth ?? Infinity;
       if (column < 300) widget.dataset.size = 'compact';
+    }
+    // After a client-side navigation the script is already running and only
+    // auto-renders widgets it saw on its first load.
+    if (window.turnstile) {
+      widgets.forEach(
+        (widget) => widget.childElementCount === 0 && window.turnstile?.render(widget),
+      );
+      return;
     }
     if (document.querySelector(`script[src="${TURNSTILE_SRC}"]`)) return;
     const script = document.createElement('script');
@@ -293,158 +301,169 @@ const strings = {
     return body;
   }
 
-  document.querySelectorAll<HTMLFormElement>('form[data-form-type]').forEach((form) => {
-    const toast = document.querySelector<HTMLElement>(`[data-toast="${form.id}"]`);
-    const status = form.querySelector<HTMLElement>('.form-status');
-    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-    const buttonLabel = button?.querySelector('span');
-    if (!toast || !status || !button || !buttonLabel) return;
+  const initForms = () => {
+    document.querySelectorAll<HTMLFormElement>('form[data-form-type]').forEach((form) => {
+      const toast = document.querySelector<HTMLElement>(`[data-toast="${form.id}"]`);
+      const status = form.querySelector<HTMLElement>('.form-status');
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const buttonLabel = button?.querySelector('span');
+      if (!toast || !status || !button || !buttonLabel) return;
 
-    let strings: Strings = {};
-    try {
-      strings = JSON.parse(form.dataset.strings ?? '{}');
-    } catch {
-      strings = {};
-    }
-    const idleLabel = buttonLabel.textContent ?? '';
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let busy = false;
-
-    const showToast = () => {
-      clearTimeout(timer);
-      toast.hidden = false;
-      // Next frame, so the transition runs from the hidden state.
-      requestAnimationFrame(() => toast.classList.add('is-shown'));
-      timer = setTimeout(() => {
-        toast.classList.remove('is-shown');
-        const done = () => {
-          toast.hidden = true;
-          toast.removeEventListener('transitionend', done);
-        };
-        toast.addEventListener('transitionend', done);
-      }, HOLD_MS);
-    };
-
-    const clearStatus = () => {
-      status.hidden = true;
-      status.textContent = '';
-      for (const element of Array.from(form.elements)) {
-        element.removeAttribute('aria-invalid');
-        element.removeAttribute('aria-describedby');
-      }
-    };
-
-    const showStatus = (message: string) => {
-      status.textContent = message;
-      status.hidden = false;
-    };
-
-    /** A general failure: the fixed sentence plus the inbox to fall back on. */
-    const showFailure = (body: string) => {
-      const email = strings.fallbackEmail ? ` ${strings.fallbackEmail}` : '';
-      showStatus(`${strings.errorTitle ?? ''} ${body}${email}`.trim());
-    };
-
-    const markFields = (fieldErrors: Record<string, string>) => {
-      let first: HTMLElement | null = null;
-      for (const [name, code] of Object.entries(fieldErrors)) {
-        const field = form.elements.namedItem(name);
-        if (!(field instanceof HTMLElement)) continue;
-        field.setAttribute('aria-invalid', 'true');
-        field.setAttribute('aria-describedby', status.id);
-        if (!first) {
-          first = field;
-          showStatus(strings[code] ?? strings.invalid ?? '');
-        }
-      }
-      first?.focus();
-    };
-
-    const resetTurnstile = () => {
-      const widget = form.querySelector('.cf-turnstile');
-      if (widget && window.turnstile) {
-        try {
-          window.turnstile.reset(widget);
-        } catch {
-          /* the widget had not rendered yet — nothing to reset */
-        }
-      }
-    };
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (busy) return;
-      clearStatus();
-
-      if (form.dataset.enabled !== 'true') {
-        showFailure(strings.unavailable ?? '');
-        return;
-      }
-
-      busy = true;
-      button.disabled = true;
-      buttonLabel.textContent = strings.sending ?? idleLabel;
-
+      let strings: Strings = {};
       try {
-        const response = await fetch(form.dataset.endpoint ?? '/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(fieldValues(form)),
-        });
-        let reply: Reply = {};
-        try {
-          reply = (await response.json()) as Reply;
-        } catch {
-          reply = {};
-        }
-
-        if (response.ok && reply.ok) {
-          form.reset();
-          showToast();
-          return;
-        }
-        if (reply.fieldErrors) {
-          markFields(reply.fieldErrors);
-          return;
-        }
-        switch (reply.error) {
-          case 'rate_limited':
-            showStatus(strings.rate_limited ?? '');
-            break;
-          case 'verification_failed':
-            showStatus(strings.verification ?? '');
-            break;
-          case 'preview_disabled':
-            showFailure(strings.unavailable ?? '');
-            break;
-          default:
-            showFailure(strings.errorBody ?? '');
-        }
+        strings = JSON.parse(form.dataset.strings ?? '{}');
       } catch {
-        showFailure(strings.errorBody ?? '');
-      } finally {
-        // Turnstile tokens are single-use: whatever happened, the next attempt
-        // needs a fresh one.
-        resetTurnstile();
-        busy = false;
-        button.disabled = false;
-        buttonLabel.textContent = idleLabel;
+        strings = {};
       }
-    });
-  });
+      const idleLabel = buttonLabel.textContent ?? '';
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let busy = false;
 
-  loadTurnstile();
+      const showToast = () => {
+        clearTimeout(timer);
+        toast.hidden = false;
+        // Next frame, so the transition runs from the hidden state.
+        requestAnimationFrame(() => toast.classList.add('is-shown'));
+        timer = setTimeout(() => {
+          toast.classList.remove('is-shown');
+          const done = () => {
+            toast.hidden = true;
+            toast.removeEventListener('transitionend', done);
+          };
+          toast.addEventListener('transitionend', done);
+        }, HOLD_MS);
+      };
+
+      const clearStatus = () => {
+        status.hidden = true;
+        status.textContent = '';
+        for (const element of Array.from(form.elements)) {
+          element.removeAttribute('aria-invalid');
+          element.removeAttribute('aria-describedby');
+        }
+      };
+
+      const showStatus = (message: string) => {
+        status.textContent = message;
+        status.hidden = false;
+      };
+
+      /** A general failure: the fixed sentence plus the inbox to fall back on. */
+      const showFailure = (body: string) => {
+        const email = strings.fallbackEmail ? ` ${strings.fallbackEmail}` : '';
+        showStatus(`${strings.errorTitle ?? ''} ${body}${email}`.trim());
+      };
+
+      const markFields = (fieldErrors: Record<string, string>) => {
+        let first: HTMLElement | null = null;
+        for (const [name, code] of Object.entries(fieldErrors)) {
+          const field = form.elements.namedItem(name);
+          if (!(field instanceof HTMLElement)) continue;
+          field.setAttribute('aria-invalid', 'true');
+          field.setAttribute('aria-describedby', status.id);
+          if (!first) {
+            first = field;
+            showStatus(strings[code] ?? strings.invalid ?? '');
+          }
+        }
+        first?.focus();
+      };
+
+      const resetTurnstile = () => {
+        const widget = form.querySelector('.cf-turnstile');
+        if (widget && window.turnstile) {
+          try {
+            window.turnstile.reset(widget);
+          } catch {
+            /* the widget had not rendered yet — nothing to reset */
+          }
+        }
+      };
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (busy) return;
+        clearStatus();
+
+        if (form.dataset.enabled !== 'true') {
+          showFailure(strings.unavailable ?? '');
+          return;
+        }
+
+        busy = true;
+        button.disabled = true;
+        buttonLabel.textContent = strings.sending ?? idleLabel;
+
+        try {
+          const response = await fetch(form.dataset.endpoint ?? '/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(fieldValues(form)),
+          });
+          let reply: Reply = {};
+          try {
+            reply = (await response.json()) as Reply;
+          } catch {
+            reply = {};
+          }
+
+          if (response.ok && reply.ok) {
+            form.reset();
+            showToast();
+            return;
+          }
+          if (reply.fieldErrors) {
+            markFields(reply.fieldErrors);
+            return;
+          }
+          switch (reply.error) {
+            case 'rate_limited':
+              showStatus(strings.rate_limited ?? '');
+              break;
+            case 'verification_failed':
+              showStatus(strings.verification ?? '');
+              break;
+            case 'preview_disabled':
+              showFailure(strings.unavailable ?? '');
+              break;
+            default:
+              showFailure(strings.errorBody ?? '');
+          }
+        } catch {
+          showFailure(strings.errorBody ?? '');
+        } finally {
+          // Turnstile tokens are single-use: whatever happened, the next attempt
+          // needs a fresh one.
+          resetTurnstile();
+          busy = false;
+          button.disabled = false;
+          buttonLabel.textContent = idleLabel;
+        }
+      });
+    });
+
+    loadTurnstile();
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initForms, { once: true });
+  } else {
+    initForms();
+  }
 </script>
 
 <script>
+  import { onPageLoad } from '~/lib/page-load';
+
   // Links elsewhere on the site arrive as /contact/?topic=partner and so on;
   // the topic decides which inbox the message is filed to.
   const TOPICS = ['general', 'partner', 'volunteer', 'media'];
-  const requested = new URLSearchParams(window.location.search).get('topic') ?? '';
-  const topic = TOPICS.includes(requested) ? requested : 'general';
-  document.querySelectorAll<HTMLFormElement>('form[data-form-type]').forEach((form) => {
-    const field = form.elements.namedItem('formType');
-    if (field instanceof HTMLInputElement) field.value = topic;
-    form.dataset.topic = topic;
+  onPageLoad(() => {
+    const requested = new URLSearchParams(window.location.search).get('topic') ?? '';
+    const topic = TOPICS.includes(requested) ? requested : 'general';
+    document.querySelectorAll<HTMLFormElement>('form[data-form-type]').forEach((form) => {
+      const field = form.elements.namedItem('formType');
+      if (field instanceof HTMLInputElement) field.value = topic;
+      form.dataset.topic = topic;
+    });
   });
 </script>

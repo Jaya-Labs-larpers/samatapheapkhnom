@@ -35,30 +35,40 @@ function logoScale(partner: Partner): number {
     {
       [0, 1].map((pass) => (
         <ul class="sk-marquee__group" aria-hidden={pass === 1 ? 'true' : undefined}>
-          {loop.map(({ partner, copy }) => (
-            <li class="sk-marquee__item" data-copy={copy}>
-              <span
-                class="sk-marquee__logo"
-                style={`--logo-scale:${logoScale(partner).toFixed(3)}`}
+          {loop.map(({ partner, copy }) => {
+            const duplicate = pass > 0 || copy > 0;
+            const Logo = partner.url ? 'a' : 'span';
+            return (
+              <li
+                class="sk-marquee__item"
+                data-copy={copy}
+                aria-hidden={duplicate ? 'true' : undefined}
               >
-                <span class="sr-only">{partner.name}</span>
-                {hasImage(partner.logo) ? (
-                  <ResponsiveImage
-                    image={partner.logo}
-                    lang={lang}
-                    alt=""
-                    sizes="220px"
-                    aspect="5/3"
-                    blurUp={false}
-                  />
-                ) : (
-                  <span class="sk-marquee__wordmark" aria-hidden="true">
-                    {partner.name}
-                  </span>
-                )}
-              </span>
-            </li>
-          ))}
+                <Logo
+                  class="sk-marquee__logo"
+                  style={`--logo-scale:${logoScale(partner).toFixed(3)}`}
+                  href={partner.url || undefined}
+                  target={partner.url ? '_blank' : undefined}
+                  rel={partner.url ? 'noopener' : undefined}
+                  tabindex={partner.url && duplicate ? -1 : undefined}
+                >
+                  {hasImage(partner.logo) ? (
+                    <ResponsiveImage
+                      image={partner.logo}
+                      lang={lang}
+                      alt={duplicate ? '' : partner.name}
+                      sizes="220px"
+                      aspect="5/3"
+                      blurUp={false}
+                      defer="visible"
+                    />
+                  ) : (
+                    <span class="sk-marquee__wordmark">{partner.name}</span>
+                  )}
+                </Logo>
+              </li>
+            );
+          })}
         </ul>
       ))
     }

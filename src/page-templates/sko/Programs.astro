@@ -19,6 +19,7 @@ interface Props {
 const { lang } = Astro.props;
 const programs = await getPrograms();
 const heading = tStrict(lang, 'pagePrograms');
+const sectionTitle = tStrict(lang, 'programsSectionTitle');
 const title = tStrict(lang, 'seoPrograms') || heading;
 const description =
   tStrict(lang, 'metaPrograms') || stripInlineLinks(tStrict(lang, 'introPrograms'));
@@ -31,47 +32,16 @@ const collection = collectionPageJsonLd({
     url: canonicalUrl(localizePath(`/programs/${program.slug}`, lang)),
   })),
 });
-
-const steps = [
-  { title: tStrict(lang, 'programsStepVisit'), body: tStrict(lang, 'programsStepVisitBody') },
-  { title: tStrict(lang, 'programsStepGoals'), body: tStrict(lang, 'programsStepGoalsBody') },
-  {
-    title: tStrict(lang, 'programsStepServices'),
-    body: tStrict(lang, 'programsStepServicesBody'),
-  },
-];
 ---
 
-<BaseLayout lang={lang} title={title} description={description} noindex jsonLd={collection}>
+<BaseLayout lang={lang} title={title} description={description} noindex darkHero jsonLd={collection}>
   <PageSolo
+    full
     lang={lang}
     title={heading}
     intro={tStrict(lang, 'introPrograms')}
     trail={[{ label: heading }]}
   />
-
-  <section class="pg-section pg-section--tint">
-    <div class="pg-wrap">
-      <SectionHead
-        eyebrow={tStrict(lang, 'programsApproachKicker')}
-        heading={tStrict(lang, 'programsApproachTitle')}
-        intro={tStrict(lang, 'programsApproachBody')}
-      />
-      <ol class="pg-steps">
-        {
-          steps.map((step, index) => (
-            <li class="pg-step">
-              <span class="pg-step__num" aria-hidden="true">
-                {index + 1}
-              </span>
-              <h3 class="pg-h3">{step.title}</h3>
-              <p>{step.body}</p>
-            </li>
-          ))
-        }
-      </ol>
-    </div>
-  </section>
 
   <section class="pg-section">
     <div class="pg-wrap">
@@ -80,9 +50,13 @@ const steps = [
           <EmptyState message={tStrict(lang, 'emptyGeneric')} />
         ) : (
           <>
-            <SectionHead heading={tStrict(lang, 'programsSectionTitle')} />
+            {sectionTitle ? (
+              <SectionHead heading={sectionTitle} />
+            ) : (
+              <h2 class="sr-only">{tStrict(lang, 'ourPrograms')}</h2>
+            )}
             <div class="pg-rows">
-              {programs.map((program, index) => {
+              {programs.map((program) => {
                 const programTitle = pick(program.title, lang);
                 const summary = pick(program.summary, lang);
                 const href = localizePath(`/programs/${program.slug}`, lang);
@@ -103,9 +77,6 @@ const steps = [
                       )}
                     </div>
                     <div class="pg-row__body">
-                      <span class="pg-kicker">
-                        {tStrict(lang, 'programLabel')} {String(index + 1).padStart(2, '0')}
-                      </span>
                       <h3 lang={programTitle.isFallback ? programTitle.lang : undefined}>
                         <a href={href}>{programTitle.value}</a>
                       </h3>
@@ -132,9 +103,5 @@ const steps = [
     </div>
   </section>
 
-  <BandCta
-    heading={tStrict(lang, 'ctaProgramsTitle')}
-    body={tStrict(lang, 'ctaProgramsBody')}
-    actions={ctaActions(lang)}
-  />
+  <BandCta heading={tStrict(lang, 'ctaProgramsTitle')} actions={ctaActions(lang)} />
 </BaseLayout>

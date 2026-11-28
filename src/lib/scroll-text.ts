@@ -58,9 +58,12 @@ export function initScrollText(root: ParentNode = document): void {
     const locale = el.lang || document.documentElement.lang || 'en';
     const { words, whole } = splitUnits(text, locale);
 
-    el.setAttribute('aria-label', text);
     el.classList.add('scroll-text');
     el.replaceChildren();
+    const srText = document.createElement('span');
+    srText.className = 'sr-only';
+    srText.textContent = text;
+    el.append(srText);
     let index = 0;
     for (const word of words) {
       const holder =

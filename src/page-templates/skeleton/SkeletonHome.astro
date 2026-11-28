@@ -2,7 +2,7 @@
 import type { Locale } from '~/lib/i18n/config';
 import { langAttr, localizePath, pick, t, text } from '~/lib/i18n/utils';
 import {
-  getDirectorMessage,
+  getActivities,
   getImpactStats,
   getPartners,
   getPrograms,
@@ -10,18 +10,18 @@ import {
   getStories,
 } from '~/lib/content';
 import { localCmsImage } from '~/lib/sanity/image';
-import { ctaActions, heroActions, programCard, tStrict } from '~/lib/skeleton-content';
+import { heroActions, postItem, programCard, tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
+import '~/styles/skeleton.css';
 import SkSection from '~/components/skeleton/SkSection.astro';
 import SkHero from '~/components/skeleton/SkHero.astro';
-import SkDirector from '~/components/skeleton/SkDirector.astro';
 import SkSplitCta from '~/components/skeleton/SkSplitCta.astro';
 import SkPartnerMarquee from '~/components/skeleton/SkPartnerMarquee.astro';
 import SkStoryText from '~/components/skeleton/SkStoryText.astro';
 import SkMapProof from '~/components/skeleton/SkMapProof.astro';
 import SkPhotoCards from '~/components/skeleton/SkPhotoCards.astro';
+import SkPosts from '~/components/skeleton/SkPosts.astro';
 import SkStorySlider from '~/components/skeleton/SkStorySlider.astro';
-import SkFeatureBanner from '~/components/skeleton/SkFeatureBanner.astro';
 
 interface Props {
   lang: Locale;
@@ -29,10 +29,10 @@ interface Props {
 
 const { lang } = Astro.props;
 
-const [settings, stats, director, programs, partners, stories] = await Promise.all([
+const [settings, stats, activities, programs, partners, [story]] = await Promise.all([
   getSiteSettings(),
   getImpactStats(),
-  getDirectorMessage(),
+  getActivities(),
   getPrograms(),
   getPartners(),
   getStories(),
@@ -42,8 +42,12 @@ const orgName = text(settings.orgName, lang);
 const tagline = pick(settings.tagline, lang);
 const brand = settings.orgShortName ?? 'SKO';
 const seoTitle = tStrict(lang, 'seoHome');
-const bannerProgram = programs.find((program) => program.image && pick(program.title, lang).value);
-const bannerTitle = bannerProgram ? pick(bannerProgram.title, lang) : null;
+const registration = pick(settings.registration, lang);
+const allPartners = tStrict(lang, 'allPartners');
+const latestPosts = activities.slice(0, 2).map((activity, index) => ({
+  ...postItem(activity, lang),
+  image: index === 0 ? activity.coverImage : null,
+}));
 const heroImage = {
   ...localCmsImage('home-hero-community', {
     en: 'Community members and SKO staff pose for a group photo',
@@ -60,15 +64,18 @@ const heroImage = {
   description={tStrict(lang, 'metaHome') || tagline.value || undefined}
   ogImage={settings.ogImage}
   noindex
+  darkHero
+  serifAboveFold={false}
 >
   <SkHero
     home
-    keep
     lang={lang}
     image={heroImage}
     title={tagline.value ?? orgName}
     titleLang={langAttr(tagline)}
     eyebrow={tStrict(lang, 'homeEyebrow')}
+    note={registration.value?.replaceAll(' | ', ' · ')}
+    noteLang={langAttr(registration)}
     actions={heroActions(lang)}
   />
 
@@ -82,11 +89,11 @@ const heroImage = {
     }}
   />
 
-  <SkStorySlider lang={lang} heading={t(lang, 'storiesHeading')} stories={stories} />
+  <SkMapProof lang={lang} stats={stats} />
 
   <SkPhotoCards
     lang={lang}
-    keep
+    showDetails
     heading={tStrict(lang, 'whatWeDo')}
     items={programs.map((program) =>
       programCard(program, lang, tStrict(lang, 'viewAllPrograms') || tStrict(lang, 'viewAll')),
@@ -97,14 +104,18 @@ const heroImage = {
     }}
   />
 
-  <SkMapProof lang={lang} stats={stats} />
-
-  <SkDirector
+  <SkPosts
     lang={lang}
-    director={director}
-    heading={tStrict(lang, 'directorMessage')}
-    link={{ label: tStrict(lang, 'readMore'), href: localizePath('/about#director', lang) }}
+    tone="tint"
+    moreInHeader
+    heading={t(lang, 'latestActivities')}
+    items={latestPosts}
+    n={latestPosts.length}
+    readMore={t(lang, 'readMore')}
+    more={{ label: t(lang, 'allActivities'), href: localizePath('/activities', lang) }}
   />
+
+  {story && <SkStorySlider lang={lang} stories={[story]} attribution />}
 
   {
     partners.length > 0 && (
@@ -113,32 +124,25 @@ const heroImage = {
           {tStrict(lang, 'trustedBy')}
         </h2>
         <SkPartnerMarquee lang={lang} partners={partners} />
+        {allPartners && (
+          <div style="text-align:center">
+            <a class="sk-link" href={localizePath('/partners', lang)}>
+              {allPartners} →
+            </a>
+          </div>
+        )}
       </SkSection>
-    )
-  }
-
-  {
-    bannerProgram && bannerTitle?.value && (
-      <SkFeatureBanner
-        lang={lang}
-        image={bannerProgram.image}
-        keep
-        title={bannerTitle.value}
-        titleLang={langAttr(bannerTitle)}
-        action={{
-          label: tStrict(lang, 'learnMore'),
-          href: localizePath(`/programs/${bannerProgram.slug}`, lang),
-        }}
-      />
     )
   }
 
   <SkSplitCta
     lang={lang}
     card
-    keep
     heading={tStrict(lang, 'ctaHomeTitle')}
     body={tStrict(lang, 'ctaHomeBody')}
-    actions={ctaActions(lang)}
+    actions={[
+      { label: t(lang, 'contactUs'), href: localizePath('/contact', lang) },
+      { label: t(lang, 'seeReports'), href: localizePath('/reports', lang), outline: true },
+    ]}
   />
 </BaseLayout>

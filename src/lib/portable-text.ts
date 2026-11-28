@@ -12,7 +12,7 @@
 
 import type { Locale } from './i18n/config';
 import { pick, text } from './i18n/utils';
-import { hasImage } from './sanity/image';
+import { hasImage, imageSrcSet, imageUrl } from './sanity/image';
 import type {
   PortableBlock,
   PortableCalloutBlock,
@@ -91,9 +91,11 @@ function renderImage(block: PortableImageBlock, lang: Locale): string {
   const caption = captionPicked.value ? esc(captionPicked.value) : '';
   const captionLang = captionPicked.isFallback ? ` lang="${captionPicked.lang}"` : '';
 
+  const src = imageUrl(block, { width: 1200 });
+  const srcset = imageSrcSet(block);
   const width = block.dimensions?.width ?? 1200;
   const height = block.dimensions?.height ?? 800;
-  const media = `<div class="media-placeholder w-full rounded-[var(--radius-lg)]" style="aspect-ratio:${width}/${height}" role="img" aria-label="${alt}"><svg class="media-placeholder__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.75"></circle><path d="m21 16-5-5-9 9"></path></svg></div>`;
+  const media = `<img src="${esc(src ?? '')}" srcset="${esc(srcset ?? '')}" sizes="(min-width: 48rem) 44rem, 100vw" width="${width}" height="${height}" alt="${alt}" loading="lazy" decoding="async" class="w-full rounded-[var(--radius-lg)]">`;
 
   const figcaption = caption
     ? `<figcaption class="mt-3 text-[color:var(--color-ink-400)] text-[0.9375rem]"${captionLang}>${caption}</figcaption>`

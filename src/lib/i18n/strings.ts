@@ -35,6 +35,7 @@ const en = {
   switchToKhmer: 'Switch to Khmer',
   switchToEnglish: 'Switch to English',
   breadcrumbLabel: 'Breadcrumb',
+  paginationLabel: 'Pagination',
   mainNavLabel: 'Main navigation',
   footerNavLabel: 'Footer navigation',
 
@@ -174,7 +175,7 @@ const en = {
   // can edit them; the keys stay as the fallback.
   homeEyebrow: 'Phnom Penh, Cambodia · Since 2007',
   homeHeroIntro:
-    "Samatapheap Khnom Organization is a Cambodian local NGO supporting vulnerable families, children and communities in Phnom Penh's urban poor and migrant communities since 2007.",
+    "Samatapheap Khnom Organization (SKO) is a Cambodian local NGO supporting vulnerable families, children and communities in Phnom Penh's urban poor and migrant communities since 2007. SKO is recognized as Cambodia's leading expert in family care and social work.",
   introPrograms:
     "SKO runs four family support programs in Phnom Penh's urban poor communities, all delivered through one approach, the Family Development Program: social work services so that a child grows up safe, in a family, in their own community.",
   introActivities:
@@ -285,6 +286,7 @@ const km: Record<keyof typeof en, string> = {
   switchToKhmer: 'ប្តូរទៅភាសាខ្មែរ',
   switchToEnglish: 'ប្តូរទៅភាសាអង់គ្លេស',
   breadcrumbLabel: 'ផ្លូវរុករក',
+  paginationLabel: 'ទំព័រ',
   mainNavLabel: 'ម៉ឺនុយមេ',
   footerNavLabel: 'ម៉ឺនុយបាតទំព័រ',
 
@@ -304,7 +306,7 @@ const km: Record<keyof typeof en, string> = {
   tapToEnlarge: 'ចុចដើម្បីពង្រីក',
 
   faqHeading: 'សំណួរដែលសួរញឹកញាប់',
-  faqMore: '',
+  faqMore: 'សំណួរទូទៅបន្ថែមអំពី SKO',
   latestActivities: 'សកម្មភាពថ្មីៗ',
   whatWeDo: 'អ្វីដែលយើងធ្វើ',
   trustedBy: 'ដៃគូរបស់យើង',
@@ -384,15 +386,15 @@ const km: Record<keyof typeof en, string> = {
 
   seoHome: '',
   metaHome: '',
-  homeAboutLink: '',
-  viewAllPrograms: '',
-  allPartners: '',
+  homeAboutLink: 'វិធីសាស្ត្ររបស់យើងក្នុងការថែរក្សាគ្រួសារ',
+  viewAllPrograms: 'មើលកម្មវិធីគាំទ្រគ្រួសារទាំងអស់',
+  allPartners: 'មើលដៃគូ និងម្ចាស់ជំនួយទាំងអស់',
   seoPrograms: '',
   metaPrograms: '',
-  programsSectionTitle: '',
+  programsSectionTitle: 'កម្មវិធីទាំងបួន ក្រោមកម្មវិធីអភិវឌ្ឍន៍គ្រួសារតែមួយ',
   seoActivities: '',
   metaActivities: '',
-  activitiesFromProgram: '',
+  activitiesFromProgram: 'សកម្មភាពពីកម្មវិធីនេះ',
   seoPartners: '',
   metaPartners: '',
   seoContact: '',
@@ -403,7 +405,7 @@ const km: Record<keyof typeof en, string> = {
 
   homeEyebrow: 'ភ្នំពេញ កម្ពុជា · តាំងពីឆ្នាំ ២០០៧',
   homeHeroIntro:
-    'អង្គការសមត្ថភាពខ្ញុំ ជាអង្គការក្រៅរដ្ឋាភិបាលក្នុងស្រុករបស់កម្ពុជា ដែលធ្វើការគាំទ្រកុមារ គ្រួសារ និងសហគមន៍ងាយរងគ្រោះ ជាពិសេសនៅសហគមន៍ក្រីក្រទីក្រុង និងសហគមន៍ចំណាកស្រុក។',
+    'អង្គការសមត្ថភាពខ្ញុំ (SKO) ជាអង្គការក្រៅរដ្ឋាភិបាលក្នុងស្រុករបស់កម្ពុជា ដែលធ្វើការគាំទ្រកុមារ គ្រួសារ និងសហគមន៍ងាយរងគ្រោះ ជាពិសេសនៅសហគមន៍ក្រីក្រទីក្រុង និងសហគមន៍ចំណាកស្រុក។ SKO ត្រូវបានទទួលស្គាល់ថាជាអ្នកជំនាញឈានមុខគេនៅកម្ពុជា ក្នុងវិស័យថែទាំគ្រួសារ និងសង្គមកិច្ច។',
   introPrograms:
     'គម្រោងបួន វិធីសាស្ត្រតែមួយ៖ កុមារធំធាត់ដោយសុវត្ថិភាព ក្នុងគ្រួសារ និងក្នុងសហគមន៍ខ្លួនឯង។',
   introActivities: 'អ្វីដែលក្រុមការងាររបស់យើងកំពុងធ្វើ ពីខែមួយទៅខែមួយ។',

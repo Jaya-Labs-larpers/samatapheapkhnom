@@ -28,7 +28,7 @@ const END: Line = ['bottom', 0];
  * Mapping progress to a visual belongs in CSS: without this script --p is unset,
  * and the CSS falls back to the finished state.
  */
-export function initScrub(root: ParentNode = document): void {
+export function initScrub(root: ParentNode = document, signal?: AbortSignal): void {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (typeof IntersectionObserver !== 'function') return;
 
@@ -74,6 +74,6 @@ export function initScrub(root: ParentNode = document): void {
   }
   if (lines.size === 0) return;
 
-  window.addEventListener('scroll', update, { passive: true });
-  window.addEventListener('resize', update);
+  window.addEventListener('scroll', update, { passive: true, signal });
+  window.addEventListener('resize', update, { signal });
 }

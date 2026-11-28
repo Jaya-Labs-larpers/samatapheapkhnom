@@ -14,6 +14,7 @@ interface Props {
 const { lang, stats } = Astro.props;
 const [lead, ...rest] = stats;
 const label = lead ? pick(lead.label, lang) : null;
+const context = lead ? pick(lead.context, lang) : null;
 const prefix = lead ? pick(lead.prefix, lang) : null;
 const suffix = lead ? pick(lead.suffix, lang) : null;
 const display = lead
@@ -32,12 +33,23 @@ const display = lead
             </span>
           )}
           <b class="proof__figure">
-            {countsUp(lead) ? <span data-count-to={lead.value}>{display}</span> : display}
+            {countsUp(lead) ? (
+              <span data-count-to={lead.value} data-count-once>
+                {display}
+              </span>
+            ) : (
+              display
+            )}
             {suffix?.value && <span class="proof__suffix">{suffix.value}</span>}
           </b>
           {label?.value && (
             <span class="proof__label" lang={label.isFallback ? label.lang : undefined}>
               {label.value}
+            </span>
+          )}
+          {context?.value && (
+            <span class="sk-small" lang={context.isFallback ? context.lang : undefined}>
+              {context.value}
             </span>
           )}
         </div>
@@ -121,7 +133,7 @@ const display = lead
       width: min(86%, 420px);
     }
   }
-  @media (max-width: 63.99rem) {
+  @media (min-width: 26rem) and (max-width: 63.99rem) {
     .proof__stats--row :global(.grid) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       column-gap: 12px;
@@ -133,9 +145,21 @@ const display = lead
       font-size: 13px;
     }
   }
+  @media (max-width: 21rem) {
+    .proof__stats :global(.grid) {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 1.5rem;
+    }
+  }
   @media (min-width: 64rem) {
     .proof {
       grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (horizontal-viewport-segments: 2) {
+    .proof {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: max(24px, var(--fold-hinge-w, 24px));
     }
   }
   @media (prefers-reduced-motion: no-preference) {

@@ -2,6 +2,7 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { TeamMember } from '~/lib/content/types';
 import { pick } from '~/lib/i18n/utils';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 
 interface Props {
   lang: Locale;
@@ -33,6 +34,9 @@ const headLabel = head ? label(head) : null;
   {
     head && headLabel && (
       <figure class="reveal m-0 mx-auto w-40 text-center">
+        <div class="aspect-4/5 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--color-blue-700)]">
+          <ResponsiveImage image={head.photo} lang={lang} alt="" aspect="4/5" sizes="160px" />
+        </div>
         <figcaption class="mt-3">
           <b
             class="block text-[16px] text-[color:var(--color-ink-900)]"
@@ -63,6 +67,9 @@ const headLabel = head ? label(head) : null;
         const staff = reportsOf(lead._id);
         return (
           <li style={`--i:${index}`}>
+            <div class="aspect-4/5 w-28 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--color-blue-700)]">
+              <ResponsiveImage image={lead.photo} lang={lang} alt="" aspect="4/5" sizes="112px" />
+            </div>
             <b
               class="mt-3 block text-[16px] text-[color:var(--color-ink-900)]"
               lang={leadLabel.name.isFallback ? leadLabel.name.lang : undefined}
@@ -80,7 +87,24 @@ const headLabel = head ? label(head) : null;
                 {staff.map((member) => {
                   const { name, role } = label(member);
                   return (
-                    <li>
+                    <li class="flex items-center gap-3">
+                      {member.vacancy ? (
+                        <span
+                          class="h-21 w-21 flex-none rounded-full border border-dashed border-[color:var(--color-ink-400)] bg-[color:var(--color-surface-subtle)]"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <span class="h-21 w-21 flex-none overflow-hidden rounded-full border border-[color:var(--color-line)]">
+                          <ResponsiveImage
+                            image={member.photo}
+                            lang={lang}
+                            alt=""
+                            aspect="1/1"
+                            sizes="84px"
+                            class="object-[50%_15%]"
+                          />
+                        </span>
+                      )}
                       <span class="min-w-0">
                         <b
                           class:list={[

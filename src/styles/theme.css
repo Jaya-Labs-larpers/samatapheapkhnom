@@ -113,13 +113,13 @@
   --text-h1--line-height: 1.1;
   --text-h1--letter-spacing: -0.02em;
 
-  --text-h2: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
-  --text-h2--line-height: 1.15;
-  --text-h2--letter-spacing: -0.015em;
+  --text-h2: clamp(1.875rem, 1.35rem + 2vw, 2.75rem);
+  --text-h2--line-height: 1.12;
+  --text-h2--letter-spacing: -0.02em;
 
   --text-h3: clamp(1.25rem, 1.1rem + 0.6vw, 1.625rem);
   --text-h3--line-height: 1.25;
-  --text-h3--letter-spacing: -0.01em;
+  --text-h3--letter-spacing: -0.015em;
 
   --text-h4: 1.25rem;
   --text-h4--line-height: 1.3;
@@ -127,13 +127,13 @@
   --text-lead: clamp(1.1875rem, 1.05rem + 0.6vw, 1.5rem);
   --text-lead--line-height: 1.5;
 
-  --text-body: 1.125rem; /* 18px serif, 1.6 leading, held to ~66 characters a line */
+  --text-body: 1.125rem;
   --text-body--line-height: 1.6;
 
-  --text-sm: 1rem; /* 16px */
+  --text-sm: 1rem;
   --text-sm--line-height: 1.5;
 
-  --text-xs: 0.875rem; /* 14px — smallest permitted size anywhere */
+  --text-xs: 0.875rem;
   --text-xs--line-height: 1.45;
 
   --text-eyebrow: 0.75rem;
@@ -144,49 +144,34 @@
   --text-stat--line-height: 1;
   --text-stat--letter-spacing: -0.03em;
 
-  /* ---------------------------------------------------------------------
-     SPACING — Tailwind's 4px base, plus a section rhythm token
-     --------------------------------------------------------------------- */
-  --spacing-section: clamp(3rem, 1.5rem + 6vw, 7rem);
-  --spacing-gutter: clamp(1.25rem, 0.75rem + 2vw, 2.5rem);
+  --spacing-section: clamp(3.5rem, 2rem + 5vw, 6.5rem);
+  --spacing-gutter: clamp(1.25rem, 0.75rem + 2.5vw, 3rem);
 
-  /* Content widths */
-  --container-page: 75rem; /* 1200px */
-  --container-prose: 44rem; /* ~68ch Latin */
-  --container-prose-km: 40rem; /* ~62ch Khmer — wider glyphs, same read length */
+  --container-page: 77.5rem;
+  --container-prose: 44rem;
+  --container-prose-km: 40rem;
   --container-narrow: 56rem;
 
-  /* ---------------------------------------------------------------------
-     RADIUS — moderate. Pills read consumer-app; sharp corners read austere.
-     --------------------------------------------------------------------- */
   --radius-xs: 0.25rem;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
-  /* Every call-to-action button: a rounded rectangle, never a pill. */
   --radius-cta: 1rem;
 
-  /* ---------------------------------------------------------------------
-     SHADOWS — deliberately weak. On a white site, a 1px line does the work
-     of a shadow without the haze. Tinted with ink-900, never pure black.
-     --------------------------------------------------------------------- */
   --shadow-xs: 0 1px 2px rgb(14 21 51 / 0.05);
   --shadow-sm: 0 1px 3px rgb(14 21 51 / 0.06), 0 1px 2px rgb(14 21 51 / 0.04);
   --shadow-md: 0 4px 14px rgb(14 21 51 / 0.07);
   --shadow-lg: 0 12px 32px rgb(14 21 51 / 0.1);
   --shadow-overlay: 0 24px 64px rgb(14 21 51 / 0.22);
 
-  /* ---------------------------------------------------------------------
-     MOTION — short, and entirely optional
-     --------------------------------------------------------------------- */
-  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --ease-ui: cubic-bezier(0.215, 0.61, 0.355, 1);
-  --duration-ui: 300ms;
-  --duration-fast: 140ms;
-  --duration-base: 220ms;
-  --duration-slow: 340ms;
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-ui: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-ui: 380ms;
+  --duration-fast: 240ms;
+  --duration-base: 360ms;
+  --duration-slow: 520ms;
 
   /* ---------------------------------------------------------------------
      BREAKPOINTS
@@ -219,7 +204,6 @@
     --gutter-left: max(var(--spacing-gutter), var(--safe-left));
     --gutter-right: max(var(--spacing-gutter), var(--safe-right));
 
-    /* easehealth.com's bar: 5.625rem below 992px, 6rem above, on an 88% root. */
     --header-h: calc(79px + var(--safe-top));
 
     /*
@@ -245,21 +229,36 @@
       --text-sm: 0.875rem;
       --text-h4: 1.0625rem;
     }
+    :lang(km) {
+      --spacing-section: clamp(2.25rem, 1.5rem + 3.5vw, 3.25rem);
+    }
+  }
+  @media (width < 30rem) {
+    :lang(km) {
+      --text-h1: clamp(1.625rem, 1.15rem + 2.4vw, 2.25rem);
+      --text-h2: clamp(1.45rem, 1.05rem + 2vw, 2rem);
+    }
   }
   @media (width >= 62rem) {
     :root {
       --header-h: calc(84px + var(--safe-top));
     }
   }
+  @media (orientation: landscape) and (height <= 32rem) {
+    :root {
+      --header-h: calc(60px + var(--safe-top));
+    }
+  }
 
   html {
     -webkit-text-size-adjust: 100%;
-    /* The header is sticky, so an anchor target has to clear it. */
     scroll-padding-top: var(--header-h);
-    /* Khmer and English pages are different lengths; reserving the scrollbar
-       keeps centred chrome (header, wrap) from stepping sideways when only one
-       of the two pages is tall enough to scroll. */
-    scrollbar-gutter: stable;
+    background: var(--color-canvas);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -285,11 +284,11 @@
   h3,
   h4 {
     color: var(--color-ink-900);
-    font-weight: 700;
+    font-weight: 600;
   }
   h1 {
     color: var(--color-ink-900);
-    font-weight: 700;
+    font-weight: 600;
     font-family: var(--font-display);
   }
 

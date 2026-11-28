@@ -20,15 +20,22 @@ const label = (locale: Locale) =>
   {
     locales.map((locale) => {
       const current = locale === lang;
-      return (
+      return current ? (
+        <span
+          lang={htmlLang[locale]}
+          aria-current="true"
+          class="lang-toggle__link is-current"
+        >
+          {localeShort[locale]}
+        </span>
+      ) : (
         <a
-          href={current ? undefined : alternatePath(pathname, locale)}
+          href={alternatePath(pathname, locale)}
           hreflang={htmlLang[locale]}
           lang={htmlLang[locale]}
-          aria-current={current ? 'true' : undefined}
-          aria-label={current ? undefined : label(locale)}
-          data-lang-link={current ? undefined : ''}
-          class:list={['lang-toggle__link', current && 'is-current']}
+          aria-label={label(locale)}
+          data-lang-link=""
+          class="lang-toggle__link"
         >
           {localeShort[locale]}
         </a>
@@ -50,14 +57,19 @@ const label = (locale: Locale) =>
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    /* "EN" and "ខ្មែរ" are near enough in width that one fixed slot keeps the
-       toggle the same size in both languages, and the pill beside it still. */
     min-inline-size: 2.875rem;
     box-sizing: border-box;
     padding: 8px 12px;
     color: var(--color-ink-700);
     text-decoration: none;
     line-height: normal;
+    transition:
+      background-color var(--duration-fast) var(--ease-out-soft),
+      color var(--duration-fast) var(--ease-out-soft);
+  }
+  .lang-toggle__link:not(.is-current):hover {
+    background: var(--color-blue-50);
+    color: var(--color-ink-900);
   }
   .lang-toggle__link.is-current {
     background: var(--color-blue-700);
@@ -84,7 +96,10 @@ const label = (locale: Locale) =>
 </style>
 
 <script>
+  import { initLanguageMemory } from '~/lib/lang-choice';
   import { initLanguagePrefetch } from '~/lib/lang-prefetch';
+  import { onPageLoad } from '~/lib/page-load';
 
-  initLanguagePrefetch();
+  initLanguageMemory();
+  onPageLoad(() => initLanguagePrefetch());
 </script>

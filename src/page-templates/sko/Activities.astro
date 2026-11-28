@@ -42,8 +42,9 @@ const collection = collectionPageJsonLd({
 });
 ---
 
-<BaseLayout lang={lang} title={title} description={description} noindex jsonLd={collection}>
+<BaseLayout lang={lang} title={title} description={description} noindex darkHero jsonLd={collection}>
   <PageSolo
+    full
     lang={lang}
     title={heading}
     intro={tStrict(lang, 'introActivities')}
@@ -72,14 +73,18 @@ const collection = collectionPageJsonLd({
                   </div>
                 )}
                 <div class="pg-feature__body">
-                  <p class="pg-meta">
-                    {lead.category && <span class="pg-tag">{lead.category}</span>}
-                    <time datetime={lead.datetime}>{lead.date}</time>
-                    {lead.author && <span>· {lead.author}</span>}
-                  </p>
-                  <h2 lang={lead.titleLang}>
+                  {lead.category && (
+                    <p class="pg-meta">
+                      <span class="pg-tag">{lead.category}</span>
+                    </p>
+                  )}
+                  <h3 lang={lead.titleLang}>
                     <a href={lead.href}>{lead.title}</a>
-                  </h2>
+                  </h3>
+                  <p class="pg-meta">
+                    <time datetime={lead.datetime}>{lead.date}</time>
+                    {lead.author && <span>{lead.author}</span>}
+                  </p>
                   {lead.excerpt && <p lang={lead.excerptLang}>{lead.excerpt}</p>}
                   <div>
                     <a class="pg-link" href={lead.href} style="margin-top:0.875rem">
@@ -105,16 +110,26 @@ const collection = collectionPageJsonLd({
                       </div>
                     )}
                     <div class="pg-card__body">
-                      <p class="pg-meta">
-                        {item.category && <span class="pg-tag">{item.category}</span>}
-                        <time datetime={item.datetime}>{item.date}</time>
-                      </p>
+                      {item.category && (
+                        <p class="pg-meta">
+                          <span class="pg-tag">{item.category}</span>
+                        </p>
+                      )}
                       <h3 class="pg-h3" lang={item.titleLang}>
                         <a href={item.href} style="color:inherit;text-decoration:none">
                           {item.title}
                         </a>
                       </h3>
+                      <p class="pg-meta">
+                        <time datetime={item.datetime}>{item.date}</time>
+                        {item.author && <span>{item.author}</span>}
+                      </p>
                       {item.excerpt && <p lang={item.excerptLang}>{item.excerpt}</p>}
+                      <div>
+                        <a class="pg-link" href={item.href} style="margin-top:0.875rem">
+                          {tStrict(lang, 'readMore')} <span aria-hidden="true">→</span>
+                        </a>
+                      </div>
                     </div>
                   </article>
                 ))}

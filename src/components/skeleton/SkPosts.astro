@@ -14,43 +14,66 @@ interface Props {
   readMore?: string;
   items?: SkPostItem[];
   more?: SkAction | null;
-  keep?: boolean;
+  tone?: 'default' | 'tint';
+  moreInHeader?: boolean;
 }
 
-const { heading, n = 3, link, lang = 'en', readMore, items = [], more, keep = false } = Astro.props;
+const {
+  heading,
+  n = 3,
+  link,
+  lang = 'en',
+  readMore,
+  items = [],
+  more,
+  tone = 'default',
+  moreInHeader = false,
+} = Astro.props;
 const placeholders = Math.max(0, n - items.length);
 ---
 
-<SkSection>
-  <h2 class="sk-h2">{heading}</h2>
+<SkSection tone={tone}>
+  <div class:list={[moreInHeader && 'posts-head']}>
+    <h2 class="sk-h2">{heading}</h2>
+    {
+      moreInHeader && more && (
+        <a class="sk-link" href={more.href}>
+          {more.label} →
+        </a>
+      )
+    }
+  </div>
   <div class:list={['sk-grid', items.length >= 3 && 'sk-grid--mosaic']}>
     {
       items.map((item) => (
         <article class="sk-card">
-          {(keep ? Boolean(item.image) : item.image !== undefined) && (
+          {Boolean(item.image) && (
             <div class="sk-media sk-card__media clip-reveal" style="aspect-ratio:3/2">
               <ResponsiveImage
                 image={item.image}
                 lang={lang}
                 alt=""
                 aspect="3/2"
-                keep={keep}
                 sizes="(min-width: 64rem) 380px, (min-width: 40rem) 50vw, 100vw"
               />
             </div>
           )}
-          <p class="sk-small">
-            {item.category && <span class="sk-pill">{item.category}</span>}
-            <time datetime={item.datetime}>{item.date}</time>
-            {item.author && <span> · {item.author}</span>}
-          </p>
+          {item.category && (
+            <div>
+              <span class="sk-pill">{item.category}</span>
+            </div>
+          )}
           <h3 class="sk-h3" lang={item.titleLang}>
             <a href={item.href} class="sk-stretch">
               {item.title}
             </a>
           </h3>
+          <p class="sk-small">
+            <time datetime={item.datetime}>{item.date}</time>
+            {item.author && <span> {item.author}</span>}
+          </p>
           {item.excerpt && (
-            <p class="sk-text sk-clamp" lang={item.excerptLang}>
+            <p class="sk-text" lang={item.excerptLang}>
               {item.excerpt}
             </p>
           )}
@@ -76,40 +99,33 @@ const placeholders = Math.max(0, n - items.length);
     }
   </div>
   {
-    more ? (
-      <div class="posts-more">
-        <a href={more.href} class="posts-more__btn">
-          {more.label}
-        </a>
-      </div>
-    ) : (
-      link && (
-        <a href="/blog" class="sk-link">
-          {link} →
-        </a>
-      )
-    )
+    more
+      ? !moreInHeader && (
+          <div class="posts-more">
+            <a href={more.href} class="sk-btn">
+              {more.label}
+            </a>
+          </div>
+        )
+      : link && (
+          <a href="/blog" class="sk-link">
+            {link} →
+          </a>
+        )
   }
 </SkSection>
 
 <style>
+  .posts-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px 32px;
+  }
   .posts-more {
     display: flex;
     justify-content: center;
-    margin-top: clamp(28px, 4vw, 44px);
-  }
-  .posts-more__btn {
-    padding: clamp(1rem, 1.6vw, 1.25rem) clamp(1.5rem, 3vw, 2.25rem);
-    border-radius: var(--radius-cta);
-    background: var(--color-blue-700);
-    color: #fff;
-    font-size: clamp(0.9375rem, 0.675rem + 1.2vw, 1.5rem);
-    font-weight: 500;
-    line-height: 1;
-    text-decoration: none;
-    transition: background-color var(--duration-ui) var(--ease-ui);
-  }
-  .posts-more__btn:is(:hover, :focus-visible) {
-    background: var(--color-blue-800);
+    margin-top: clamp(24px, 3vw, 36px);
   }
 </style>

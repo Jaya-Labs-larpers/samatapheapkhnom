@@ -34,7 +34,7 @@ const hasPrefix = stats.some((stat) => pick(stat.prefix, lang).value);
           stat.displayValue ??
           (typeof stat.value === 'number' ? formatNumber(stat.value, lang) : '');
         return (
-          <div class="min-w-0 border-t border-[color:var(--color-ink-900)] pt-5 sm:pt-6">
+          <div class="min-w-0 border-t border-[color:var(--color-line-strong)] pt-5 sm:pt-6">
             {hasPrefix && (
               <span
                 class="mb-1.5 block h-6 truncate text-[15px] leading-6 font-semibold text-[color:var(--color-blue-700)]"
@@ -43,9 +43,9 @@ const hasPrefix = stats.some((stat) => pick(stat.prefix, lang).value);
                 {prefix.value}
               </span>
             )}
-            <b class="block text-[length:clamp(2.75rem,1rem+5.6vw,6rem)] leading-none font-normal tracking-[-0.04em] text-[color:var(--color-ink-900)] tabular-nums">
+            <b class="block text-[length:clamp(2.75rem,1rem+5.2vw,5.25rem)] leading-none font-semibold tracking-[-0.035em] text-[color:var(--color-ink-900)] tabular-nums">
               {countsUp(stat) ? (
-                <span class="leading-none" data-count-to={stat.value}>
+                <span class="leading-none" data-count-to={stat.value} data-count-once>
                   {display}
                 </span>
               ) : (
@@ -76,5 +76,6 @@ const hasPrefix = stats.some((stat) => pick(stat.prefix, lang).value);
 
 <script>
   import { countUpOnEntry } from '~/lib/count-up';
-  countUpOnEntry();
+  import { onPageLoad } from '~/lib/page-load';
+  onPageLoad(() => countUpOnEntry());
 </script>

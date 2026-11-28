@@ -3,16 +3,15 @@ import type { Locale } from '~/lib/i18n/config';
 import type { LocaleBlocks, PortableBlock, Program } from '~/lib/content/types';
 import { getPartners, getPrograms, getStories } from '~/lib/content';
 import { ACTIVITY_LIMITS, blockText } from '~/lib/content/sections';
-import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
+import { langAttr, localizePath, pick, t } from '~/lib/i18n/utils';
 import { resolveSeo } from '~/lib/seo';
 import { serviceJsonLd } from '~/lib/seo/page-schema';
-import { ctaActions, programCard, statItem, tStrict } from '~/lib/skeleton-content';
+import { programCard, statItem, tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import RichText from '~/components/content/RichText.astro';
 import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 import SectionedBody from '~/components/content/SectionedBody.astro';
 import PageHero from '~/components/page/PageHero.astro';
-import GlanceBar from '~/components/page/GlanceBar.astro';
 import SectionHead from '~/components/page/SectionHead.astro';
 import BandCta from '~/components/page/BandCta.astro';
 
@@ -64,25 +63,10 @@ const hasImpact = Object.values(impact).some((blocks) => blocks && blocks.length
 const quote = story ? pick(story.quote, lang) : null;
 const storyRole = story ? pick(story.personRole, lang) : null;
 
-const position = programs.findIndex((entry) => entry.slug === program.slug) + 1;
 const pad = (n: number) => String(n).padStart(2, '0');
 const activitiesLink = tStrict(lang, 'activitiesFromProgram');
 
 const otherPrograms = programs.filter((entry) => entry.slug !== program.slug);
-const glance = [
-  { label: tStrict(lang, 'glanceWhere'), value: tStrict(lang, 'navPhnomPenh') },
-  { label: tStrict(lang, 'programMethod'), value: tStrict(lang, 'programMethodValue') },
-].filter((item) => item.value);
-
-const steps = [
-  { title: tStrict(lang, 'programsStepVisit'), body: tStrict(lang, 'programsStepVisitBody') },
-  { title: tStrict(lang, 'programsStepGoals'), body: tStrict(lang, 'programsStepGoalsBody') },
-  {
-    title: tStrict(lang, 'programsStepServices'),
-    body: tStrict(lang, 'programsStepServicesBody'),
-  },
-];
-
 const statCards = stats.map((stat) => {
   const item = statItem(stat, lang);
   const percent = /^\d+(\.\d+)?%$/.test(item.value) ? Number.parseFloat(item.value) : null;
@@ -108,6 +92,7 @@ const service = serviceJsonLd({
   description={seo.description}
   ogImage={seo.ogImage}
   noindex
+  darkHero
   jsonLd={service}
 >
   <PageHero
@@ -117,14 +102,9 @@ const service = serviceJsonLd({
     intro={summary.value}
     introLang={langAttr(summary)}
     trail={[{ label: tStrict(lang, 'pagePrograms'), path: '/programs' }, { label: heading }]}
-    eyebrow={position > 0
-      ? `${tStrict(lang, 'programLabel')} ${pad(position)} / ${pad(programs.length)}`
-      : null}
     image={program.image}
     caption={pick(program.image?.caption ?? program.image?.alt, lang).value}
   />
-
-  {glance.length > 0 && <GlanceBar items={glance} />}
 
   {
     statCards.length > 0 && (
@@ -183,25 +163,6 @@ const service = serviceJsonLd({
     )
   }
 
-  <section class="pg-section pg-section--tint">
-    <div class="pg-wrap">
-      <SectionHead heading={tStrict(lang, 'programHowTitle')} />
-      <ol class="pg-steps">
-        {
-          steps.map((step, index) => (
-            <li class="pg-step">
-              <span class="pg-step__num" aria-hidden="true">
-                {index + 1}
-              </span>
-              <h3 class="pg-h3">{step.title}</h3>
-              <p>{step.body}</p>
-            </li>
-          ))
-        }
-      </ol>
-    </div>
-  </section>
-
   <SectionedBody lang={lang} body={body} limits={ACTIVITY_LIMITS} partners={partners} />
 
   {
@@ -210,7 +171,6 @@ const service = serviceJsonLd({
         <div class="pg-wrap">
           <div class="pg-quote pg-quote--solo">
             <div>
-              <span class="pg-kicker">{tStrict(lang, 'typeStory')}</span>
               {hasImpact ? (
                 <div class="pg-quote__message">
                   <RichText blocks={impact} lang={lang} />
@@ -219,8 +179,8 @@ const service = serviceJsonLd({
                 quote?.value && <blockquote lang={langAttr(quote)}>{quote.value}</blockquote>
               )}
               <cite>
-                <b>{story.personName}</b>
-                {storyRole?.value && <span lang={langAttr(storyRole)}> · {storyRole.value}</span>}
+                — <b>{story.personName}</b>
+                {storyRole?.value && <span lang={langAttr(storyRole)}>, {storyRole.value}</span>}
               </cite>
             </div>
           </div>
@@ -238,7 +198,7 @@ const service = serviceJsonLd({
             more={{ label: tStrict(lang, 'viewAll'), href: localizePath('/programs', lang) }}
           />
           <div class="pg-grid pg-grid--3">
-            {otherPrograms.map((entry) => {
+            {otherPrograms.map((entry, index) => {
               const card = programCard(entry, lang, tStrict(lang, 'learnMore'));
               return (
                 <article class="pg-card">
@@ -253,13 +213,16 @@ const service = serviceJsonLd({
                     )}
                   </div>
                   <div class="pg-card__body">
+                    <span class="pg-card__index" aria-hidden="true">
+                      {pad(index + 1)}
+                    </span>
                     <h3 class="pg-h3">
                       <a href={card.href}>{card.title}</a>
                     </h3>
                     <p lang={card.bodyLang}>{card.body}</p>
-                    <a class="pg-link pg-card__link" href={card.href}>
-                      {card.linkLabel} <span aria-hidden="true">→</span>
-                    </a>
+                    <span class="pg-card__arrow" aria-hidden="true">
+                      →
+                    </span>
                   </div>
                 </article>
               );
@@ -270,7 +233,13 @@ const service = serviceJsonLd({
     )
   }
 
-  <BandCta heading={tStrict(lang, 'ctaProgramTitle')} actions={ctaActions(lang)} />
+  <BandCta
+    heading={tStrict(lang, 'ctaProgramTitle')}
+    actions={[
+      { label: t(lang, 'contactUs'), href: localizePath('/contact', lang) },
+      { label: t(lang, 'seeReports'), href: localizePath('/reports', lang), outline: true },
+    ]}
+  />
 
   {
     activitiesLink && (
@@ -284,3 +253,23 @@ const service = serviceJsonLd({
     )
   }
 </BaseLayout>
+
+<style>
+  .pg-card__index {
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-blue-700);
+  }
+  .pg-card__arrow {
+    display: inline-block;
+    margin-top: auto;
+    padding-top: 0.25rem;
+    color: var(--color-blue-700);
+    font-weight: 600;
+    transition: transform var(--duration-fast) var(--ease-out-soft);
+  }
+  .pg-card:hover .pg-card__arrow {
+    transform: translateX(4px);
+  }
+</style>

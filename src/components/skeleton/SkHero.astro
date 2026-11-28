@@ -16,11 +16,12 @@ interface Props {
   /** Pass null for a real page without an intro; leave out for grey placeholder lines. */
   intro?: string | null;
   introLang?: string;
+  note?: string;
+  noteLang?: string;
   actions?: SkAction[];
   /** Homepage hero: a photo filling the first screen, text over it. */
   home?: boolean;
   image?: CmsImage | null;
-  keep?: boolean;
   lang?: Locale;
 }
 
@@ -31,10 +32,11 @@ const {
   eyebrow,
   intro,
   introLang,
+  note,
+  noteLang,
   actions,
   home = false,
   image,
-  keep = false,
   lang = 'en',
 } = Astro.props;
 ---
@@ -43,7 +45,7 @@ const {
   home ? (
     <section class="sk-hero--home" data-home-hero data-hero-dark>
       <div class="sk-hero__media">
-        {image && <ResponsiveImage image={image} lang={lang} eager sizes="100vw" keep={keep} />}
+        {image && <ResponsiveImage image={image} lang={lang} eager sizes="100vw" />}
       </div>
       <div class="sk-wrap sk-hero__text">
         {eyebrow && <p class="sk-eyebrow">{eyebrow}</p>}
@@ -53,6 +55,11 @@ const {
         {intro && (
           <p class="sk-lead inline-links" lang={introLang}>
             <InlineLinks text={intro} />
+          </p>
+        )}
+        {note && (
+          <p class="sk-hero__note" lang={noteLang}>
+            <span aria-hidden="true">✓</span> {note}
           </p>
         )}
         {actions && (

@@ -1,23 +1,21 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
 import { getImpactStats, getPage, getPrograms, getStories } from '~/lib/content';
+import { countsUp } from '~/lib/content/stats';
 import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
 import { resolveSeo } from '~/lib/seo';
 import { ctaActions, programRow, statItem, storyCard, tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import SectionedBody from '~/components/content/SectionedBody.astro';
-import PageHero from '~/components/page/PageHero.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
 import SectionHead from '~/components/page/SectionHead.astro';
 import BandCta from '~/components/page/BandCta.astro';
-import { impactProjectsAvailable, impactProjectsPath } from '~/lib/impact-pages';
 
 interface Props {
   lang: Locale;
-  projects?: boolean;
 }
 
-const { lang, projects = false } = Astro.props;
-const hasProjects = await impactProjectsAvailable(lang);
+const { lang } = Astro.props;
 const [stats, page, programs, stories] = await Promise.all([
   getImpactStats(),
   getPage('impact'),
@@ -27,47 +25,23 @@ const [stats, page, programs, stories] = await Promise.all([
 
 const title = pick(page?.title, lang);
 const intro = pick(page?.intro, lang);
-const impactTitle = title.value ?? tStrict(lang, 'pageImpact');
-const heading = projects ? tStrict(lang, 'impactProjects') : impactTitle;
+const heading = title.value ?? tStrict(lang, 'pageImpact');
 const introText = intro.value ?? tStrict(lang, 'introImpact');
 const story = stories[0] ? storyCard(stories[0], lang) : null;
-const heroImage = page?.heroImage ?? null;
-const seo = resolveSeo(projects ? null : page?.seo, lang, {
+const seo = resolveSeo(page?.seo, lang, {
   title: heading,
   description: introText,
   image: page?.heroImage,
 });
 
-const statById = (id: string) => stats.find((stat) => stat._id === id);
-const families = statById('stat-families');
-const mapIds = ['stat-since', 'stat-khans', 'stat-sangkats'];
-const badge = families ? statItem(families, lang) : null;
-const mapStats = mapIds.flatMap((id) => {
-  const stat = statById(id);
-  const item = stat ? statItem(stat, lang) : null;
-  return item?.value ? [item] : [];
-});
-const otherStats = stats
-  .filter((stat) => !mapIds.includes(stat._id))
-  .map((stat) => statItem(stat, lang))
-  .filter((item) => item.value);
+const statItems = [...stats]
+  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  .flatMap((stat) => {
+    const item = statItem(stat, lang);
+    return item.value ? [{ ...item, countTo: countsUp(stat) ? stat.value : null }] : [];
+  });
 
-const programItems = programs.map((program, index) => {
-  const stat = program.impactStats?.[0];
-  return {
-    ...programRow(program, index, lang),
-    stat: stat ? statItem(stat, lang) : null,
-  };
-});
-
-const chips = [
-  { label: tStrict(lang, 'navImpact'), href: localizePath('/impact', lang) },
-  ...(hasProjects
-    ? [{ label: tStrict(lang, 'impactProjects'), href: localizePath(impactProjectsPath, lang) }]
-    : []),
-  { label: tStrict(lang, 'navActivities'), href: localizePath('/activities', lang) },
-  { label: tStrict(lang, 'ourPrograms'), href: localizePath('/programs', lang) },
-].filter((chip) => chip.label);
+const programItems = programs.map((program, index) => programRow(program, index, lang));
 ---
 
 <BaseLayout
@@ -76,84 +50,75 @@ const chips = [
   description={seo.description}
   ogImage={seo.ogImage}
   noindex
+  darkHero
 >
-  <PageHero
+  <PageSolo
+    full
     lang={lang}
     title={heading}
-    titleLang={projects ? undefined : langAttr(title)}
-    intro={projects ? null : introText}
-    introLang={projects ? undefined : langAttr(intro)}
-    trail={projects
-      ? [{ label: impactTitle, path: '/impact' }, { label: heading }]
-      : [{ label: heading }]}
-    image={heroImage}
-    caption={pick(heroImage?.caption ?? heroImage?.alt, lang).value}
-    badge={!projects && badge?.value
-      ? { value: badge.value, label: badge.label ?? '', labelLang: badge.labelLang }
-      : null}
-    chips={chips}
+    titleLang={langAttr(title)}
+    intro={introText}
+    introLang={langAttr(intro)}
+    trail={[{ label: heading }]}
   />
 
   {
-    !projects && (mapStats.length > 0 || otherStats.length > 0) && (
-      <section class="pg-section" id="results">
+    statItems.length > 0 && (
+      <section class="pg-section pg-section--results" id="results">
         <div class="pg-wrap">
-          <SectionHead
-            heading={tStrict(lang, 'resultsAtAGlance')}
-            more={{ label: tStrict(lang, 'seeReports'), href: localizePath('/reports', lang) }}
-          />
-          {mapStats.length > 0 && (
-            <div class="pg-mapbox">
-              <div class="pg-mapbox__map">
-                <img src="/maps/cambodia-phnom-penh.svg" alt="" width="1000" height="896" />
-              </div>
-              <div class="pg-mapbox__stats">
-                {mapStats.map((stat) => (
-                  <div>
-                    {stat.prefix && <small lang={stat.prefixLang}>{stat.prefix}</small>}
-                    <b>
-                      {stat.value}
-                      {stat.suffix && <small>{stat.suffix}</small>}
-                    </b>
-                    <span lang={stat.labelLang}>{stat.label}</span>
-                    {stat.context && <span lang={stat.contextLang}>{stat.context}</span>}
-                  </div>
+          <SectionHead heading={tStrict(lang, 'resultsAtAGlance')} />
+          <div class="pg-results">
+            <div class="pg-results__content">
+              <ul class="pg-results__grid">
+                {statItems.map((stat) => (
+                  <li class="pg-results__stat">
+                    <span class="pg-results__value">
+                      {stat.prefix && (
+                        <span class="pg-results__prefix" lang={stat.prefixLang}>
+                          {stat.prefix}
+                        </span>
+                      )}
+                      <b>
+                        {stat.countTo !== null ? (
+                          <span data-count-to={stat.countTo} data-count-once>
+                            {stat.value}
+                          </span>
+                        ) : (
+                          stat.value
+                        )}
+                        {stat.suffix && <small>{stat.suffix}</small>}
+                      </b>
+                    </span>
+                    {stat.label && (
+                      <span class="pg-results__label" lang={stat.labelLang}>
+                        {stat.label}
+                      </span>
+                    )}
+                    {stat.context && (
+                      <span class="pg-results__context" lang={stat.contextLang}>
+                        {stat.context}
+                      </span>
+                    )}
+                  </li>
                 ))}
-              </div>
+              </ul>
+              <a href={localizePath('/reports', lang)} class="pg-link pg-results__link">
+                {tStrict(lang, 'seeReports')} <span aria-hidden="true">→</span>
+              </a>
             </div>
-          )}
-          {otherStats.length > 0 && (
-            <div class="pg-grid pg-grid--4 pg-stat-grid">
-              {otherStats.map((stat) => (
-                <div class="pg-stat-card">
-                  {stat.prefix && <small lang={stat.prefixLang}>{stat.prefix}</small>}
-                  <b>
-                    {stat.value}
-                    {stat.suffix && <small>{stat.suffix}</small>}
-                  </b>
-                  <span lang={stat.labelLang}>{stat.label}</span>
-                  {stat.context && <span lang={stat.contextLang}>{stat.context}</span>}
-                </div>
-              ))}
+            <div class="pg-results__map">
+              <img src="/maps/cambodia-phnom-penh.svg" alt="" width="1000" height="896" />
             </div>
-          )}
+          </div>
         </div>
       </section>
     )
   }
 
-  {
-    projects ? (
-      <SectionedBody lang={lang} body={page?.body} showLead={false} />
-    ) : hasProjects ? (
-      <SectionedBody lang={lang} body={page?.body} only={[]} showLead />
-    ) : (
-      <SectionedBody lang={lang} body={page?.body} />
-    )
-  }
+  <SectionedBody lang={lang} body={page?.body} />
 
   {
-    !projects && programItems.length > 0 && (
+    programItems.length > 0 && (
       <section class="pg-section pg-section--tint" id="programs">
         <div class="pg-wrap">
           <SectionHead
@@ -164,17 +129,10 @@ const chips = [
             {programItems.map((item) => (
               <article class="pg-card">
                 <div class="pg-card__body">
-                  <span class="pg-kicker">{item.index}</span>
                   <h3 class="pg-h3" lang={item.titleLang}>
                     <a href={item.href}>{item.title}</a>
                   </h3>
                   {item.body && <p lang={item.bodyLang}>{item.body}</p>}
-                  {item.stat?.value && (
-                    <span class="pg-pill">
-                      <b>{item.stat.value}</b>
-                      <span lang={item.stat.labelLang}>{item.stat.label}</span>
-                    </span>
-                  )}
                 </div>
               </article>
             ))}
@@ -185,16 +143,26 @@ const chips = [
   }
 
   {
-    !projects && story && (
+    story && (
       <section class="pg-section pg-section--tint">
         <div class="pg-wrap">
           <div class="pg-quote pg-quote--solo">
             <div>
-              <span class="pg-kicker">{tStrict(lang, 'typeStory')}</span>
               {story.quote && <blockquote lang={story.quoteLang}>{story.quote}</blockquote>}
               <cite>
-                <b>{story.cite}</b>
-                {story.citeRole && <span lang={story.citeRoleLang}> · {story.citeRole}</span>}
+                — <b>{story.cite}</b>
+                {story.citeRole && (
+                  <>
+                    ,{' '}
+                    {story.citeHref ? (
+                      <a href={story.citeHref} lang={story.citeRoleLang}>
+                        {story.citeRole}
+                      </a>
+                    ) : (
+                      <span lang={story.citeRoleLang}>{story.citeRole}</span>
+                    )}
+                  </>
+                )}
               </cite>
             </div>
           </div>
@@ -205,3 +173,10 @@ const chips = [
 
   <BandCta heading={tStrict(lang, 'ctaImpactTitle')} actions={ctaActions(lang)} />
 </BaseLayout>
+
+<script>
+  import { countUpOnEntry } from '~/lib/count-up';
+  import { onPageLoad } from '~/lib/page-load';
+
+  onPageLoad(() => countUpOnEntry());
+</script>

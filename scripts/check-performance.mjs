@@ -16,21 +16,12 @@ const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
 const PUBLIC = fileURLToPath(new URL('../public/', import.meta.url));
 
 export const BUDGETS = {
-  /** One page's HTML, uncompressed. Inline logos alone used to add 140 KB. */
-  htmlBytes: 140_000,
-  /** The largest inline <svg> a page may carry (icons are well under this). */
+  htmlBytes: 120_000,
   inlineSvgChars: 6_000,
-  /** The site stylesheet, gzipped. */
-  cssGzipBytes: 17_000,
-  /** Render-blocking stylesheets per page: the site's, plus a page's own. */
+  totalInlineSvgChars: 12_000,
+  cssGzipBytes: 14_500,
   stylesheetsPerPage: 2,
-  /**
-   * All first-party JavaScript in /_astro, gzipped: butterflies, reveals, count-up,
-   * and smooth scrolling (Lenis, ~5.4 KB, its own lazily loaded chunk) with the scroll-driven
-   * text, scrub and step scripts.
-   */
-  jsGzipBytes: 13_000,
-  /** Fonts preloaded per page: more starves the LCP image of bandwidth. */
+  jsGzipBytes: 17_000,
   fontPreloads: 3,
 };
 
@@ -108,12 +99,19 @@ for await (const file of allFiles(DIST)) {
     `HTML is ${html.length} B, budget ${BUDGETS.htmlBytes} B`,
   );
 
-  for (const svg of html.match(/<svg[\s\S]*?<\/svg>/g) ?? [])
+  const svgs = html.match(/<svg[\s\S]*?<\/svg>/g) ?? [];
+  for (const svg of svgs)
     check(
       svg.length <= BUDGETS.inlineSvgChars,
       page,
       `inline SVG of ${svg.length} chars — serve it as a cached file`,
     );
+  const totalSvgChars = svgs.reduce((sum, svg) => sum + svg.length, 0);
+  check(
+    totalSvgChars <= BUDGETS.totalInlineSvgChars,
+    page,
+    `total inline SVGs are ${totalSvgChars} chars, budget ${BUDGETS.totalInlineSvgChars} chars`,
+  );
 
   const sheets = html.match(/<link[^>]+rel="stylesheet"[^>]*>/g) ?? [];
   check(

@@ -1,19 +1,9 @@
 @import 'tailwindcss';
 @import './theme.css';
-@import './skeleton.css';
-
-/* ============================================================================
-   Component layer.
-   Deliberately small — only primitives that repeat across many components and
-   would be noise as long utility strings. Everything else uses utilities
-   directly in the .astro file where it can be read in context.
-   ========================================================================= */
 
 /*
  * Tailwind's preflight hides [hidden] with a :where() rule of zero specificity,
- * so any display utility on the same element (e.g. `flex` on the mobile nav
- * panel) wins the cascade and the "hidden" element stays visible. Make the
- * attribute authoritative.
+ * so any display utility on the same element wins the cascade unless !important.
  */
 [hidden] {
   display: none !important;
@@ -42,15 +32,14 @@
    Every animation here is a *continuity transition* or *feedback* — it orients
    the visitor or confirms their action. Nothing decorates.
 
-   Deliberately still absent: parallax. Content boxes rise into place from below
-   as they come into view (.reveal), and chosen impact figures count up
-   (~/lib/count-up); both replay whenever the visitor scrolls back down to
-   them, and neither ever hides something already on screen.
+   Deliberately still absent: parallax. Content boxes and section headings rise
+   into place as they come into view (.reveal), photos unfold (.clip-reveal),
+   and chosen impact figures count up (~/lib/count-up). None of them ever hides
+   something already on screen.
 
-   Script cost: one pageswap listener (card-morph.ts) that names the clicked
-   card's photo, and the hero butterfly loop. Page
-   transitions are the native cross-document API, so unsupported browsers
-   navigate exactly as before.
+   Page transitions run natively via CSS @view-transition and Speculation Rules
+   (BaseLayout): content crossfades between pages while the header holds still.
+   Browsers without view transitions navigate normally.
    ========================================================================= */
 
 /* Lets the accordion transition between 0 and `auto` height. */
@@ -58,93 +47,84 @@
   interpolate-size: allow-keywords;
 }
 
-/* --- Page transitions ----------------------------------------------------- */
-@view-transition {
-  navigation: auto;
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
 }
 
-/*
- * The chrome holds still and only the content changes — a *continuity
- * transition*. The header does not move; only what differs between the two
- * headers (nav labels after a language switch, the toggle's active chip)
- * crossfades, briefly, instead of snapping.
- */
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Explicit normal blending avoids UA plus-lighter additive white flashes when
+   the outgoing snapshot stays opaque underneath the incoming one. */
+::view-transition-group(root) {
+  animation: none;
+}
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: page-fade-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  mix-blend-mode: normal;
+}
+::view-transition-group(site-header) {
+  z-index: 10;
+  animation: none;
+}
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(site-header) {
+  opacity: 0;
+}
+::view-transition-group(cookie-panel) {
+  z-index: 20;
+  animation: none;
+}
+::view-transition-old(cookie-panel),
+::view-transition-new(cookie-panel) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(cookie-panel) {
+  opacity: 0;
+}
+
+/* The sticky header is lifted into its own transition layer, exposing body
+   behind it in the root snapshot. Matching the dark hero's colour prevents a
+   white strip from flashing behind the transparent home header on switch. */
+body:has(#main > [data-hero-dark]:first-child, #main > :first-child > [data-hero-dark]:first-child) {
+  background: linear-gradient(
+    var(--color-blue-900) var(--header-h),
+    var(--color-canvas) var(--header-h)
+  );
+}
+
 header.site-header {
-  view-transition-name: site-header;
   height: var(--header-h);
+  view-transition-name: site-header;
 }
 
-/* How much of the top of the window the header covers: sticky columns sit
-   this far down. */
+#cookie-panel {
+  view-transition-name: cookie-panel;
+}
+
 :root {
   --header-offset: var(--header-h);
 }
 
 main > .sk-hero--home[data-hero-dark] {
-  min-height: calc(100svh - var(--header-h));
-}
-
-/*
- * Marks the scroll depth at which the header takes its background back. A bare
- * marker observed once, rather than a scroll listener that runs every frame.
- */
-.header-sentinel {
-  position: absolute;
-  top: 120px;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  pointer-events: none;
-}
-
-footer.site-footer {
-  view-transition-name: site-footer;
-}
-main {
-  view-transition-name: page-content;
-}
-
-::view-transition-group(*) {
-  animation-duration: 100ms;
-}
-
-/*
- * page-content too: its group would otherwise slide from the old page's box to
- * the new one, and the home hero starts under the header while other pages
- * start below it, so the photo visibly rose into place. It crossfades in place.
- */
-::view-transition-group(site-header),
-::view-transition-group(site-footer),
-::view-transition-group(page-content) {
-  animation: none;
-}
-
-@keyframes page-enter {
-  from {
-    opacity: 0;
-  }
-}
-
-/*
- * The outgoing page stays opaque underneath while the incoming one fades in
- * over it: fading both lets the white canvas flash through. Nothing on either
- * page can be clicked while a transition runs, so it stays short.
- */
-::view-transition-old(page-content) {
-  animation: none;
-}
-::view-transition-new(page-content) {
-  animation: page-enter 100ms var(--ease-out-soft) both;
-}
-/* The old page's header keeps its own ink and logo (blue on light pages), so
-   crossfading it would ghost blue over a dark hero. The new header already
-   paints with the right ink on first frame, so swap instantly. */
-::view-transition-old(site-header) {
-  animation: none;
-  opacity: 0;
-}
-::view-transition-new(site-header) {
-  animation: none;
+  min-height: calc(100lvh - var(--header-h));
 }
 
 /*
@@ -209,7 +189,7 @@ main {
 
 @media (prefers-reduced-motion: no-preference) {
   .site-header[data-home]:not([data-skip-intro]) {
-    animation: header-slide-down 800ms var(--ease-reveal) backwards;
+    animation: header-slide-down 280ms var(--ease-reveal) backwards;
   }
 }
 
@@ -271,77 +251,6 @@ html.lenis body {
     var(--color-ink-400),
     var(--color-ink-900) calc(var(--t) * (2 - var(--t)) * 100%)
   );
-}
-
-/* --- Mobile navigation panel ---------------------------------------------- */
-@keyframes panel-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-}
-@keyframes panel-exit {
-  to {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-}
-
-#mobile-nav:not([hidden]) {
-  animation: panel-enter 240ms var(--ease-out-soft) both;
-}
-#mobile-nav[data-closing] {
-  animation: panel-exit 160ms ease-in both;
-}
-
-/* The close button's cross starts as two parallel bars, where the menu icon
-   was, then closes up and turns, so opening reads as the icon becoming an X.
-   Open only: the panel's close listens for its own animationend, and a child
-   animation finishing during the exit would end it early. */
-.menu-x {
-  position: relative;
-  display: block;
-  width: 20px;
-  height: 20px;
-}
-.menu-x > span {
-  position: absolute;
-  left: 1px;
-  right: 1px;
-  top: calc(50% - 0.75px);
-  height: 1.5px;
-  border-radius: 1px;
-  background: currentColor;
-  rotate: 45deg;
-}
-.menu-x > span:last-child {
-  rotate: -45deg;
-}
-#mobile-nav:not([hidden], [data-closing]) .menu-x > span {
-  animation: menu-x-first 420ms var(--ease-reveal) both;
-}
-#mobile-nav:not([hidden], [data-closing]) .menu-x > span:last-child {
-  animation-name: menu-x-last;
-}
-@keyframes menu-x-first {
-  0% {
-    translate: 0 -4px;
-    rotate: 0deg;
-  }
-  40% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
-}
-@keyframes menu-x-last {
-  0% {
-    translate: 0 4px;
-    rotate: 0deg;
-  }
-  40% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
 }
 
 /* --- Dialogs -------------------------------------------------------------- */
@@ -450,27 +359,38 @@ details[open] > summary > .disclosure-icon {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 1rem 1.5rem;
+    min-height: 2.875rem;
+    padding: 0.75rem 1.5rem;
     border: 1px solid transparent;
     border-radius: var(--radius-cta);
     font-size: 0.9375rem;
-    font-weight: 500;
-    line-height: 1;
+    font-weight: 600;
+    line-height: 1.15;
     text-decoration: none;
     white-space: nowrap;
+    max-width: 100%;
     user-select: none;
     cursor: pointer;
     transition:
       background-color var(--duration-ui) var(--ease-ui),
       border-color var(--duration-ui) var(--ease-ui),
-      color var(--duration-ui) var(--ease-ui);
+      color var(--duration-ui) var(--ease-ui),
+      transform var(--duration-fast) var(--ease-out-soft);
   }
   .btn-sm {
-    padding: 0.75rem 1.125rem;
+    min-height: 2.5rem;
+    padding: 0.625rem 1.125rem;
     font-size: 0.875rem;
   }
   .btn-block {
     width: 100%;
+  }
+  @media (width < 30rem) {
+    .btn {
+      white-space: normal;
+      text-align: center;
+      padding-inline: 1.125rem;
+    }
   }
 
   .btn-primary {
@@ -526,17 +446,18 @@ details[open] > summary > .disclosure-icon {
   .link-arrow {
     display: inline-flex;
     align-items: center;
-    gap: 0.4375rem;
-    color: var(--color-blue-800);
+    gap: 0.4rem;
+    color: var(--color-blue-700);
     font-weight: 600;
     font-size: 0.9375rem;
     text-decoration: none;
-    border-bottom: 1px solid var(--color-blue-200);
-    padding-bottom: 2px;
-    transition: border-color var(--duration-fast) var(--ease-out-soft);
+    text-underline-offset: 4px;
+    transition: color var(--duration-fast) var(--ease-out-soft);
   }
   .link-arrow:hover {
-    border-color: var(--color-blue-700);
+    color: var(--color-blue-800);
+    text-decoration: underline;
+    text-decoration-color: var(--color-blue-200);
   }
   .link-arrow > .arrow {
     transition: transform var(--duration-fast) var(--ease-out-soft);
@@ -749,7 +670,18 @@ details[open] > summary > .disclosure-icon {
     font-weight: 600;
   }
 
-  /* --- Screen-reader-only -------------------------------------------------- */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
   .sr-only-focusable:not(:focus):not(:focus-within) {
     position: absolute;
     width: 1px;
@@ -763,14 +695,6 @@ details[open] > summary > .disclosure-icon {
   }
 }
 
-/* ============================================================================
-   Placeholder media.
-   Holds the box wherever a CMS image has not been supplied yet, so the layout
-   does not shift when the real photograph lands. Silent by design: it carries
-   no text and is hidden from assistive tech. The old diagonal-stripe treatment
-   read as a broken asset to a visitor who had no idea the site was unfinished;
-   a quiet tinted panel simply looks like part of the page.
-   ========================================================================= */
 .media-placeholder {
   background: radial-gradient(
     120% 120% at 50% 0%,
@@ -788,21 +712,6 @@ details[open] > summary > .disclosure-icon {
   opacity: 0.5;
 }
 
-/*
- * Blur-up: the ~20px LQIP Sanity ships with every photo, blurred and scaled
- * past its own soft edge, holds the frame until the photo fades in over it.
- * Without an LQIP the frame shows the sunken paper instead. Both are dropped
- * once the fade is over, so nothing lingers behind a photo's transparent edges.
- *
- * Hidden only where scripting runs, because only script can say the photo has
- * loaded — a no-JS visitor gets the photo directly, never a stuck blur.
- *
- * The photo sharpens from its own blur as it fades in, over 800ms, so the
- * handover from placeholder to photo reads as one image coming into focus.
- * Layered so utilities passed to ResponsiveImage still win, and the image's
- * transition keeps the card zoom's transform, so the fade never cancels it.
- * A cached photo skips only the fade, via --blur-fade.
- */
 @layer components {
   .blur-up {
     position: relative;
@@ -817,22 +726,22 @@ details[open] > summary > .disclosure-icon {
     position: absolute;
     inset: 0;
     background: var(--lqip, none) center / cover;
-    filter: blur(14px);
-    transform: scale(1.15);
+    filter: blur(8px);
+    transform: scale(1.08);
   }
   .blur-up[data-loaded] {
     background: transparent;
-    transition: background-color 0s 800ms;
+    transition: background-color 0s 280ms;
   }
   .blur-up[data-loaded]::before {
     opacity: 0;
-    transition: opacity 0s 800ms;
+    transition: opacity 0s 280ms;
   }
   .blur-up > img {
     position: relative;
     transition:
-      opacity var(--blur-fade, 800ms) var(--ease-reveal),
-      filter var(--blur-fade, 800ms) var(--ease-reveal),
+      opacity var(--blur-fade, 280ms) var(--ease-reveal),
+      filter var(--blur-fade, 280ms) var(--ease-reveal),
       transform var(--duration-slow) var(--ease-out-soft);
   }
   .blur-up[data-instant] {
@@ -841,7 +750,7 @@ details[open] > summary > .disclosure-icon {
   @media (scripting: enabled) {
     .blur-up > img {
       opacity: 0;
-      filter: blur(12px);
+      filter: blur(6px);
     }
     .blur-up[data-loaded] > img {
       opacity: 1;

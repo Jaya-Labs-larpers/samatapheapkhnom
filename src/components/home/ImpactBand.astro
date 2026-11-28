@@ -53,8 +53,9 @@ const display = (stat: ImpactStat) =>
 
 <script>
   import { countUpOnEntry } from '~/lib/count-up';
+  import { onPageLoad } from '~/lib/page-load';
 
-  countUpOnEntry();
+  onPageLoad(() => countUpOnEntry());
 </script>
 
 <style>

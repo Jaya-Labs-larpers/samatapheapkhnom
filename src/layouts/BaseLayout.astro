@@ -2,7 +2,7 @@
 import '~/styles/global.css';
 
 import { htmlLang, type Locale } from '~/lib/i18n/config';
-import { t } from '~/lib/i18n/utils';
+import { parsePath, t } from '~/lib/i18n/utils';
 import { getSiteSettings } from '~/lib/content';
 import { cfAnalyticsToken, hasSanity, smoothScrollEnabled } from '~/lib/config';
 import type { CmsImage } from '~/lib/content/types';
@@ -19,13 +19,12 @@ interface Props {
   noindex?: boolean;
   plainTitle?: boolean;
   publishedAt?: string | null;
-  /** Extra schema.org node for this page type, e.g. Article or BreadcrumbList. */
   jsonLd?: Record<string, unknown> | null;
-  /** Extra properties for the Organization node. */
   orgJsonLd?: Record<string, unknown> | null;
-  /** A focused page (Donate): slim header, no footer, no third-party scripts. */
   minimal?: boolean;
   noFooter?: boolean;
+  darkHero?: boolean;
+  serifAboveFold?: boolean;
 }
 
 const {
@@ -40,10 +39,22 @@ const {
   orgJsonLd,
   minimal = false,
   noFooter = false,
+  darkHero = false,
+  serifAboveFold = true,
 } = Astro.props;
 
 const settings = await getSiteSettings();
 const pathname = Astro.url.pathname;
+const defaultHome = lang === 'en' && parsePath(pathname).path === '/';
+// Runs before first paint, but not while prerendering: the cookie may change before the click.
+const homeRedirect = `(() => {
+  const go = () => {
+    if (/(?:^|; )sko-lang=km(?:;|$)/.test(document.cookie))
+      location.replace('/km/' + location.search + location.hash);
+  };
+  if (document.prerendering) document.addEventListener('prerenderingchange', go, { once: true });
+  else go();
+})();`;
 const speculationRules = JSON.stringify({
   prerender: [
     {
@@ -57,11 +68,22 @@ const speculationRules = JSON.stringify({
       eagerness: 'moderate',
     },
   ],
+  prefetch: [
+    {
+      where: {
+        and: [{ href_matches: '/*' }, { not: { href_matches: '/api/*' } }],
+      },
+      eagerness: 'conservative',
+    },
+  ],
 });
-const preloadFonts =
+const baseFonts =
   lang === 'km'
-    ? ['noto-sans-khmer', 'noto-sans-latin', 'source-serif-4-latin']
-    : ['noto-sans-latin', 'source-serif-4-latin'];
+    ? ['noto-sans-khmer', 'noto-sans-latin']
+    : ['noto-sans-latin'];
+const preloadFonts = serifAboveFold ? [...baseFonts, 'source-serif-4-latin'] : baseFonts;
+const preloadLogo =
+  darkHero && !minimal ? '/logo/sko-logo-reversed.svg' : '/logo/sko-logo-full-colour.svg';
 ---
 
 <!doctype html>
@@ -80,8 +102,9 @@ const preloadFonts =
       because a meta-delivered policy cannot set it.
     */
     }
-    <meta http-equiv="Content-Security-Policy" content="__CSP_POLICY__" />
+    {import.meta.env.PROD && <meta http-equiv="Content-Security-Policy" content="__CSP_POLICY__" />}
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    {defaultHome && <script is:inline set:html={homeRedirect} />}
     <meta name="generator" content={Astro.generator} />
     <meta name="google" content="notranslate" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -91,15 +114,6 @@ const preloadFonts =
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#F5F7FD" />
 
-    {
-      /*
-      Preload what the first paint needs, and no more: the locale's body font and
-      its Latin face on Khmer pages. The other script
-      still loads — the language toggle renders "ខ្មែរ" on English pages — but
-      lazily, under font-display: swap, so it never blocks LCP for one word of
-      chrome.
-    */
-    }
     {
       preloadFonts.map((font) => (
         <link
@@ -111,15 +125,8 @@ const preloadFonts =
         />
       ))
     }
-    {hasSanity && <link rel="preconnect" href="https://cdn.sanity.io" />}
-    <link rel="preload" as="image" type="image/svg+xml" href="/logo/sko-logo-full-colour.svg" />
-    {
-      /*
-      Prerenders a same-site page once the visitor shows intent (hover on
-      desktop, touch start on phones), so the click swaps to a finished page.
-      Files, the API and links that open elsewhere are left out.
-    */
-    }
+    {hasSanity && <link rel="dns-prefetch" href="https://cdn.sanity.io" />}
+    <link rel="preload" as="image" type="image/svg+xml" href={preloadLogo} fetchpriority="low" />
     <script is:inline type="speculationrules" set:html={speculationRules} />
     <SeoHead
       lang={lang}
@@ -135,7 +142,7 @@ const preloadFonts =
       orgJsonLd={orgJsonLd}
     />
   </head>
-  <body class="bg-white" data-cf-token={(!minimal && cfAnalyticsToken) || undefined}>
+  <body data-cf-token={(!minimal && cfAnalyticsToken) || undefined}>
     <a
       href="#main"
       class="sr-only-focusable absolute top-3 left-3 z-[100] rounded-[var(--radius-md)] bg-[color:var(--color-blue-700)] px-4 py-3 text-[15px] font-semibold text-white no-underline"
@@ -147,7 +154,7 @@ const preloadFonts =
       minimal ? (
         <MinimalHeader lang={lang} pathname={pathname} settings={settings} />
       ) : (
-        <Header lang={lang} pathname={pathname} settings={settings} />
+        <Header lang={lang} pathname={pathname} settings={settings} darkHero={darkHero} />
       )
     }
 
@@ -160,15 +167,47 @@ const preloadFonts =
     <script>
       import { revealOnEntry } from '~/lib/reveal';
       import { initScrollMotion } from '~/lib/scroll-motion';
+      import { onPageLoad } from '~/lib/page-load';
+      import { hydrateDeferredImages, revealWhenLoaded, whenSettled } from '~/lib/lazy';
 
-      import { whenSettled } from '~/lib/lazy';
+      onPageLoad((signal) => {
+        revealWhenLoaded();
+        hydrateDeferredImages();
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            if (signal.aborted) return;
+            revealOnEntry();
+            initScrollMotion(signal);
+          }),
+        );
+      });
 
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          revealOnEntry();
-          initScrollMotion();
-        }),
-      );
+      if (!HTMLScriptElement.supports?.('speculationrules')) {
+        const prefetched = new Set<string>();
+        const canPrefetch = () => {
+          const connection = (
+            navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
+          ).connection;
+          if (connection?.saveData) return false;
+          return !connection?.effectiveType || !/^(slow-)?2g$/.test(connection.effectiveType);
+        };
+        const onIntent = (event: Event) => {
+          if (!canPrefetch()) return;
+          const anchor = (event.target as Element | null)?.closest?.<HTMLAnchorElement>('a[href]');
+          if (!anchor || anchor.target || anchor.hasAttribute('download')) return;
+          if (anchor.origin !== location.origin || anchor.pathname === location.pathname) return;
+          if (anchor.pathname.startsWith('/api/') || prefetched.has(anchor.href)) return;
+          prefetched.add(anchor.href);
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.as = 'document';
+          link.href = anchor.href;
+          document.head.append(link);
+        };
+        document.addEventListener('pointerenter', onIntent, { capture: true, passive: true });
+        document.addEventListener('touchstart', onIntent, { passive: true });
+        document.addEventListener('focusin', onIntent, { passive: true });
+      }
 
       const token = document.body.dataset.cfToken;
       if (token) {

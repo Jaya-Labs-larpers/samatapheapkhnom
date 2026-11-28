@@ -10,17 +10,16 @@ interface Props {
   title: string;
   titleLang?: string;
   action: SkAction;
-  keep?: boolean;
 }
 
-const { lang, image, title, titleLang, action, keep = false } = Astro.props;
+const { lang, image, title, titleLang, action } = Astro.props;
 ---
 
 {
   image && title && (
     <section class="banner">
       <div class="banner__media clip-reveal">
-        <ResponsiveImage image={image} lang={lang} alt="" sizes="100vw" keep={keep} />
+        <ResponsiveImage image={image} lang={lang} alt="" sizes="100vw" />
       </div>
       <div class="banner__text">
         <h2 class="banner__title" lang={titleLang}>

@@ -14,7 +14,7 @@ import type { PortableBlock, PortableTextBlock } from './types';
  * - terms: three or more paragraphs that each open "Term. …", as numbered rows
  * - points: three or more bullets that each open "Term: …", as numbered rows
  * - facts: nothing but bullets, set as ruled lines
- * - prose: anything else, as running text beside a sticky heading
+ * - prose: anything else, as running text under its heading
  */
 export type SectionLayout = 'statement' | 'terms' | 'points' | 'facts' | 'prose';
 
@@ -147,6 +147,33 @@ export function layoutFor(
     return 'terms';
   }
   return 'prose';
+}
+
+export interface Chapter {
+  heading: string;
+  blocks: PortableBlock[];
+}
+
+/**
+ * A long prose section that staff broke up with "### " headings, as chapters
+ * a page can set side by side. Fewer than two "### " headings is no chapters.
+ */
+export function splitChapters(blocks: PortableBlock[]): {
+  intro: PortableBlock[];
+  chapters: Chapter[];
+} {
+  const intro: PortableBlock[] = [];
+  const chapters: Chapter[] = [];
+  for (const block of blocks) {
+    if (isTextBlock(block) && block.style === 'h3') {
+      chapters.push({ heading: blockText(block), blocks: [] });
+    } else if (chapters.length > 0) {
+      chapters[chapters.length - 1]!.blocks.push(block);
+    } else {
+      intro.push(block);
+    }
+  }
+  return chapters.length >= 2 ? { intro, chapters } : { intro: blocks, chapters: [] };
 }
 
 export function splitBody(

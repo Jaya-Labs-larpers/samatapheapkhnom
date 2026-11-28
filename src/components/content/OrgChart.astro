@@ -60,7 +60,6 @@ const hasTextVersion = Object.values(chart.textVersion ?? {}).some(
           image={chart.image}
           lang={lang}
           alt=""
-          keep
           aspect="16/8"
           sizes="(min-width: 64rem) 1100px, 100vw"
         />
@@ -162,28 +161,31 @@ const hasTextVersion = Object.values(chart.textVersion ?? {}).some(
 
 <script>
   import { loadDeferredImage } from '~/lib/lazy';
+  import { onPageLoad } from '~/lib/page-load';
 
-  const trigger = document.getElementById('orgchart-open') as HTMLButtonElement | null;
-  const dialog = document.getElementById('orgchart-dialog') as HTMLDialogElement | null;
-  const closeButton = document.getElementById('orgchart-close');
-  const full = document.getElementById('orgchart-full') as HTMLImageElement | null;
+  onPageLoad(() => {
+    const trigger = document.getElementById('orgchart-open') as HTMLButtonElement | null;
+    const dialog = document.getElementById('orgchart-dialog') as HTMLDialogElement | null;
+    const closeButton = document.getElementById('orgchart-close');
+    const full = document.getElementById('orgchart-full') as HTMLImageElement | null;
 
-  if (trigger && dialog && closeButton) {
-    /* Start the download on the intent rather than the click, so the dialog
+    if (trigger && dialog && closeButton) {
+      /* Start the download on the intent rather than the click, so the dialog
        opens onto a picture instead of a blank box. */
-    const load = () => full && loadDeferredImage(full);
-    trigger.addEventListener('pointerenter', load, { once: true });
-    trigger.addEventListener('focus', load, { once: true });
+      const load = () => full && loadDeferredImage(full);
+      trigger.addEventListener('pointerenter', load, { once: true });
+      trigger.addEventListener('focus', load, { once: true });
 
-    trigger.addEventListener('click', () => {
-      load();
-      dialog.showModal();
-    });
-    closeButton.addEventListener('click', () => dialog.close());
-    // Click on the backdrop closes it; clicks inside the panel do not.
-    dialog.addEventListener('click', (event) => {
-      if (event.target === dialog) dialog.close();
-    });
-    // Native <dialog> restores focus to the trigger on close.
-  }
+      trigger.addEventListener('click', () => {
+        load();
+        dialog.showModal();
+      });
+      closeButton.addEventListener('click', () => dialog.close());
+      // Click on the backdrop closes it; clicks inside the panel do not.
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+      // Native <dialog> restores focus to the trigger on close.
+    }
+  });
 </script>

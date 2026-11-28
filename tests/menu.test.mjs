@@ -78,21 +78,9 @@ function load({ desktop = false } = {}) {
   const link = new El('panel-link');
   panel.foundAll['a[href], button:not([disabled])'] = [link];
 
-  const item = new El('item');
-  const toggle = new El('toggle');
-  const dd = new El('dd');
-  const dropdownLink = new El('dropdown-link');
-  toggle.setAttribute('aria-expanded', 'false');
-  item.children = [toggle, dd, dropdownLink];
-  item.found['[data-dd]'] = dd;
-  item.found['[data-dd-toggle]'] = toggle;
-  item.foundAll['.dd__link'] = [dropdownLink];
-
   doc.documentElement = html;
   doc.found['[data-mobile-open]'] = burger;
   doc.found['[data-mobile-panel]'] = panel;
-  doc.foundAll['[data-mgroup]'] = [];
-  doc.foundAll['[data-nav-item]'] = [item];
 
   context = {
     exports: {},
@@ -108,7 +96,7 @@ function load({ desktop = false } = {}) {
     },
   };
   vm.runInNewContext(compiled, context);
-  return { menu: context.exports, burger, panel, html, doc, timers, item, toggle, dropdownLink };
+  return { menu: context.exports, burger, panel, html, doc, timers };
 }
 
 test("the bar's menu button opens the phone menu and turns into its close button", () => {
@@ -122,7 +110,7 @@ test("the bar's menu button opens the phone menu and turns into its close button
   assert.ok(html.hasAttribute('data-menu-open'));
 });
 
-test('pressing the menu button again closes the menu after the 400ms fade', () => {
+test('pressing the menu button again closes the menu after the 240ms collapse', () => {
   const { menu, burger, panel, html, timers } = load();
   menu.initMenus();
   burger.fire('click');
@@ -131,7 +119,7 @@ test('pressing the menu button again closes the menu after the 400ms fade', () =
   assert.equal(burger.getAttribute('aria-label'), 'Open menu');
   assert.equal(html.hasAttribute('data-menu-open'), false);
   const close = timers.at(-1);
-  assert.equal(close.ms, 400);
+  assert.equal(close.ms, 240);
   close.fn();
   assert.equal(panel.hidden, true);
 });
@@ -142,28 +130,4 @@ test('Escape closes the phone menu', () => {
   burger.fire('click');
   doc.fire('keydown', { key: 'Escape' });
   assert.equal(burger.getAttribute('aria-expanded'), 'false');
-});
-
-test('a desktop drop-down opens at once and closes 300ms after the pointer leaves', () => {
-  const { menu, item, toggle, timers } = load({ desktop: true });
-  menu.initDropdowns();
-  item.fire('pointerenter', { pointerType: 'mouse' });
-  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
-  item.fire('pointerleave', { pointerType: 'mouse' });
-  assert.equal(timers.at(-1).ms, 300);
-  timers.at(-1).fn();
-  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
-});
-
-test('Arrow Down opens a desktop dropdown and Escape closes it and returns focus', () => {
-  const { menu, item, toggle, doc, dropdownLink } = load({ desktop: true });
-  menu.initDropdowns();
-  toggle.focus();
-  item.fire('keydown', { key: 'ArrowDown', target: toggle });
-  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
-  assert.equal(doc.activeElement, dropdownLink);
-
-  item.fire('keydown', { key: 'Escape', target: dropdownLink });
-  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
-  assert.equal(doc.activeElement, toggle);
 });

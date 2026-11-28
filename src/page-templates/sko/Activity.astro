@@ -8,10 +8,9 @@ import { siteUrl } from '~/lib/config';
 import { hasImage, imageUrl } from '~/lib/sanity/image';
 import { categoryLabels, tStrict } from '~/lib/skeleton-content';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
 import RichText from '~/components/content/RichText.astro';
 import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
-import SkSection from '~/components/skeleton/SkSection.astro';
 
 interface Props {
   lang: Locale;
@@ -56,76 +55,85 @@ const programTitle = pick(activity.program?.title, lang);
   description={seo.description}
   ogImage={seo.ogImage}
   noindex
+  darkHero
   publishedAt={activity.publishedAt}
   jsonLd={articleJsonLd}
 >
-  <SkSection narrow>
-    <Breadcrumbs
-      lang={lang}
-      trail={[{ label: tStrict(lang, 'pageActivities'), path: '/activities' }, { label: heading }]}
-    />
-    <p class="sk-small">
-      {category && <span class="sk-pill">{category}</span>}
+  <PageSolo
+    full
+    lang={lang}
+    title={heading}
+    titleLang={langAttr(title)}
+    eyebrow={category}
+    trail={[{ label: tStrict(lang, 'pageActivities'), path: '/activities' }, { label: heading }]}
+  >
+    <p class="pg-solo__meta">
       <time datetime={activity.publishedAt ?? undefined}>
         {formatDate(activity.publishedAt, lang)}
       </time>
-      {activity.author && <span> · {activity.author}</span>}
+      {activity.author && <span>{activity.author}</span>}
       {
         activity.program && programTitle.value && (
-          <span lang={langAttr(programTitle)}>
-            {' · '}
-            <a href={localizePath(`/programs/${activity.program.slug}`, lang)}>
-              {programTitle.value}
-            </a>
-          </span>
+          <a
+            href={localizePath(`/programs/${activity.program.slug}`, lang)}
+            lang={langAttr(programTitle)}
+          >
+            {programTitle.value}
+          </a>
         )
       }
     </p>
-    <h1 class="sk-h1" style="max-width:none" lang={langAttr(title)}>
-      {heading}
-    </h1>
-    <div class="sk-media" style="aspect-ratio:16/9">
-      <ResponsiveImage
-        image={activity.coverImage}
-        lang={lang}
-        alt=""
-        aspect="16/9"
-        eager
-        sizes="(min-width: 48rem) 760px, 100vw"
-      />
-    </div>
-    {
-      excerpt.value && (
-        <p class="sk-lead" lang={langAttr(excerpt)}>
-          {excerpt.value}
-        </p>
-      )
-    }
-  </SkSection>
+  </PageSolo>
 
-  <SkSection narrow>
-    <RichText blocks={activity.body} lang={lang} />
-    <nav
-      class="sk-actions"
-      style="justify-content:space-between"
-      aria-label={tStrict(lang, 'pageActivities')}
-    >
-      {
-        previous ? (
-          <a href={localizePath(`/activities/${previous.slug}`, lang)} class="sk-link" rel="prev">
-            ← {tStrict(lang, 'previous')}
-          </a>
-        ) : (
-          <span />
-        )
-      }
-      {
-        next && (
-          <a href={localizePath(`/activities/${next.slug}`, lang)} class="sk-link" rel="next">
-            {tStrict(lang, 'next')} →
-          </a>
-        )
-      }
-    </nav>
-  </SkSection>
+  <section class="pg-section">
+    <div class="pg-wrap">
+      <div class="pg-article">
+        {
+          hasImage(activity.coverImage) && (
+            <div class="pg-article__media clip-reveal">
+              <ResponsiveImage
+                image={activity.coverImage}
+                lang={lang}
+                alt=""
+                aspect="16/9"
+                sizes="(min-width: 48rem) 760px, 100vw"
+              />
+            </div>
+          )
+        }
+        {
+          excerpt.value && (
+            <p class="pg-article__lead" lang={langAttr(excerpt)}>
+              {excerpt.value}
+            </p>
+          )
+        }
+
+        <RichText blocks={activity.body} lang={lang} />
+
+        {
+          (previous || next) && (
+            <nav class="pg-article__nav" aria-label={tStrict(lang, 'pageActivities')}>
+              {previous ? (
+                <a
+                  href={localizePath(`/activities/${previous.slug}`, lang)}
+                  class="pg-link"
+                  rel="prev"
+                >
+                  <span aria-hidden="true">←</span> {tStrict(lang, 'previous')}
+                </a>
+              ) : (
+                <span />
+              )}
+              {next && (
+                <a href={localizePath(`/activities/${next.slug}`, lang)} class="pg-link" rel="next">
+                  {tStrict(lang, 'next')} <span aria-hidden="true">→</span>
+                </a>
+              )}
+            </nav>
+          )
+        }
+      </div>
+    </div>
+  </section>
 </BaseLayout>

@@ -7,7 +7,6 @@ import { gtmId } from '~/lib/config';
 import CookieSettings from './CookieSettings.astro';
 import LanguageToggle from './LanguageToggle.astro';
 import SocialIcon, { type SocialPlatform } from '~/components/design/SocialIcon.astro';
-import Logo from '~/components/Logo.astro';
 
 interface Props {
   lang: Locale;
@@ -23,12 +22,13 @@ const socialLabels = {
   instagram: 'menuInstagramLabel',
   youtube: 'menuYoutubeLabel',
 } as const;
-// Placeholder '#' until SKO adds the real accounts to Site settings in Sanity.
-const socials = (Object.keys(socialLabels) as SocialPlatform[]).map((platform) => ({
-  platform,
-  label: t(lang, socialLabels[platform]),
-  url: settings.socials?.find((social) => social.platform.toLowerCase() === platform)?.url ?? '#',
-}));
+const socials = (Object.keys(socialLabels) as SocialPlatform[])
+  .map((platform) => ({
+    platform,
+    label: t(lang, socialLabels[platform]),
+    url: settings.socials?.find((social) => social.platform.toLowerCase() === platform)?.url ?? '',
+  }))
+  .filter((social) => /^https?:\/\//.test(social.url));
 const year = new Date().getFullYear();
 const orgName = text(settings.orgName, lang);
 const address = text(settings.address, lang);
@@ -38,12 +38,6 @@ const { email, phone } = settings;
 <footer class="ftr">
   <div class="ftr__inner">
     <div class="ftr__top">
-      <div class="ftr__brand">
-        <a href={localizePath('/', lang)} class="ftr__logo">
-          <Logo variant="full" width={200} title={orgName} lazy />
-        </a>
-      </div>
-
       <nav class="ftr__nav" aria-label={t(lang, 'footerNavLabel')}>
         {
           footerColumns.map((column) => (
@@ -61,40 +55,48 @@ const { email, phone } = settings;
             </div>
           ))
         }
+      </nav>
 
-        <div class="ftr__col">
-          <h2 class="ftr__heading">{t(lang, 'footerContactHeading')}</h2>
-          <address class="ftr__contact">
-            {address && <p class="ftr__address">{address}</p>}
-            {
-              email && (
-                <a href={`mailto:${email}`} class="ftr__link">
-                  {email}
-                </a>
-              )
-            }
-            {
-              phone && (
-                <a href={`tel:${phone.replace(/\s+/g, '')}`} class="ftr__link">
-                  {phone}
-                </a>
-              )
-            }
-          </address>
-          <a href={localizePath('/contact', lang)} class="ftr__btn">{t(lang, 'navContact')}</a>
-          <ul class="ftr__socials">
-            {
-              socials.map((social) => (
+      <div class="ftr__col">
+        <h2 class="ftr__heading">{t(lang, 'footerContactHeading')}</h2>
+        <address class="ftr__contact">
+          {address && <p class="ftr__address">{address}</p>}
+          {
+            email && (
+              <a href={`mailto:${email}`} class="ftr__link">
+                {email}
+              </a>
+            )
+          }
+          {
+            phone && (
+              <a href={`tel:${phone.replace(/\s+/g, '')}`} class="ftr__link">
+                {phone}
+              </a>
+            )
+          }
+        </address>
+        <a href={localizePath('/contact', lang)} class="ftr__btn">{t(lang, 'navContact')}</a>
+        {
+          socials.length > 0 && (
+            <ul class="ftr__socials">
+              {socials.map((social) => (
                 <li>
-                  <a href={social.url} class="ftr__social" aria-label={social.label} rel="noopener">
+                  <a
+                    href={social.url}
+                    class="ftr__social"
+                    aria-label={social.label}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <SocialIcon platform={social.platform} />
                   </a>
                 </li>
-              ))
-            }
-          </ul>
-        </div>
-      </nav>
+              ))}
+            </ul>
+          )
+        }
+      </div>
     </div>
 
     <div class="ftr__legal">
@@ -112,49 +114,43 @@ const { email, phone } = settings;
   .ftr {
     box-sizing: border-box;
     width: 100%;
-    background: #fff;
-    border-top: 1px solid var(--color-line-strong);
+    background: var(--color-surface-subtle);
+    border-top: 1px solid var(--color-line);
     color: var(--color-ink-600);
-    padding: clamp(36px, 4vw, 52px) 20px 20px;
+    padding: clamp(2.5rem, 4vw, 3.5rem) var(--gutter-right) calc(1.5rem + var(--safe-bottom))
+      var(--gutter-left);
     font-family: var(--font-sans);
   }
   .ftr__inner {
-    max-width: 1240px;
+    max-width: var(--container-page);
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 28px;
   }
   .ftr__top {
     display: grid;
-    gap: 32px;
-    grid-template-columns: 1fr;
-  }
-  .ftr__logo {
-    display: inline-block;
-  }
-  .ftr__logo :global(img) {
-    display: block;
-    width: clamp(150px, 16vw, 200px);
-    height: auto;
+    gap: 28px;
+    grid-template-columns: minmax(0, 1fr);
   }
   .ftr__nav {
     display: grid;
-    gap: 28px 32px;
-    grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+    align-content: start;
+    gap: 24px 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .ftr__col {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     min-width: 0;
   }
   .ftr__heading {
     margin: 0;
     font-family: var(--font-sans);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.16em;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     line-height: normal;
     color: var(--color-ink-900);
@@ -170,75 +166,106 @@ const { email, phone } = settings;
   .ftr__link {
     color: var(--color-ink-600);
     text-decoration: none;
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1.4;
     overflow-wrap: anywhere;
+    transition: color var(--duration-fast) var(--ease-out-soft);
   }
   .ftr__link:hover {
-    color: var(--color-ink-900);
+    color: var(--color-blue-700);
+  }
+  .ftr__contact .ftr__link {
+    font-size: 14px;
   }
   .ftr__contact {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
     font-style: normal;
   }
   .ftr__address {
     margin: 0;
-    font-size: 15px;
-    line-height: 1.55;
+    font-size: 14px;
+    line-height: 1.5;
     white-space: pre-line;
   }
   .ftr__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     align-self: flex-start;
-    padding: 0.875rem 1.375rem;
+    min-height: 2.75rem;
+    margin-top: 4px;
+    padding: 0.6875rem 1.375rem;
     border-radius: var(--radius-cta);
     background: var(--color-blue-700);
     color: #fff;
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 1;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.15;
     text-decoration: none;
-    transition: background-color var(--duration-ui) var(--ease-ui);
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      transform var(--duration-fast) var(--ease-out-soft);
   }
   .ftr__btn:hover {
     background: var(--color-blue-800);
   }
+  .ftr__btn:active {
+    transform: scale(0.98);
+  }
   .ftr__socials {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin: 0;
+    gap: 8px;
+    margin: 4px 0 0;
     padding: 0;
     list-style: none;
   }
   .ftr__social {
     display: inline-flex;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    border: 1.5px solid var(--color-blue-700);
+    border: 1.5px solid var(--color-line-strong);
+    background: #fff;
     color: var(--color-blue-700);
     align-items: center;
     justify-content: center;
+    transition:
+      background-color var(--duration-fast) var(--ease-out-soft),
+      border-color var(--duration-fast) var(--ease-out-soft),
+      color var(--duration-fast) var(--ease-out-soft),
+      transform var(--duration-fast) var(--ease-out-soft);
   }
   .ftr__social:hover {
     background: var(--color-blue-700);
+    border-color: var(--color-blue-700);
     color: #fff;
+    transform: translateY(-2px);
   }
   .ftr__legal {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px 24px;
-    border-top: 1px solid var(--color-line-strong);
-    padding-top: 18px;
+    gap: 8px 18px;
+    border-top: 1px solid var(--color-line);
+    padding-top: 16px;
     font-size: 14px;
-    color: var(--color-ink-600);
+    color: var(--color-ink-400);
   }
   .ftr__legal-link {
-    color: inherit;
+    color: var(--color-ink-600);
     text-decoration: underline;
+    text-decoration-color: var(--color-line-strong);
+    text-underline-offset: 3px;
+    transition:
+      color var(--duration-fast) var(--ease-out-soft),
+      text-decoration-color var(--duration-fast) var(--ease-out-soft);
+  }
+  .ftr__legal-link:hover {
+    color: var(--color-blue-700);
+    text-decoration-color: currentColor;
   }
   .ftr__lang {
     margin-left: auto;
@@ -247,11 +274,13 @@ const { email, phone } = settings;
     letter-spacing: normal;
     text-transform: none;
   }
-  @media (min-width: 64rem) {
+  @media (min-width: 48rem) {
     .ftr__top {
-      grid-template-columns: minmax(180px, 0.7fr) 3fr;
-      align-items: start;
-      gap: 56px;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      gap: 32px;
+    }
+    .ftr__nav {
+      column-gap: 32px;
     }
   }
 </style>

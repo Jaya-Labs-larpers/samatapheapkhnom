@@ -147,3 +147,24 @@ test("the running text after a lead-in keeps its link", () => {
   assert.equal(after.children.map((child) => child.text).join(""), "We are honest with families.");
   assert.deepEqual(plain(after.children.filter((child) => child.marks).map((child) => child.text)), ["honest"]);
 });
+
+function withH3(lines) {
+  return blocks(lines.map((line) => line.replace(/^### /, "## "))).map((block, index) =>
+    lines[index].startsWith("### ") ? { ...block, style: "h3" } : block,
+  );
+}
+
+test("a prose section with two or more ### headings splits into chapters", () => {
+  const body = withH3(["Intro.", "### Health", "Clinics.", "- Referrals", "### Housing", "Homes."]);
+  const { intro, chapters } = plain(sections.splitChapters(body));
+  assert.deepEqual(intro.map((block) => block.children[0].text), ["Intro."]);
+  assert.deepEqual(chapters.map((chapter) => chapter.heading), ["Health", "Housing"]);
+  assert.deepEqual(chapters.map((chapter) => chapter.blocks.length), [2, 1]);
+});
+
+test("a single ### heading stays running prose", () => {
+  const body = withH3(["### Only one", "Text."]);
+  const { intro, chapters } = plain(sections.splitChapters(body));
+  assert.equal(chapters.length, 0);
+  assert.equal(intro.length, 2);
+});

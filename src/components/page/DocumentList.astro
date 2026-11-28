@@ -2,8 +2,6 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { Report } from '~/lib/content/types';
 import { formatFileSize, pick, t } from '~/lib/i18n/utils';
-import { hasInlineLinks } from '~/lib/inline-links';
-import InlineLinks from '~/components/content/InlineLinks.astro';
 
 interface Props {
   lang: Locale;
@@ -24,14 +22,12 @@ const typeLabels: Record<string, Record<Locale, string>> = {
   {
     reports.map((report) => {
       const title = pick(report.title, lang);
-      const summary = pick(report.summary, lang);
       const file = lang === 'km' && report.fileKm?.url ? report.fileKm : report.file;
       const fileLanguage =
         lang === 'km' && report.fileKm?.url ? t(lang, 'languageKhmer') : t(lang, 'languageEnglish');
       const typeLabel = report.type ? typeLabels[report.type]?.[lang] : null;
       const size = formatFileSize(file?.size);
-      const meta = ['PDF', fileLanguage, size].filter(Boolean).join(' · ');
-      const label = [report.year, typeLabel].filter(Boolean).join(' · ');
+      const meta = [typeLabel, fileLanguage, size].filter(Boolean).join(' · ');
       const cover = [typeLabel ?? t(lang, 'download'), report.year].filter(Boolean).join(' ');
       const Tag = file?.url ? 'a' : 'span';
 
@@ -48,9 +44,9 @@ const typeLabels: Record<string, Record<Locale, string>> = {
               <span>{cover}</span>
             </span>
             <span>
-              {label && <span class="pg-kicker">{label}</span>}
-              <h3 class="pg-doc__title" lang={title.isFallback ? title.lang : undefined}>
-                {title.value}
+              <h3 class="pg-doc__title">
+                <span lang={title.isFallback ? title.lang : undefined}>{title.value}</span>
+                {report.year && ` (${report.year})`}
               </h3>
               <span class="pg-doc__meta">{meta}</span>
             </span>
@@ -59,18 +55,6 @@ const typeLabels: Record<string, Record<Locale, string>> = {
               <span aria-hidden="true">↓</span>
             </span>
           </Tag>
-          {summary.value && (
-            <p
-              class="pg-doc__summary inline-links"
-              lang={summary.isFallback ? summary.lang : undefined}
-            >
-              {hasInlineLinks(summary.value) ? (
-                <InlineLinks text={summary.value} />
-              ) : (
-                summary.value
-              )}
-            </p>
-          )}
         </li>
       );
     })

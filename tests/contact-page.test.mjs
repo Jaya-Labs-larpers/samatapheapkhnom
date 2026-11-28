@@ -107,19 +107,19 @@ test('dark column is one flat colour and starts below the solid header', () => {
   assert.doesNotMatch(page, /data-nav-solid/);
 });
 
-test('header has no "Get involved": it led to the same contact page as "Contact us"', async () => {
+test('header links match the original site: Get involved leads to the contact page', async () => {
   const nav = await read('src/lib/nav.ts');
   const mainNav = nav.slice(
     nav.indexOf('export const mainNav'),
     nav.indexOf('export const mobileNav'),
   );
-  assert.doesNotMatch(mainNav, /navGetInvolved/);
+  assert.match(mainNav, /key: 'navGetInvolved', path: '\/contact'/);
 });
 
 test('switching pages swaps the header instantly so the old ink never ghosts over a dark hero', async () => {
-  const global = await read('src/styles/global.css');
-  assert.match(global, /::view-transition-old\(site-header\) \{\s*animation: none;\s*opacity: 0;/);
-  assert.match(global, /::view-transition-new\(site-header\) \{\s*animation: none;/);
+  const globalCss = await read('src/styles/global.css');
+  assert.match(globalCss, /header\.site-header\s*\{[\s\S]*?view-transition-name:\s*site-header/);
+  assert.match(globalCss, /::view-transition-group\(site-header\)\s*\{[\s\S]*?animation:\s*none/);
 });
 
 test('"What can we help with?" offers the six agreed choices, each in both languages', async () => {

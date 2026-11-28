@@ -16,6 +16,7 @@ import {
   blockAfterLeadIn,
   hasLinkMarks,
   splitBody,
+  splitChapters,
   splitLeadIn,
   splitPoint,
   type TermLimits,
@@ -91,258 +92,343 @@ function mentioned(text: string): Partner[] {
 }
 
 {
-  sections.map((section) => {
+  sections.map((section, index) => {
     const logos =
       section.layout === 'statement' ? mentioned(section.blocks.map(blockText).join(' ')) : [];
+    const { intro, chapters } =
+      section.layout === 'prose'
+        ? splitChapters(section.blocks)
+        : { intro: section.blocks, chapters: [] };
     return (
       <section
-        class:list={['about-section', `about-section--${section.layout}`]}
+        class:list={[
+          'about-section',
+          `about-section--${section.layout}`,
+          index % 2 === 1 && 'about-section--tint',
+        ]}
+        data-mobile-accordion
+        data-expanded={index === 0 ? 'true' : 'false'}
         lang={fallbackLang}
       >
-        <div class="wrap about-section__grid">
-          <h2
-            class:list={['about-section__label eyebrow', section.layout === 'points' && 'reveal']}
-          >
-            {section.heading}
-          </h2>
+        <div class="wrap">
+          <div class="about-section__head">
+            <h2
+              class:list={[
+                'about-section__title',
+                section.heading.length > 48 && 'about-section__title--long',
+              ]}
+            >
+              <button
+                type="button"
+                class="about-section__toggle"
+                aria-expanded={index === 0 ? 'true' : 'false'}
+                aria-controls={`about-panel-${index}`}
+                data-accordion-toggle
+              >
+                <span>{section.heading}</span>
+                <span class="about-section__icon" aria-hidden="true"></span>
+              </button>
+            </h2>
+          </div>
 
-          {section.layout === 'statement' && (
-            <div>
-              <RichText blocks={asBlocks(section.blocks)} lang={lang} class="about-statement" />
-              {logos.length > 0 && (
-                <ul class="statement-logos reveal reveal-cascade list-none p-0">
-                  {logos.map((partner, index) => (
-                    <li class="statement-logo [&_img]:object-contain" style={`--i:${index}`}>
-                      {hasImage(partner.logo) ? (
-                        <ResponsiveImage
-                          image={partner.logo}
-                          lang={lang}
-                          alt={partner.name}
-                          aspect="5/3"
-                          sizes="160px"
-                          blurUp={false}
-                        />
+          <div class="about-section__panel" id={`about-panel-${index}`}>
+            <div class="about-section__body">
+            {section.layout === 'statement' && (
+              <>
+                <RichText blocks={asBlocks(section.blocks)} lang={lang} class="about-statement" />
+                {logos.length > 0 && (
+                  <ul class="statement-logos reveal reveal-cascade list-none p-0">
+                    {logos.map((partner, logoIndex) => (
+                      <li class="statement-logo [&_img]:object-contain" style={`--i:${logoIndex}`}>
+                        {hasImage(partner.logo) ? (
+                          <ResponsiveImage
+                            image={partner.logo}
+                            lang={lang}
+                            alt={partner.name}
+                            aspect="5/3"
+                            sizes="160px"
+                            blurUp={false}
+                          />
+                        ) : (
+                          <span>{partner.name}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+
+            {(section.layout === 'terms' || section.layout === 'points') && (
+              <ul
+                class:list={[
+                  'about-terms reveal reveal-cascade list-none p-0',
+                  section.layout === 'points' && 'reveal-cascade--slow',
+                ]}
+                data-reveal-ms={section.layout === 'points' ? '2400' : undefined}
+              >
+                {section.blocks.map((block, termIndex) => {
+                  const split =
+                    section.layout === 'terms'
+                      ? splitLeadIn(blockText(block), limits)!
+                      : splitPoint(blockText(block))!;
+                  const html = restHtml(block, split.rest);
+                  return (
+                    <li class="about-term" style={`--i:${termIndex}`}>
+                      {section.layout === 'terms' && (
+                        <span class="about-term__index" aria-hidden="true">
+                          {String(termIndex + 1).padStart(2, '0')}
+                        </span>
+                      )}
+                      <span class="about-term__name">{split.term}</span>
+                      {html ? (
+                        <span class="about-term__text" set:html={html} />
                       ) : (
-                        <span>{partner.name}</span>
+                        <span class="about-term__text">{split.rest}</span>
                       )}
                     </li>
-                  ))}
-                </ul>
-              )}
+                  );
+                })}
+              </ul>
+            )}
+
+            {section.layout === 'facts' && (
+              <RichText blocks={asBlocks(section.blocks)} lang={lang} class="about-facts" />
+            )}
+
+            {section.layout === 'prose' && intro.length > 0 && (
+              <RichText
+                blocks={asBlocks(intro)}
+                lang={lang}
+                class={leadProse ? 'about-prose about-prose--lead' : 'about-prose'}
+              />
+            )}
+
+            {chapters.length > 0 && (
+              <div class="about-chapters">
+                {chapters.map((chapter) => (
+                  <div class="about-chapter">
+                    <h3 class="about-chapter__title">{chapter.heading}</h3>
+                    <RichText blocks={asBlocks(chapter.blocks)} lang={lang} class="about-prose" />
+                  </div>
+                ))}
+              </div>
+            )}
             </div>
-          )}
-
-          {section.layout === 'terms' && (
-            <ol class="about-terms reveal reveal-cascade list-none p-0">
-              {section.blocks.map((block, index) => {
-                const split = splitLeadIn(blockText(block), limits)!;
-                const html = restHtml(block, split.rest);
-                return (
-                  <li class="about-term" style={`--i:${index}`}>
-                    <span class="about-term__index" aria-hidden="true">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <span class="about-term__name">{split.term}</span>
-                    {html ? (
-                      <span class="about-term__text" set:html={html} />
-                    ) : (
-                      <span class="about-term__text">{split.rest}</span>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-
-          {section.layout === 'points' && (
-            <ol
-              class="about-terms reveal reveal-cascade reveal-cascade--slow list-none p-0"
-              data-reveal-ms="2400"
-            >
-              {section.blocks.map((block, index) => {
-                const split = splitPoint(blockText(block))!;
-                const html = restHtml(block, split.rest);
-                return (
-                  <li class="about-term" style={`--i:${index}`}>
-                    <span class="about-term__index" aria-hidden="true">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <span class="about-term__name">{split.term}</span>
-                    {html ? (
-                      <span class="about-term__text" set:html={html} />
-                    ) : (
-                      <span class="about-term__text">{split.rest}</span>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-
-          {section.layout === 'facts' && (
-            <RichText blocks={asBlocks(section.blocks)} lang={lang} class="about-facts" />
-          )}
-
-          {section.layout === 'prose' && (
-            <RichText
-              blocks={asBlocks(section.blocks)}
-              lang={lang}
-              class={leadProse ? 'about-prose about-prose--lead' : 'about-prose'}
-            />
-          )}
+          </div>
         </div>
       </section>
     );
   })
 }
 
+<script>
+  import { onPageLoad } from '~/lib/page-load';
+
+  onPageLoad((signal) => {
+    const narrow = window.matchMedia('(width < 40rem)');
+    for (const section of document.querySelectorAll<HTMLElement>('[data-mobile-accordion]')) {
+      const btn = section.querySelector<HTMLButtonElement>('[data-accordion-toggle]');
+      if (!btn) continue;
+      btn.addEventListener(
+        'click',
+        () => {
+          if (!narrow.matches) return;
+          const next = section.dataset.expanded !== 'true';
+          section.dataset.expanded = String(next);
+          btn.setAttribute('aria-expanded', String(next));
+        },
+        { signal },
+      );
+    }
+  });
+</script>
+
 <style is:global>
-@layer components {
-  /* --- About page body (SectionedBody) ---------------------------------- *
-   * Each "## " section of the CMS body gets a label column and a content
-   * column, divided by a hairline. The label sticks beside long prose so the
-   * visitor always knows which part they are reading. */
-  .about-lead {
-    font-size: var(--text-lead);
-    line-height: 1.7;
-    color: var(--color-ink-900);
-  }
-  .about-section {
-    padding-top: clamp(2.5rem, 2rem + 3vw, 5rem);
-  }
-  .about-section__grid {
-    display: grid;
-    gap: 1rem;
-    padding-top: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
-    border-top: 1px solid var(--color-line);
-  }
-  @media (min-width: 64rem) {
-    .about-section__grid {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 2.6fr);
-      gap: 3rem;
+  @layer components {
+    /* --- CMS body sections (SectionedBody) -------------------------------- *
+   * Each "## " section opens with its own title, set large above its content
+   * and marked with the logo butterfly, so the visitor reads the title before
+   * the text. Sections alternate between paper and a cool tint instead of
+   * being divided by lines. */
+    .about-lead {
+      font-size: var(--text-lead);
+      line-height: 1.7;
+      color: var(--color-ink-900);
     }
-    .about-section--prose .about-section__label {
-      position: sticky;
-      top: calc(var(--header-offset) + 1.5rem);
-      align-self: start;
-      transition: top 320ms var(--ease-out-soft);
+    .about-section {
+      padding-block: var(--spacing-section);
     }
-  }
-  .about-section__label {
-    padding-top: 0.4rem;
-  }
+    .about-section--tint {
+      background: var(--color-surface-subtle);
+    }
 
-  .prose.about-statement p {
-    max-width: 30ch;
-    font-size: var(--text-statement);
-    line-height: 1.3;
-    letter-spacing: -0.02em;
-    color: var(--color-ink-900);
-    text-align: start;
-    hyphens: manual;
-  }
-  .prose.about-statement:lang(km) p {
-    max-width: 36ch;
-    line-height: 1.6;
-    letter-spacing: normal;
-  }
+    .about-section__head {
+      max-width: var(--container-page);
+    }
+    .about-section__title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: var(--text-h2);
+      font-weight: 600;
+      line-height: var(--text-h2--line-height);
+      letter-spacing: var(--text-h2--letter-spacing);
+      color: var(--color-ink-900);
+      text-wrap: balance;
+    }
+    .about-section__title--long {
+      font-size: clamp(1.625rem, 1.2rem + 1.5vw, 2.375rem);
+      line-height: 1.15;
+    }
+    .about-section__title:lang(km) {
+      line-height: 1.45;
+      letter-spacing: normal;
+    }
+    .about-section__body {
+      margin-top: clamp(1.75rem, 1.25rem + 1.5vw, 3rem);
+    }
 
-  .about-terms {
-    border-top: 1px solid var(--color-line);
-  }
-  .about-term {
-    display: grid;
-    grid-template-columns: 2.75rem minmax(0, 1fr);
-    gap: 0.25rem 1rem;
-    padding: 1.25rem 0.75rem;
-    border-bottom: 1px solid var(--color-line);
-    transition: background-color var(--duration-base) var(--ease-out-soft);
-  }
-  .about-term__index {
-    grid-row: span 2;
-    padding-top: 0.3rem;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--color-blue-700);
-  }
-  .about-term__name {
-    font-size: clamp(1.125rem, 0.95rem + 1vw, 1.625rem);
-    font-weight: 600;
-    line-height: 1.25;
-    letter-spacing: -0.015em;
-    color: var(--color-ink-900);
-  }
-  .about-term__text {
-    max-width: 60ch;
-    font-size: 0.9688rem;
-    line-height: 1.6;
-    color: var(--color-ink-600);
-  }
-  @media (min-width: 48rem) {
+    .prose.about-statement p {
+      max-width: 36ch;
+      font-size: min(var(--text-statement), 2.25rem);
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      color: var(--color-ink-900);
+      text-align: start;
+      hyphens: manual;
+    }
+    .prose.about-statement:lang(km) p {
+      max-width: 36ch;
+      line-height: 1.6;
+      letter-spacing: normal;
+    }
+
+    .about-prose {
+      max-width: 68ch;
+    }
+    .about-prose--lead > p:first-child {
+      font-size: var(--text-lead);
+      line-height: 1.65;
+      color: var(--color-ink-900);
+    }
+
+    /* Chapters: the "### " parts of a long section, side by side on a wide
+     screen so eight programme areas read as one spread, not one long column. */
+    .about-chapters {
+      display: grid;
+      gap: clamp(2.5rem, 2rem + 2vw, 4rem);
+    }
+    .about-prose + .about-chapters {
+      margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+    }
+    @media (min-width: 64rem) {
+      .about-chapters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: clamp(3rem, 2rem + 3vw, 6rem);
+      }
+    }
+    .about-chapter__title {
+      margin-bottom: 0.875rem;
+      font-family: var(--font-display);
+      font-size: var(--text-h3);
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      color: var(--color-blue-800);
+    }
+    .about-chapter__title:lang(km) {
+      line-height: 1.5;
+      letter-spacing: normal;
+    }
+
+    /* Terms and points: each name set large over its text, two to a row on a
+     wide screen, held apart by space rather than rules. */
+    .about-terms {
+      display: grid;
+      gap: clamp(2rem, 1.5rem + 1.5vw, 3rem);
+    }
+    @media (min-width: 64rem) {
+      .about-terms {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: clamp(3rem, 2rem + 3vw, 6rem);
+      }
+    }
     .about-term {
-      grid-template-columns: 3.5rem minmax(12rem, 1fr) minmax(0, 1.8fr);
-      align-items: baseline;
-      gap: 1.5rem;
+      display: grid;
+      gap: 0.5rem;
+      align-content: start;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--color-line);
     }
     .about-term__index {
-      grid-row: auto;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--color-blue-700);
     }
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .about-term:hover {
+    .about-term__name {
+      font-family: var(--font-display);
+      font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.75rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.015em;
+      color: var(--color-blue-800);
+    }
+    .about-term__name:lang(km) {
+      line-height: 1.5;
+      letter-spacing: normal;
+    }
+    .about-term__text {
+      max-width: 60ch;
+      font-size: var(--text-body);
+      line-height: 1.6;
+      color: var(--color-ink-700);
+    }
+
+    .about-facts ul {
+      display: grid;
+      gap: 1rem;
+      padding-left: 0;
+      list-style: none;
+    }
+    .about-facts li {
+      margin: 0;
+      max-width: 40ch;
+      font-size: clamp(1.125rem, 0.9rem + 1vw, 1.75rem);
+      line-height: 1.35;
+      color: var(--color-ink-900);
+      text-align: start;
+    }
+    .prose.about-facts li + li {
+      margin-top: 0;
+    }
+
+    .statement-logos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 2rem;
+    }
+    .statement-logo {
+      display: grid;
+      place-items: center;
+      width: 10rem;
+      aspect-ratio: 5 / 3;
+      padding: 0.875rem;
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius-lg);
       background: var(--color-blue-50);
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: center;
+      color: var(--color-ink-600);
+    }
+    .about-section--tint .statement-logo {
+      background: var(--color-canvas);
+    }
+    .statement-logo img {
+      max-height: 100%;
     }
   }
-
-  .about-facts ul {
-    padding-left: 0;
-    list-style: none;
-    border-top: 1px solid var(--color-line);
-  }
-  .about-facts li {
-    margin: 0;
-    padding-block: 1.125rem;
-    border-bottom: 1px solid var(--color-line);
-    font-size: clamp(1rem, 0.85rem + 0.9vw, 1.5rem);
-    line-height: 1.4;
-    color: var(--color-ink-900);
-    text-align: start;
-  }
-  .prose.about-facts li + li {
-    margin-top: 0;
-  }
-
-  .about-prose--lead > p:first-child {
-    font-size: var(--text-lead);
-    line-height: 1.65;
-    color: var(--color-ink-900);
-  }
-
-  .statement-logos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 2rem;
-  }
-  .statement-logo {
-    display: grid;
-    place-items: center;
-    width: 10rem;
-    aspect-ratio: 5 / 3;
-    padding: 0.875rem;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-lg);
-    background: #fff;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1.3;
-    text-align: center;
-    color: var(--color-ink-600);
-  }
-  .statement-logo img {
-    max-height: 100%;
-  }
-}
 </style>

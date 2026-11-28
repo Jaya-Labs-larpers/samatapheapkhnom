@@ -92,8 +92,9 @@ const cards = stories.slice(0, 3).map((story) => {
 
 <script>
   import { initCarousels } from '~/lib/carousel';
+  import { onPageLoad } from '~/lib/page-load';
 
-  initCarousels();
+  onPageLoad(() => initCarousels());
 </script>
 
 <style>

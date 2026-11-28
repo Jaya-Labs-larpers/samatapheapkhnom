@@ -35,8 +35,9 @@ const description =
 const partnerList = partnersJsonLd({ name: title, partners });
 ---
 
-<BaseLayout lang={lang} title={title} description={description} noindex jsonLd={partnerList}>
+<BaseLayout lang={lang} title={title} description={description} noindex darkHero jsonLd={partnerList}>
   <PageSolo
+    full
     lang={lang}
     title={heading}
     intro={tStrict(lang, 'introPartners')}

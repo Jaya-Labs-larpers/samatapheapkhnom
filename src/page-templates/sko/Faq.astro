@@ -36,8 +36,10 @@ const hasBody = Boolean(pick(page?.body, lang).value?.length);
   description={seo.description}
   ogImage={seo.ogImage}
   noindex
+  darkHero
 >
   <PageSolo
+    full
     lang={lang}
     title={heading}
     titleLang={langAttr(title)}

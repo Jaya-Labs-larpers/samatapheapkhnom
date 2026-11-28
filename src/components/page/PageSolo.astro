@@ -8,29 +8,35 @@ import InlineLinks from '~/components/content/InlineLinks.astro';
 interface Props {
   lang: Locale;
   title: string;
+  eyebrow?: string | null;
   titleLang?: string;
   intro?: string | null;
   introLang?: string;
   trail: Crumb[];
+  /** Leave the rest of the first screen empty, so the page content starts on scroll. */
+  full?: boolean;
 }
 
-const { lang, title, titleLang, intro, introLang, trail } = Astro.props;
+const { lang, title, titleLang, eyebrow, intro, introLang, trail } = Astro.props;
 ---
 
-<section class="pg-solo" data-hero-dark>
-  <div class="pg-wrap">
-    <Breadcrumbs lang={lang} trail={trail} />
-    <h1 class="pg-solo__title" lang={titleLang}>
-      {title}
-    </h1>
-    {
-      intro && (
-        <p class="pg-solo__lead" lang={introLang}>
-          <InlineLinks text={intro} />
-        </p>
-      )
-    }
-    <slot />
-  </div>
-  <slot name="media" />
-</section>
+<div class="pg-solo-wrap">
+  <section class="pg-solo" data-hero-dark>
+    <div class="pg-wrap">
+      <Breadcrumbs lang={lang} trail={trail} />
+      {eyebrow && <span class="pg-tag pg-solo__eyebrow">{eyebrow}</span>}
+      <h1 class="pg-solo__title" lang={titleLang}>
+        {title}
+      </h1>
+      {
+        intro && (
+          <p class="pg-solo__lead" lang={introLang}>
+            <InlineLinks text={intro} />
+          </p>
+        )
+      }
+      <slot />
+    </div>
+    <slot name="media" />
+  </section>
+</div>

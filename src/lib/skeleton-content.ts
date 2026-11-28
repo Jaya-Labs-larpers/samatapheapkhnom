@@ -82,7 +82,6 @@ export function donateHref(lang: Locale): string {
 
 export function heroActions(lang: Locale): SkAction[] {
   return [
-    { label: t(lang, 'donate'), href: donateHref(lang) },
     {
       label: t(lang, 'partnerWithUs'),
       href: localizePath('/contact?topic=partner', lang),
@@ -94,11 +93,7 @@ export function heroActions(lang: Locale): SkAction[] {
 export function ctaActions(lang: Locale): SkAction[] {
   return [
     { label: t(lang, 'contactUs'), href: localizePath('/contact', lang) },
-    {
-      label: t(lang, 'partnerWithUs'),
-      href: localizePath('/contact?topic=partner', lang),
-      outline: true,
-    },
+    { label: t(lang, 'seeReports'), href: localizePath('/reports', lang), outline: true },
   ];
 }
 

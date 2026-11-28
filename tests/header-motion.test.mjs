@@ -25,7 +25,7 @@ function fakeHeader() {
   };
 }
 
-function load({ y = 0, heroHeight = 800 } = {}) {
+function load({ y = 0, heroHeight = 800, selector: heroSelector = '[data-home-hero]' } = {}) {
   const header = fakeHeader();
   const listeners = {};
   const context = {
@@ -39,7 +39,7 @@ function load({ y = 0, heroHeight = 800 } = {}) {
     document: {
       querySelector: (selector) => {
         if (selector === '[data-header]') return header;
-        if (selector !== '[data-home-hero]' || !heroHeight) return null;
+        if (selector !== heroSelector || !heroHeight) return null;
         return {
           getBoundingClientRect: () => ({ bottom: heroHeight - context.window.scrollY }),
         };
@@ -110,4 +110,18 @@ test('reset on pageshow from the back/forward cache', () => {
   motion.initHeaderMotion();
   fire('pageshow', { persisted: true });
   assert.equal(header.attrs.has('data-skip-intro'), true);
+});
+
+test('stays over a dark subpage hero until scrolled past its bottom edge', () => {
+  const darkSelector =
+    '#main > [data-hero-dark]:first-child, #main > :first-child > [data-hero-dark]:first-child';
+  const { motion, header, scrollTo } = load({ heroHeight: 500, selector: darkSelector });
+  motion.initHeaderMotion();
+  assert.equal(header.attrs.has('data-solid'), false);
+  scrollTo(409);
+  assert.equal(header.attrs.has('data-solid'), false);
+  scrollTo(410);
+  assert.equal(header.attrs.has('data-solid'), true);
+  scrollTo(0);
+  assert.equal(header.attrs.has('data-solid'), false);
 });

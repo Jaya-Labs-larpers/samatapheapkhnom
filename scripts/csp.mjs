@@ -1,39 +1,12 @@
-/**
- * Post-build step: generate a per-page Content-Security-Policy.
- *
- * WHY THIS EXISTS
- * ---------------
- * Every page carries structured data in an inline
- * `<script type="application/ld+json">`. Chrome enforces `script-src` against
- * those blocks — verified, not assumed: under a strict policy Chrome logs
- * "Executing inline script violates the following Content Security Policy
- * directive… The action has been blocked."
- *
- * So a strict CSP needs either `'unsafe-inline'` (which defeats most of the
- * point) or a hash per inline block. The hashes differ per page and change
- * whenever staff edit content, so they cannot live in a hand-written global
- * file — and a union of every page's hashes in one global header would be
- * kilobytes sent on every request.
- *
- * This walks the built HTML, hashes each page's own inline scripts, and writes
- * that page's exact policy into its `<meta http-equiv>` tag. Cost per response:
- * nothing. Scales to any number of activity posts.
- *
- * `frame-ancestors` cannot be set via meta, so it stays in `public/_headers`
- * alongside the other security headers.
- */
-
 import { createHash } from 'node:crypto';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// fileURLToPath, not URL.pathname — the latter leaves %20 in paths like
-// "C:\Users\WORLDTECH COMPUTER\…".
+// fileURLToPath avoids %20 encoding on paths with spaces.
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
 const PLACEHOLDER = '__CSP_POLICY__';
 
-/** Everything except script-src, which is assembled per page. */
 const BASE_DIRECTIVES = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -53,12 +26,9 @@ const SCRIPT_HOSTS = [
   'https://*.googletagmanager.com',
 ];
 
-/**
- * Matches inline <script> blocks — those with no src attribute. The captured
- * content must be byte-identical to what the browser hashes, so it is taken
- * verbatim with no trimming or re-encoding.
- */
-const INLINE_SCRIPT = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g;
+// Chrome enforces script-src against inline application/ld+json and speculationrules
+// blocks as well as executable scripts; content must match verbatim before hashing.
+const INLINE_SCRIPT = /<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/g;
 
 async function* htmlFiles(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -72,6 +42,8 @@ let pages = 0;
 let hashCount = 0;
 let missing = 0;
 
+const hashOf = (body) => `'sha256-${createHash('sha256').update(body, 'utf8').digest('base64')}'`;
+
 for await (const file of htmlFiles(DIST)) {
   const html = await readFile(file, 'utf8');
   if (!html.includes(PLACEHOLDER)) {
@@ -81,9 +53,9 @@ for await (const file of htmlFiles(DIST)) {
 
   const hashes = new Set();
   for (const match of html.matchAll(INLINE_SCRIPT)) {
-    const body = match[1];
+    const body = match[2];
     if (body === undefined || body === '') continue;
-    hashes.add(`'sha256-${createHash('sha256').update(body, 'utf8').digest('base64')}'`);
+    hashes.add(hashOf(body));
   }
 
   const scriptSrc = ["script-src 'self'", ...SCRIPT_HOSTS, ...hashes].join(' ');

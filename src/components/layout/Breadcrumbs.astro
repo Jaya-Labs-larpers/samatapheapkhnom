@@ -26,24 +26,21 @@ const jsonLd = {
 };
 ---
 
-<nav aria-label={t(lang, 'breadcrumbLabel')} class="text-[13px] text-[color:var(--color-ink-400)]">
-  <ol class="flex list-none flex-wrap items-center gap-2 p-0">
+<nav class="breadcrumbs" aria-label={t(lang, 'breadcrumbLabel')}>
+  <ol class="breadcrumbs__list">
     {
-      items.map((crumb, index) => (
-        <li class="flex items-center gap-2">
-          {crumb.path && index < items.length - 1 ? (
-            <a
-              href={localizePath(crumb.path, lang)}
-              class="text-inherit no-underline hover:text-[color:var(--color-blue-800)]"
-            >
-              {crumb.label}
-            </a>
-          ) : (
-            <span aria-current="page">{crumb.label}</span>
-          )}
-          {index < items.length - 1 && <span aria-hidden="true">/</span>}
-        </li>
-      ))
+      items.map((crumb, index) => {
+        const isLast = index === items.length - 1;
+        return (
+          <li class="breadcrumbs__item">
+            {crumb.path && !isLast ? (
+              <a href={localizePath(crumb.path, lang)}>{crumb.label}</a>
+            ) : (
+              <span aria-current={isLast ? 'page' : undefined}>{crumb.label}</span>
+            )}
+          </li>
+        );
+      })
     }
   </ol>
 </nav>
