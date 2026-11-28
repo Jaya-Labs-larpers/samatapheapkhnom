@@ -3,6 +3,7 @@ import type { Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
 import { localizePath, parsePath, pick, t, text } from '~/lib/i18n/utils';
 import { footerNav } from '~/lib/nav';
+import { safeHref } from '~/lib/safe-href';
 import Icon from '~/components/Icon.astro';
 import Logo from '~/components/Logo.astro';
 
@@ -21,6 +22,10 @@ const orgName = text(settings.orgName, lang);
 const address = pick(settings.address, lang);
 const registration = pick(settings.registration, lang);
 const year = new Date().getFullYear();
+const socials = (settings.socials ?? []).flatMap((social) => {
+  const href = safeHref(social.url);
+  return href ? [{ ...social, href }] : [];
+});
 
 /** CMS platform names are free text (e.g. "Facebook"); map the known ones to a sprite icon. */
 const socialIcon: Record<string, string> = {
@@ -109,12 +114,12 @@ function iconForPlatform(platform: string): string {
         </p>
 
         {
-          settings.socials && settings.socials.length > 0 && (
+          socials.length > 0 && (
             <ul class="mt-4 flex list-none flex-col gap-2 p-0">
-              {settings.socials.map((social) => (
+              {socials.map((social) => (
                 <li>
                   <a
-                    href={social.url}
+                    href={social.href}
                     rel="noopener noreferrer"
                     target="_blank"
                     class="flex items-center gap-2 text-white/70 no-underline hover:text-white"

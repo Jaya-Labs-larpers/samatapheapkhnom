@@ -25,6 +25,13 @@ const workerSecretNames = [
   "CONTACT_TO_EMAIL",
   "PARTNER_TO_EMAIL",
 ];
+const cronSecretNames = ["DEPLOY_HOOK_URL", "ALERT_TO_EMAIL"];
+
+export function workerSecretNamesFor(environment) {
+  return environment === "production"
+    ? [...workerSecretNames, ...cronSecretNames]
+    : workerSecretNames;
+}
 
 export function row(name, ok, detail = "") {
   return { name, status: ok ? "PASS" : "MISSING", detail };
@@ -79,7 +86,11 @@ export function productionPolicyRow(environment, policies) {
 }
 
 export function workerSecretRows(entries, environment) {
-  return presenceRows(entries, workerSecretNames, `Cloudflare ${environment}`);
+  return presenceRows(
+    entries,
+    workerSecretNamesFor(environment),
+    `Cloudflare ${environment}`,
+  );
 }
 
 export function parseSanityUsers(output) {
@@ -267,7 +278,7 @@ async function cloudflareRows() {
       rows.push(...workerSecretRows(secrets, label));
     } catch {
       rows.push(
-        ...workerSecretNames.map((name) =>
+        ...workerSecretNamesFor(label).map((name) =>
           skipped(`Cloudflare ${label} ${name}`),
         ),
       );

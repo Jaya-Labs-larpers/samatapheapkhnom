@@ -73,6 +73,44 @@ test("unknown /api/ paths are a JSON 404, never an asset lookup", async () => {
   assert.equal(assets.calls.length, 0);
 });
 
+test("every /api/ response carries the API security headers", async () => {
+  for (const [path, init] of [
+    ["/api/anything", {}],
+    ["/api/contact", {}],
+    ["/api/contact", { method: "POST", body: "{}" }],
+  ]) {
+    const response = await handler.fetch(request(path, init), env());
+    assert.equal(response.headers.get("Strict-Transport-Security"), "max-age=31536000");
+    assert.equal(response.headers.get("Cross-Origin-Resource-Policy"), "same-origin");
+    assert.equal(response.headers.get("X-Frame-Options"), "DENY");
+    assert.equal(
+      response.headers.get("Content-Security-Policy"),
+      "default-src 'none'; frame-ancestors 'none'",
+    );
+  }
+});
+
+test("production contact rejects another origin through the Worker", async (t) => {
+  t.mock.method(globalThis, "fetch", () => {
+    throw new Error("No service calls allowed");
+  });
+  const response = await handler.fetch(
+    request("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "https://evil.example" },
+      body: "{}",
+    }),
+    env({
+      PUBLIC_DEPLOYMENT_ENV: "production",
+      CONTACT_ENABLED: "true",
+      SITE_URL: "https://www.samatapheapkhnom.org",
+    }),
+  );
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).error, "forbidden_origin");
+  assert.equal(response.headers.get("X-Frame-Options"), "DENY");
+});
+
 test("contact endpoint answers GET with 405 and both slash forms", async () => {
   for (const path of ["/api/contact", "/api/contact/"]) {
     const response = await handler.fetch(request(path), env());

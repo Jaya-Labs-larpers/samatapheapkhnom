@@ -11,13 +11,13 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.526",
-    "zod": "4.5.4"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@remotion/eslint-config-flat": "4.0.526",
     "@types/react": "19.2.7",
     "@types/web": "0.0.166",
-    "eslint": "9.19.0",
+    "eslint": "9.39.5",
     "prettier": "3.8.1",
     "typescript": "5.9.3"
   },
@@ -29,5 +29,11 @@
   },
   "sideEffects": [
     "*.css"
-  ]
+  ],
+  "overrides": {
+    "zod": "4.6.7",
+    "fast-uri": "3.1.9",
+    "source-map-js": "1.2.2",
+    "minimatch": "11.0.3"
+  }
 }

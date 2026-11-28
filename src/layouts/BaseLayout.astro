@@ -4,7 +4,7 @@ import '~/styles/global.css';
 import { htmlLang, type Locale } from '~/lib/i18n/config';
 import { t } from '~/lib/i18n/utils';
 import { getSiteSettings } from '~/lib/content';
-import { gtmId, hasSanity } from '~/lib/config';
+import { hasSanity } from '~/lib/config';
 import type { CmsImage } from '~/lib/content/types';
 import Header from '~/components/layout/Header.astro';
 import Footer from '~/components/layout/Footer.astro';
@@ -50,17 +50,6 @@ const {
 
 const settings = await getSiteSettings();
 const pathname = Astro.url.pathname;
-/*
-  GTM waits for the page's own load and then for an idle moment, so its download
-  and parse never compete with the first paint. Page views are still counted:
-  GTM fires its own page-view from the dataLayer once it starts.
-*/
-const gtmLoader = gtmId
-  ? `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`
-  : '';
-const gtmSnippet =
-  gtmLoader &&
-  `(function(){var go=function(){${gtmLoader}};var idle=function(){(window.requestIdleCallback||function(f){setTimeout(f,1)})(go,{timeout:4000})};if(document.readyState==='complete')idle();else addEventListener('load',idle);})();`;
 const preloadFonts =
   lang === 'km' ? ['kantumruy-pro-khmer', 'inter-latin'] : ['inter-latin', 'source-serif-4-latin'];
 ---
@@ -78,7 +67,6 @@ const preloadFonts =
     */
     }
     <meta http-equiv="Content-Security-Policy" content="__CSP_POLICY__" />
-    {gtmSnippet && <script is:inline set:html={gtmSnippet} />}
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="generator" content={Astro.generator} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -155,18 +143,6 @@ const preloadFonts =
     </script>
   </head>
   <body class="bg-white">
-    {
-      gtmId && (
-        <noscript>
-          <iframe
-            src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
-            height="0"
-            width="0"
-            style="display:none;visibility:hidden"
-          />
-        </noscript>
-      )
-    }
     {intro && <PageLoader />}
 
     <a

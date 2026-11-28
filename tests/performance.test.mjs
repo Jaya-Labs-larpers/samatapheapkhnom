@@ -51,9 +51,14 @@ test('static files are cached for at least 30 days', () => {
   }
 });
 
-test('GTM starts after the page has loaded, not in the head', () => {
-  assert.match(layout, /addEventListener\('load'/);
-  assert.match(layout, /requestIdleCallback/);
+test('no Google Tag Manager or Google Analytics is loaded', () => {
+  for (const file of ['src/layouts/BaseLayout.astro', 'src/lib/config.ts', 'scripts/csp.mjs']) {
+    assert.doesNotMatch(
+      read(file),
+      /googletagmanager|google-analytics|analytics\.google|GTM-/i,
+      file,
+    );
+  }
 });
 
 test('the contact form styles load only with the form', () => {

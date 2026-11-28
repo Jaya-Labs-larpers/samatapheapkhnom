@@ -1,19 +1,21 @@
 ---
 import { inlineLinkSpans } from '~/lib/inline-links';
+import { isExternalHref, safeHref } from '~/lib/safe-href';
 
 interface Props {
   text: string;
 }
 
 const { children, markDefs } = inlineLinkSpans(Astro.props.text);
-const hrefFor = (marks?: string[]) => markDefs.find((def) => def._key === marks?.[0])?.href;
+const hrefFor = (marks?: string[]) =>
+  safeHref(markDefs.find((def) => def._key === marks?.[0])?.href);
 ---
 
 {
   children.map((span) => {
     const href = hrefFor(span.marks);
     if (!href) return span.text;
-    const external = /^https?:\/\//i.test(href);
+    const external = isExternalHref(href);
     return (
       <a
         href={href}
