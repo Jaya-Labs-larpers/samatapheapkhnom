@@ -16,12 +16,12 @@ const pages = Array.from({ length: total }, (_, index) => index + 1);
 
 {
   total > 1 && (
-    <nav class="mt-11 flex justify-center gap-1.5" aria-label="Pagination">
+    <nav class="mt-11 flex justify-center gap-1.5" aria-label={t(lang, 'paginationLabel')}>
       {current > 1 && (
         <a
           href={hrefFor(current - 1)}
           rel="prev"
-          class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-sm)] border border-[color:var(--color-line)] bg-white px-3 text-[15px] font-semibold text-[color:var(--color-ink-700)] no-underline hover:border-[color:var(--color-blue-700)] hover:text-[color:var(--color-blue-800)]"
+          class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-md)] border border-[color:var(--color-line)] bg-white px-3.5 text-[15px] font-semibold text-[color:var(--color-ink-700)] no-underline transition-colors duration-150 hover:border-[color:var(--color-blue-700)] hover:bg-[color:var(--color-blue-50)] hover:text-[color:var(--color-blue-800)]"
         >
           ← {t(lang, 'previous')}
         </a>
@@ -30,14 +30,14 @@ const pages = Array.from({ length: total }, (_, index) => index + 1);
         page === current ? (
           <span
             aria-current="page"
-            class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-sm)] border border-[color:var(--color-blue-700)] bg-[color:var(--color-blue-700)] text-[15px] font-semibold text-white"
+            class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-md)] border border-[color:var(--color-blue-700)] bg-[color:var(--color-blue-700)] text-[15px] font-semibold text-white shadow-[var(--shadow-xs)]"
           >
             {page}
           </span>
         ) : (
           <a
             href={hrefFor(page)}
-            class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-sm)] border border-[color:var(--color-line)] bg-white text-[15px] font-semibold text-[color:var(--color-ink-700)] no-underline hover:border-[color:var(--color-blue-700)] hover:text-[color:var(--color-blue-800)]"
+            class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-md)] border border-[color:var(--color-line)] bg-white text-[15px] font-semibold text-[color:var(--color-ink-700)] no-underline transition-colors duration-150 hover:border-[color:var(--color-blue-700)] hover:bg-[color:var(--color-blue-50)] hover:text-[color:var(--color-blue-800)]"
           >
             {page}
           </a>
@@ -47,7 +47,7 @@ const pages = Array.from({ length: total }, (_, index) => index + 1);
         <a
           href={hrefFor(current + 1)}
           rel="next"
-          class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-sm)] border border-[color:var(--color-line)] bg-white px-3 text-[15px] font-semibold text-[color:var(--color-ink-700)] no-underline hover:border-[color:var(--color-blue-700)] hover:text-[color:var(--color-blue-800)]"
+          class="grid h-11 min-w-11 place-items-center rounded-[var(--radius-md)] border border-[color:var(--color-line)] bg-white px-3.5 text-[15px] font-semibold text-[color:var(--color-ink-700)] no-underline transition-colors duration-150 hover:border-[color:var(--color-blue-700)] hover:bg-[color:var(--color-blue-50)] hover:text-[color:var(--color-blue-800)]"
         >
           {t(lang, 'next')} →
         </a>

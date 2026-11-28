@@ -1,0 +1,148 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { langAttr, localizePath, pick, t, text } from '~/lib/i18n/utils';
+import {
+  getActivities,
+  getImpactStats,
+  getPartners,
+  getPrograms,
+  getSiteSettings,
+  getStories,
+} from '~/lib/content';
+import { localCmsImage } from '~/lib/sanity/image';
+import { heroActions, postItem, programCard, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import '~/styles/skeleton.css';
+import SkSection from '~/components/skeleton/SkSection.astro';
+import SkHero from '~/components/skeleton/SkHero.astro';
+import SkSplitCta from '~/components/skeleton/SkSplitCta.astro';
+import SkPartnerMarquee from '~/components/skeleton/SkPartnerMarquee.astro';
+import SkStoryText from '~/components/skeleton/SkStoryText.astro';
+import SkMapProof from '~/components/skeleton/SkMapProof.astro';
+import SkPhotoCards from '~/components/skeleton/SkPhotoCards.astro';
+import SkPosts from '~/components/skeleton/SkPosts.astro';
+import SkStorySlider from '~/components/skeleton/SkStorySlider.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const [settings, stats, activities, programs, partners, [story]] = await Promise.all([
+  getSiteSettings(),
+  getImpactStats(),
+  getActivities(),
+  getPrograms(),
+  getPartners(),
+  getStories(),
+]);
+
+const orgName = text(settings.orgName, lang);
+const tagline = pick(settings.tagline, lang);
+const brand = settings.orgShortName ?? 'SKO';
+const seoTitle = tStrict(lang, 'seoHome');
+const registration = pick(settings.registration, lang);
+const allPartners = tStrict(lang, 'allPartners');
+const latestPosts = activities.slice(0, 2).map((activity, index) => ({
+  ...postItem(activity, lang),
+  image: index === 0 ? activity.coverImage : null,
+}));
+const heroImage = {
+  ...localCmsImage('home-hero-community', {
+    en: 'Community members and SKO staff pose for a group photo',
+    km: 'សមាជិកសហគមន៍ និងបុគ្គលិកអង្គការ SKO ថតរូបជុំគ្នា',
+  }),
+  hotspot: { x: 0.5, y: 0.75 },
+};
+---
+
+<BaseLayout
+  lang={lang}
+  title={seoTitle ? `${seoTitle} · ${brand}` : orgName}
+  plainTitle
+  description={tStrict(lang, 'metaHome') || tagline.value || undefined}
+  ogImage={settings.ogImage}
+  noindex
+  darkHero
+  serifAboveFold={false}
+>
+  <SkHero
+    home
+    lang={lang}
+    image={heroImage}
+    title={tagline.value ?? orgName}
+    titleLang={langAttr(tagline)}
+    eyebrow={tStrict(lang, 'homeEyebrow')}
+    note={registration.value?.replaceAll(' | ', ' · ')}
+    noteLang={langAttr(registration)}
+    actions={heroActions(lang)}
+  />
+
+  <SkStoryText
+    lang={lang}
+    label={tStrict(lang, 'navAbout')}
+    text={tStrict(lang, 'homeHeroIntro')}
+    link={{
+      label: tStrict(lang, 'homeAboutLink') || tStrict(lang, 'learnMore'),
+      href: localizePath('/about', lang),
+    }}
+  />
+
+  <SkMapProof lang={lang} stats={stats} />
+
+  <SkPhotoCards
+    lang={lang}
+    showDetails
+    heading={tStrict(lang, 'whatWeDo')}
+    items={programs.map((program) =>
+      programCard(program, lang, tStrict(lang, 'viewAllPrograms') || tStrict(lang, 'viewAll')),
+    )}
+    more={{
+      label: tStrict(lang, 'viewAllPrograms') || tStrict(lang, 'viewAll'),
+      href: localizePath('/programs', lang),
+    }}
+  />
+
+  <SkPosts
+    lang={lang}
+    tone="tint"
+    moreInHeader
+    heading={t(lang, 'latestActivities')}
+    items={latestPosts}
+    n={latestPosts.length}
+    readMore={t(lang, 'readMore')}
+    more={{ label: t(lang, 'allActivities'), href: localizePath('/activities', lang) }}
+  />
+
+  {story && <SkStorySlider lang={lang} stories={[story]} attribution />}
+
+  {
+    partners.length > 0 && (
+      <SkSection>
+        <h2 class="sk-h2" style="text-align:center">
+          {tStrict(lang, 'trustedBy')}
+        </h2>
+        <SkPartnerMarquee lang={lang} partners={partners} />
+        {allPartners && (
+          <div style="text-align:center">
+            <a class="sk-link" href={localizePath('/partners', lang)}>
+              {allPartners} →
+            </a>
+          </div>
+        )}
+      </SkSection>
+    )
+  }
+
+  <SkSplitCta
+    lang={lang}
+    card
+    heading={tStrict(lang, 'ctaHomeTitle')}
+    body={tStrict(lang, 'ctaHomeBody')}
+    actions={[
+      { label: t(lang, 'contactUs'), href: localizePath('/contact', lang) },
+      { label: t(lang, 'seeReports'), href: localizePath('/reports', lang), outline: true },
+    ]}
+  />
+</BaseLayout>

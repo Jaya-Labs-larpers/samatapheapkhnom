@@ -90,6 +90,7 @@ export const siteSettings = defineType({
       title: 'Google Maps link',
       type: 'url',
       group: 'contact',
+      validation: (r) => r.uri({ scheme: ['https', 'http'] }),
       description: 'A link, not an embed — an embedded map would load third-party trackers.',
     }),
     defineField({
@@ -114,12 +115,14 @@ export const siteSettings = defineType({
       title: 'General email',
       type: 'string',
       group: 'contact',
+      validation: (r) => r.email(),
     }),
     defineField({
       name: 'partnerEmail',
       title: 'Partnerships / grants email',
       type: 'string',
       group: 'contact',
+      validation: (r) => r.email(),
       description: 'Where the partner inquiry form is delivered.',
     }),
     defineField({
@@ -456,7 +459,12 @@ export const partner = defineType({
       type: 'imageWithAlt',
       description: 'SVG or transparent PNG. Confirm the partner permits use of their logo.',
     }),
-    defineField({ name: 'url', title: 'Website', type: 'url' }),
+    defineField({
+      name: 'url',
+      title: 'Website',
+      type: 'url',
+      validation: (r) => r.uri({ scheme: ['https', 'http'] }),
+    }),
     defineField({
       name: 'category',
       title: 'Category',

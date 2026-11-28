@@ -1,0 +1,153 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getSiteSettings } from '~/lib/content';
+import { langAttr, pick } from '~/lib/i18n/utils';
+import { stripInlineLinks } from '~/lib/inline-links';
+import { safeHref } from '~/lib/safe-href';
+import { contactPageJsonLd, officeOpeningHours } from '~/lib/seo/page-schema';
+import { donateHref, tStrict } from '~/lib/skeleton-content';
+import { donatePageLive } from '~/config/donation';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import ContactForm from '~/components/forms/ContactForm.astro';
+import Icon from '~/components/Icon.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const settings = await getSiteSettings();
+const mapHref = safeHref(settings.mapUrl);
+const address = pick(settings.address, lang);
+const hours = pick(settings.officeHours, lang);
+const heading = tStrict(lang, 'pageContact');
+const tel = (phone: string) => `tel:${phone.replace(/[^+\d]/g, '')}`;
+const withContact = (value: string) =>
+  value.replace('{phone}', settings.phone ?? '').replace('{email}', settings.email ?? '');
+const intro = withContact(tStrict(lang, 'introContact'));
+const title = tStrict(lang, 'seoContact') || heading;
+const description = withContact(tStrict(lang, 'metaContact')) || stripInlineLinks(intro);
+const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: title, description });
+---
+
+<BaseLayout
+  lang={lang}
+  title={title}
+  description={description}
+  noindex
+  jsonLd={contactPage}
+  orgJsonLd={{ openingHoursSpecification: officeOpeningHours }}
+>
+  <div class="contact-split contact-desk">
+    <h1 class="contact-split__title">
+      {tStrict(lang, 'contactUs')}
+    </h1>
+
+    <div class="contact-quick">
+      {
+        settings.phone && (
+          <a href={tel(settings.phone)} class="contact-quick__chip">
+            <Icon name="phone" size={16} />
+            <span>{tStrict(lang, 'contactCall')}</span>
+          </a>
+        )
+      }
+      {
+        settings.email && (
+          <a href={`mailto:${settings.email}`} class="contact-quick__chip">
+            <Icon name="envelope" size={16} />
+            <span>{tStrict(lang, 'contactEmail')}</span>
+          </a>
+        )
+      }
+      {
+        settings.mapUrl && (
+          <a
+            href={settings.mapUrl}
+            class="contact-quick__chip"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <Icon name="map-pin" size={16} />
+            <span>{tStrict(lang, 'contactVisit')}</span>
+          </a>
+        )
+      }
+    </div>
+
+    <div class="contact-split__form">
+      <ContactForm lang={lang} id="form-contact" />
+    </div>
+
+    <div class="contact-split__info">
+      <img class="contact-split__mark" src="/images/butterfly.svg" alt="" width="100" height="41" />
+      <ul class="contact-info">
+        {
+          settings.email && (
+            <li>
+              <span class="contact-info__chip">
+                <Icon name="envelope" />
+              </span>
+              <span>
+                <span class="contact-info__label">{tStrict(lang, 'contactEmail')}</span>
+                <a href={`mailto:${settings.email}`} class="contact-info__value">
+                  {settings.email}
+                </a>
+              </span>
+            </li>
+          )
+        }
+        {
+          settings.phone && (
+            <li>
+              <span class="contact-info__chip">
+                <Icon name="phone" />
+              </span>
+              <span>
+                <span class="contact-info__label">{tStrict(lang, 'contactCall')}</span>
+                <a href={tel(settings.phone)} class="contact-info__value">
+                  {settings.phone}
+                </a>
+                {hours.value && <small lang={langAttr(hours)}>{hours.value}</small>}
+              </span>
+            </li>
+          )
+        }
+        {
+          address.value && (
+            <li>
+              <span class="contact-info__chip">
+                <Icon name="map-pin" />
+              </span>
+              <span>
+                <span class="contact-info__label">{tStrict(lang, 'contactVisit')}</span>
+                <span class="contact-info__address" lang={langAttr(address)}>
+                  {address.value}
+                </span>
+                {mapHref && (
+                  <a
+                    href={mapHref}
+                    class="contact-info__action"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {tStrict(lang, 'viewOnGoogleMaps')}
+                  </a>
+                )}
+              </span>
+            </li>
+          )
+        }
+      </ul>
+
+      {
+        donatePageLive && (
+          <a href={donateHref(lang)} class="contact-split__donate">
+            {tStrict(lang, 'donate')}
+          </a>
+        )
+      }
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,99 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getPartners } from '~/lib/content';
+import { stripInlineLinks } from '~/lib/inline-links';
+import { partnersJsonLd } from '~/lib/seo/page-schema';
+import { ctaActions, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import EmptyState from '~/components/content/EmptyState.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
+import BandCta from '~/components/page/BandCta.astro';
+import { hasImage } from '~/lib/sanity/image';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const partners = await getPartners();
+const heading = tStrict(lang, 'pagePartners');
+
+const categoryLabels: Record<string, Record<Locale, string>> = {
+  'un-agency': { en: 'UN agencies', km: 'ទីភ្នាក់ងារអង្គការសហប្រជាជាតិ' },
+  ingo: { en: 'International NGOs', km: 'អង្គការក្រៅរដ្ឋាភិបាលអន្តរជាតិ' },
+  government: { en: 'Government', km: 'រដ្ឋាភិបាល' },
+  foundation: { en: 'Foundations', km: 'មូលនិធិ' },
+  corporate: { en: 'Corporate', km: 'ក្រុមហ៊ុន' },
+};
+
+const groups = [...new Set(partners.map((partner) => partner.category ?? 'other'))];
+const title = tStrict(lang, 'seoPartners') || heading;
+const description =
+  tStrict(lang, 'metaPartners') || stripInlineLinks(tStrict(lang, 'introPartners'));
+const partnerList = partnersJsonLd({ name: title, partners });
+---
+
+<BaseLayout lang={lang} title={title} description={description} noindex darkHero jsonLd={partnerList}>
+  <PageSolo
+    full
+    lang={lang}
+    title={heading}
+    intro={tStrict(lang, 'introPartners')}
+    trail={[{ label: heading }]}
+  />
+
+  {
+    partners.length === 0 ? (
+      <section class="pg-section">
+        <div class="pg-wrap">
+          <EmptyState message={tStrict(lang, 'emptyGeneric')} />
+        </div>
+      </section>
+    ) : (
+      groups.map((group, index) => (
+        <section class:list={['pg-section', index % 2 === 0 && 'pg-section--tint']}>
+          <div class="pg-wrap">
+            <SectionHead heading={categoryLabels[group]?.[lang] ?? group} />
+            <ul class="pg-logos">
+              {partners
+                .filter((partner) => (partner.category ?? 'other') === group)
+                .map((partner) => {
+                  const Tag = partner.url ? 'a' : 'div';
+                  return (
+                    <li>
+                      <Tag
+                        class="pg-logo"
+                        {...(partner.url
+                          ? { href: partner.url, rel: 'noopener noreferrer', target: '_blank' }
+                          : {})}
+                      >
+                        {hasImage(partner.logo) ? (
+                          <>
+                            <span class="sr-only-focusable">{partner.name}</span>
+                            <ResponsiveImage
+                              image={partner.logo}
+                              lang={lang}
+                              alt=""
+                              aspect="5/3"
+                              sizes="180px"
+                              blurUp={false}
+                            />
+                          </>
+                        ) : (
+                          <b>{partner.name}</b>
+                        )}
+                      </Tag>
+                    </li>
+                  );
+                })}
+            </ul>
+          </div>
+        </section>
+      ))
+    )
+  }
+
+  <BandCta heading={tStrict(lang, 'ctaPartnersTitle')} actions={ctaActions(lang)} />
+</BaseLayout>

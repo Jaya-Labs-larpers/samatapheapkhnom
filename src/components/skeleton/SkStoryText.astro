@@ -1,0 +1,65 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import SkSection from './SkSection.astro';
+
+interface Props {
+  lang: Locale;
+  label: string;
+  text: string;
+  link?: { label: string; href: string };
+}
+
+const { lang, label, text, link } = Astro.props;
+---
+
+<SkSection class="sk-statement">
+  <div class="statement reveal">
+    <h2 class="sr-only">{label}</h2>
+    <p class="statement__text" lang={lang} data-scroll-text>
+      {text}
+    </p>
+    {
+      link && (
+        <a href={link.href} class="sk-btn">
+          {link.label}
+        </a>
+      )
+    }
+  </div>
+</SkSection>
+
+<style>
+  .statement {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(32px, 4vw, 56px);
+    padding-block: clamp(24px, 4vw, 64px);
+    text-align: center;
+  }
+  .statement__text {
+    margin: 0;
+    max-width: 34ch;
+    font-family: var(--font-display);
+    font-size: clamp(1.625rem, 0.75rem + 2.9vw, 3.25rem);
+    line-height: 1.18;
+    letter-spacing: -0.03em;
+    color: var(--color-ink-900);
+    text-wrap: pretty;
+  }
+  :global(:lang(km)) .statement__text {
+    letter-spacing: normal;
+    line-height: 1.55;
+  }
+  @media (min-width: 64rem) {
+    .statement__text {
+      max-width: 44ch;
+    }
+  }
+</style>
+
+<style is:global>
+  .sk-statement {
+    border-bottom: 1px solid var(--color-line-strong);
+  }
+</style>

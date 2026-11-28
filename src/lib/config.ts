@@ -13,6 +13,7 @@
 const env = import.meta.env;
 export const isProductionDeployment = env.PUBLIC_DEPLOYMENT_ENV === 'production';
 export const isPreviewDeployment = env.PUBLIC_DEPLOYMENT_ENV === 'preview';
+export const smoothScrollEnabled = env.PUBLIC_SMOOTH_SCROLL === 'true';
 export const contactEnabled =
   env.PUBLIC_CONTACT_ENABLED === 'true' ||
   (!isPreviewDeployment && env.PUBLIC_CONTACT_ENABLED !== 'false');
@@ -50,7 +51,6 @@ export const siteUrl = (str(env.PUBLIC_SITE_URL) || 'http://localhost:4321').rep
 
 export const turnstileSiteKey = str(env.PUBLIC_TURNSTILE_SITE_KEY);
 export const cfAnalyticsToken = str(env.PUBLIC_CF_ANALYTICS_TOKEN);
-export const gtmId = isProductionDeployment ? 'GTM-MSXSCPTS' : '';
 
 /* --- Build-time reporting -------------------------------------------------- */
 

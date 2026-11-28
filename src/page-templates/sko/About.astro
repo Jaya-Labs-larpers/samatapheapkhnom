@@ -1,0 +1,129 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getDirectorMessage, getOrgChart, getPage, getTeam } from '~/lib/content';
+import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
+import { resolveSeo } from '~/lib/seo';
+import { aboutPageJsonLd } from '~/lib/seo/page-schema';
+import { ctaActions, faqItems, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import SectionedBody from '~/components/content/SectionedBody.astro';
+import DirectorMessage from '~/components/content/DirectorMessage.astro';
+import OrgChart from '~/components/content/OrgChart.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
+import Accordion from '~/components/page/Accordion.astro';
+import BandCta from '~/components/page/BandCta.astro';
+import TeamStructure from '~/components/content/TeamStructure.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const [page, director, chart, team] = await Promise.all([
+  getPage('about'),
+  getDirectorMessage(),
+  getOrgChart(),
+  getTeam(),
+]);
+
+const hasOrgChart =
+  Boolean(chart.image?.asset) ||
+  Object.values(chart.textVersion ?? {}).some((value) => Array.isArray(value) && value.length > 0);
+
+const title = pick(page?.title, lang);
+const intro = pick(page?.intro, lang);
+const heading = title.value ?? tStrict(lang, 'pageAbout');
+const seo = resolveSeo(page?.seo, lang, {
+  title: heading,
+  description: intro.value || heading,
+  image: page?.heroImage,
+});
+const aboutPage = aboutPageJsonLd({
+  pathname: Astro.url.pathname,
+  name: seo.title,
+  description: seo.description,
+});
+
+const hasDirector = Boolean(
+  pick(director.pullQuote, lang).value ||
+  director.message?.en?.length ||
+  director.message?.km?.length,
+);
+
+const faqs = faqItems(page?.faqs, lang);
+const faqMore = tStrict(lang, 'faqMore');
+---
+
+<BaseLayout
+  lang={lang}
+  title={seo.title}
+  description={seo.description}
+  ogImage={seo.ogImage}
+  noindex
+  darkHero
+  jsonLd={aboutPage}
+>
+  <PageSolo
+    full
+    lang={lang}
+    title={heading}
+    titleLang={langAttr(title)}
+    intro={intro.value}
+    introLang={langAttr(intro)}
+    trail={[{ label: heading }]}
+  />
+
+  <SectionedBody lang={lang} body={page?.body} />
+
+  {
+    hasDirector && (
+      <section class="pg-section pg-section--tint">
+        <div class="pg-wrap">
+          <SectionHead heading={tStrict(lang, 'directorMessage')} />
+          <DirectorMessage lang={lang} director={director} />
+        </div>
+      </section>
+    )
+  }
+
+  {
+    (hasOrgChart || team.length > 0) && (
+      <section class="pg-section" id="team">
+        <div class="pg-wrap">
+          <SectionHead heading={tStrict(lang, 'ourTeam')} />
+          <h3 class="pg-h3">{tStrict(lang, 'orgStructure')}</h3>
+          {hasOrgChart && <OrgChart lang={lang} chart={chart} />}
+          {team.length > 0 && (
+            <div style="margin-top:2rem">
+              <TeamStructure lang={lang} team={team} />
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    faqs.length > 0 && (
+      <section class="pg-section pg-section--tint">
+        <div class="pg-wrap">
+          <SectionHead heading={tStrict(lang, 'faqHeading')} />
+          <Accordion items={faqs} />
+          {faqMore && (
+            <a href={localizePath('/faq', lang)} class="pg-link" style="margin-top:1.5rem">
+              {faqMore} <span aria-hidden="true">→</span>
+            </a>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <BandCta
+    heading={tStrict(lang, 'ctaAboutTitle')}
+    body={tStrict(lang, 'ctaAboutBody')}
+    actions={ctaActions(lang)}
+  />
+</BaseLayout>

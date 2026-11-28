@@ -8,7 +8,6 @@ import { siteUrl } from '~/lib/config';
 import { hasImage, imageUrl } from '~/lib/sanity/image';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 import RichText from '~/components/content/RichText.astro';
 import Icon from '~/components/Icon.astro';
 
@@ -123,20 +122,6 @@ const programTitle = pick(activity.program?.title, lang);
             )
           }
         </p>
-
-        <div
-          class="mt-6.5 overflow-hidden rounded-[var(--radius-lg)] [view-transition-name:card-media]"
-          data-morph-hero
-        >
-          <ResponsiveImage
-            image={activity.coverImage}
-            lang={lang}
-            alt=""
-            aspect="16/9"
-            eager
-            sizes="(min-width: 48rem) 44rem, 100vw"
-          />
-        </div>
 
         {
           excerpt.value && (

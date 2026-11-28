@@ -1,0 +1,120 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { CmsImage } from '~/lib/content/types';
+import type { SkAction } from '~/lib/skeleton-content';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+
+interface Props {
+  lang: Locale;
+  heading: string;
+  body?: string | null;
+  actions: SkAction[];
+  image?: CmsImage | null;
+  card?: boolean;
+}
+
+const { lang, heading, body, actions, image, card = false } = Astro.props;
+---
+
+<section class:list={['sk-cta-split', card && 'sk-cta-split--card']}>
+  {
+    image && (
+      <div class="sk-cta-split__media clip-reveal">
+        <ResponsiveImage
+          image={image}
+          lang={lang}
+          alt=""
+          aspect="4/3"
+          sizes="(min-width: 64rem) 50vw, 100vw"
+        />
+      </div>
+    )
+  }
+  <div class="sk-cta-split__panel">
+    <div class="sk-cta-split__copy">
+      <h2 class="sk-h2">{heading}</h2>
+      {body && <p class="sk-lead">{body}</p>}
+      {
+        actions.length > 0 && (
+          <div class="sk-actions">
+            {actions.map((action, index) => (
+              <a
+                href={action.href}
+                class:list={['sk-btn', index === 0 ? 'sk-btn--light' : 'sk-btn--ghost']}
+              >
+                {action.label}
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  .sk-cta-split--card {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    box-sizing: border-box;
+    width: min(
+      calc(100% - var(--gutter-left) - var(--gutter-right)),
+      calc(var(--container-page) - var(--gutter-left) - var(--gutter-right))
+    );
+    min-height: 0;
+    margin: clamp(32px, 5vw, 72px) auto;
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    background:
+      radial-gradient(
+        85% 130% at 92% 0%,
+        color-mix(in srgb, var(--color-blue-700) 28%, transparent),
+        transparent 62%
+      ),
+      var(--color-blue-900);
+    box-shadow: var(--shadow-lg);
+  }
+  .sk-cta-split--card .sk-cta-split__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    min-height: 0;
+  }
+  .sk-cta-split--card .sk-cta-split__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgb(14 21 51 / 0.55);
+  }
+  .sk-cta-split--card .sk-cta-split__panel {
+    align-items: flex-start;
+    padding: clamp(40px, 6vw, 80px) clamp(24px, 5vw, 72px);
+  }
+  .sk-cta-split--card .sk-h2 {
+    max-width: 22ch;
+  }
+  .sk-cta-split__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  /* Equal columns on one line, scaling cleanly to fill available width. */
+  .sk-cta-split--card .sk-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: clamp(0.5rem, 2vw, 0.625rem);
+    width: min(100%, 24rem);
+  }
+  @media (width < 40rem) {
+    .sk-cta-split--card .sk-actions {
+      width: 100%;
+    }
+    .sk-cta-split--card .sk-btn {
+      width: 100%;
+      padding: clamp(0.625rem, 2.4vw, 0.75rem) clamp(0.5rem, 2.2vw, 1.25rem);
+      font-size: clamp(0.75rem, 3.2vw, 0.9375rem);
+      white-space: nowrap;
+    }
+  }
+</style>

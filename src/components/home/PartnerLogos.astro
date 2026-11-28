@@ -1,0 +1,129 @@
+---
+import '~/styles/design.css';
+import type { Locale } from '~/lib/i18n/config';
+import type { Partner } from '~/lib/content/types';
+import { localizePath, t, tLang } from '~/lib/i18n/utils';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import { safeHref } from '~/lib/safe-href';
+
+interface Props {
+  lang: Locale;
+  partners: Partner[];
+}
+
+const { lang, partners } = Astro.props;
+const ordered = [...partners].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+---
+
+{
+  ordered.length > 0 && (
+    <section class="partners">
+      <div class="partners__inner">
+        <h2 class="partners__title" lang={tLang(lang, 'trustedByPartners')}>
+          {t(lang, 'trustedByPartners')}
+        </h2>
+        <ul class="partners__grid">
+          {ordered.map((partner) => (
+            <li>
+              {safeHref(partner.url) ? (
+                <a href={safeHref(partner.url)} class="partners__logo" rel="noopener">
+                  {partner.logo ? (
+                    <ResponsiveImage
+                      image={partner.logo}
+                      lang={lang}
+                      alt={partner.name}
+                      blurUp={false}
+                      sizes="140px"
+                      aspect="5/2"
+                    />
+                  ) : (
+                    partner.name
+                  )}
+                </a>
+              ) : (
+                <span class="partners__logo">
+                  {partner.logo ? (
+                    <ResponsiveImage
+                      image={partner.logo}
+                      lang={lang}
+                      alt={partner.name}
+                      blurUp={false}
+                      sizes="140px"
+                      aspect="5/2"
+                    />
+                  ) : (
+                    partner.name
+                  )}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+        <a href={localizePath('/partners', lang)} class="d-link">
+          <span lang={tLang(lang, 'allPartners')}>{t(lang, 'allPartners')}</span> →
+        </a>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .partners {
+    box-sizing: border-box;
+    width: 100%;
+    padding: clamp(40px, 5vw, 56px) 20px;
+    background: var(--color-surface-subtle);
+    color: var(--color-ink-600);
+    font-family: var(--font-sans);
+  }
+  .partners__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-items: center;
+  }
+  .partners__title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-400);
+    text-align: center;
+  }
+  .partners__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+    gap: 16px;
+  }
+  .partners__logo {
+    box-sizing: content-box;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    font-size: 12px;
+    text-align: center;
+    color: inherit;
+    text-decoration: none;
+  }
+  .partners__logo :global(img) {
+    max-width: 100%;
+    max-height: 64px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+  :global(:lang(km)) .partners__title {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+</style>

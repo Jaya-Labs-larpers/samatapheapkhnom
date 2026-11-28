@@ -9,7 +9,11 @@
     "not_found_handling": "404-page",
     "run_worker_first": ["/api/*"],
   },
-  "observability": { "enabled": true },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 },
+  },
 
   // Top level is the rehearsal, served on workers.dev. Forms never deliver here.
   // Deploy it with `npm run deploy:rehearsal` (wrangler deploy --env "").
@@ -23,11 +27,25 @@
   // The rehearsal runs no cron jobs; production's are in worker/scheduled.ts.
   "triggers": { "crons": [] },
 
+  // `wrangler preview`: forms never deliver, and the KV is the rehearsal's, not production's.
+  "previews": {
+    "vars": { "PUBLIC_DEPLOYMENT_ENV": "preview", "CONTACT_ENABLED": "false" },
+    "kv_namespaces": [
+      { "binding": "RATE_LIMIT_KV", "id": "0bd8a5bfc040452db9e214f5dee44eb8" },
+    ],
+    "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  },
+
   "env": {
     "production": {
       "name": "sko-website-production",
       "workers_dev": false,
       "preview_urls": false,
+      "observability": {
+        "enabled": true,
+        "logs": { "enabled": true, "head_sampling_rate": 1 },
+        "traces": { "enabled": true, "head_sampling_rate": 0.1 },
+      },
       "routes": [
         { "pattern": "www.samatapheapkhnom.org", "custom_domain": true },
       ],

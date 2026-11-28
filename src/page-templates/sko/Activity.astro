@@ -1,0 +1,139 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Activity } from '~/lib/content/types';
+import { formatDate, langAttr, localizePath, pick } from '~/lib/i18n/utils';
+import { blocksToPlainText } from '~/lib/portable-text';
+import { resolveSeo } from '~/lib/seo';
+import { siteUrl } from '~/lib/config';
+import { hasImage, imageUrl } from '~/lib/sanity/image';
+import { categoryLabels, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import RichText from '~/components/content/RichText.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+
+interface Props {
+  lang: Locale;
+  activity: Activity;
+  previous?: Activity | null;
+  next?: Activity | null;
+}
+
+const { lang, activity, previous, next } = Astro.props;
+
+const title = pick(activity.title, lang);
+const excerpt = pick(activity.excerpt, lang);
+const heading = title.value ?? '';
+const seo = resolveSeo(activity.seo, lang, {
+  title: heading,
+  description: excerpt.value ?? blocksToPlainText(pick(activity.body, lang).value),
+  image: activity.coverImage,
+});
+
+const canonical = new URL(localizePath(`/activities/${activity.slug}`, lang), siteUrl).href;
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: heading,
+  ...(seo.description ? { description: seo.description } : {}),
+  ...(activity.publishedAt ? { datePublished: activity.publishedAt } : {}),
+  ...(activity.author ? { author: { '@type': 'Organization', name: activity.author } } : {}),
+  ...(activity.coverImage && hasImage(activity.coverImage)
+    ? { image: imageUrl(activity.coverImage, { width: 1200 }) }
+    : {}),
+  inLanguage: lang,
+  mainEntityOfPage: canonical,
+};
+
+const category = activity.category ? categoryLabels[activity.category]?.[lang] : null;
+const programTitle = pick(activity.program?.title, lang);
+---
+
+<BaseLayout
+  lang={lang}
+  title={seo.title}
+  description={seo.description}
+  ogImage={seo.ogImage}
+  noindex
+  darkHero
+  publishedAt={activity.publishedAt}
+  jsonLd={articleJsonLd}
+>
+  <PageSolo
+    full
+    lang={lang}
+    title={heading}
+    titleLang={langAttr(title)}
+    eyebrow={category}
+    trail={[{ label: tStrict(lang, 'pageActivities'), path: '/activities' }, { label: heading }]}
+  >
+    <p class="pg-solo__meta">
+      <time datetime={activity.publishedAt ?? undefined}>
+        {formatDate(activity.publishedAt, lang)}
+      </time>
+      {activity.author && <span>{activity.author}</span>}
+      {
+        activity.program && programTitle.value && (
+          <a
+            href={localizePath(`/programs/${activity.program.slug}`, lang)}
+            lang={langAttr(programTitle)}
+          >
+            {programTitle.value}
+          </a>
+        )
+      }
+    </p>
+  </PageSolo>
+
+  <section class="pg-section">
+    <div class="pg-wrap">
+      <div class="pg-article">
+        {
+          hasImage(activity.coverImage) && (
+            <div class="pg-article__media clip-reveal">
+              <ResponsiveImage
+                image={activity.coverImage}
+                lang={lang}
+                alt=""
+                aspect="16/9"
+                sizes="(min-width: 48rem) 760px, 100vw"
+              />
+            </div>
+          )
+        }
+        {
+          excerpt.value && (
+            <p class="pg-article__lead" lang={langAttr(excerpt)}>
+              {excerpt.value}
+            </p>
+          )
+        }
+
+        <RichText blocks={activity.body} lang={lang} />
+
+        {
+          (previous || next) && (
+            <nav class="pg-article__nav" aria-label={tStrict(lang, 'pageActivities')}>
+              {previous ? (
+                <a
+                  href={localizePath(`/activities/${previous.slug}`, lang)}
+                  class="pg-link"
+                  rel="prev"
+                >
+                  <span aria-hidden="true">←</span> {tStrict(lang, 'previous')}
+                </a>
+              ) : (
+                <span />
+              )}
+              {next && (
+                <a href={localizePath(`/activities/${next.slug}`, lang)} class="pg-link" rel="next">
+                  {tStrict(lang, 'next')} <span aria-hidden="true">→</span>
+                </a>
+              )}
+            </nav>
+          )
+        }
+      </div>
+    </div>
+  </section>
+</BaseLayout>

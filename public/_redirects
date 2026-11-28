@@ -27,3 +27,40 @@
 # Crawlers and webmaster tools that are not told otherwise look for the
 # sitemap here; the real one is the index @astrojs/sitemap writes.
 /sitemap.xml  /sitemap-index.xml  301
+
+# Paths from the pre-2019 WordPress site, so old links and search results still land somewhere.
+/our-story                  /about/ 301
+/our-story/                 /about/ 301
+/our-team                   /team/ 301
+/our-team/                  /team/ 301
+/our-board                  /about/leadership/ 301
+/our-board/                 /about/leadership/ 301
+/our-partners               /partners/ 301
+/our-partners/              /partners/ 301
+/what-we-do                 /programs/ 301
+/what-we-do/                /programs/ 301
+/counselling                /programs/childrens-education-and-health/ 301
+/counselling/               /programs/childrens-education-and-health/ 301
+/community-training         /programs/childrens-education-and-health/ 301
+/community-training/        /programs/childrens-education-and-health/ 301
+/community-resource-center  /programs/childrens-education-and-health/ 301
+/community-resource-center/ /programs/childrens-education-and-health/ 301
+/family-follow-up           /programs/childrens-education-and-health/ 301
+/family-follow-up/          /programs/childrens-education-and-health/ 301
+/free-play                  /programs/childrens-education-and-health/ 301
+/free-play/                 /programs/childrens-education-and-health/ 301
+/parent-child-activity      /programs/childrens-education-and-health/ 301
+/parent-child-activity/     /programs/childrens-education-and-health/ 301
+/blog                       /activities/ 301
+/blog/                      /activities/ 301
+/gallery                    /activities/ 301
+/gallery/                   /activities/ 301
+/happy-khmer-new-year       /activities/ 301
+/happy-khmer-new-year/      /activities/ 301
+/contact-us                 /contact/ 301
+/contact-us/                /contact/ 301
+/job-announcemen            /contact/ 301
+/job-announcemen/           /contact/ 301
+/job-announcement           /contact/ 301
+/job-announcement/          /contact/ 301
+/blog/*                     /activities/ 301

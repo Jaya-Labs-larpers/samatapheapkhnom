@@ -4,12 +4,11 @@ import { t } from '~/lib/i18n/utils';
 import { contactEnabled, turnstileSiteKey } from '~/lib/config';
 import { getSiteSettings } from '~/lib/content';
 import Icon from '~/components/Icon.astro';
-import TopicPicker from '~/components/forms/TopicPicker.astro';
 import '~/styles/forms.css';
 
 interface Props {
   lang: Locale;
-  /** The form's id. The topic radios on the page point at it with form="…". */
+  /** The form's id. */
   id: string;
   /** Extra classes on the panel — used by pages to make it stick on desktop. */
   class?: string;
@@ -17,25 +16,13 @@ interface Props {
 
 const { lang, id, class: className } = Astro.props;
 
-const topics = [
-  { value: 'general', label: 'topicGeneral', hint: 'topicGeneralHint' },
-  { value: 'partner', label: 'topicPartner', hint: 'topicPartnerHint' },
-  { value: 'volunteer', label: 'topicVolunteer', hint: 'topicVolunteerHint' },
-  { value: 'media', label: 'topicMedia', hint: 'topicMediaHint' },
-  {
-    value: 'safeguarding',
-    label: 'topicSafeguarding',
-    hint: 'topicSafeguardingHint',
-    tone: 'danger',
-  },
-] as const;
-
-const partnershipTypes = [
-  'partnershipFunding',
-  'partnershipTechnical',
-  'partnershipReferrals',
-  'partnershipCorporate',
-  'partnershipOther',
+const helpTopics = [
+  'helpPartnership',
+  'helpFunding',
+  'helpVolunteer',
+  'helpConcern',
+  'helpMedia',
+  'helpOther',
 ] as const;
 
 /**
@@ -62,10 +49,9 @@ const strings = {
 };
 ---
 
-<div class:list={['form-panel', 'contact-enter', className]} data-enter="pending">
+<div class:list={['form-panel', className]}>
   <div class="form-panel-head form-enter-row" style="--i: 0">
     <h2 class="form-panel-title">{t(lang, 'formPanelTitleGeneral')}</h2>
-    <p class="form-panel-note">{t(lang, 'formPanelNoteGeneral')}</p>
   </div>
 
   <form
@@ -77,27 +63,16 @@ const strings = {
     data-strings={JSON.stringify(strings)}
   >
     <div class="form-panel-body">
-      <section class="form-section form-section--reason form-enter-row" style="--i: 1">
-        <span class="form-label" id={`${id}-formType-label`}>
-          {t(lang, 'contactHelpTitle')}
-        </span>
-        <TopicPicker
-          lang={lang}
-          id={`${id}-formType`}
-          name="formType"
-          labelId={`${id}-formType-label`}
-          topics={topics}
-        />
-      </section>
+      <input type="hidden" name="formType" value="general" />
 
       <section class="form-section form-enter-row" style="--i: 2">
-        <h3 class="form-section__label">{t(lang, 'formSectionYou')}</h3>
         <div class="form-field">
           <label class="form-label" for={`${id}-name`}>
             {t(lang, 'formName')}
           </label>
           <div class="form-control">
             <input
+              placeholder={t(lang, 'formName')}
               class="field"
               id={`${id}-name`}
               name="name"
@@ -109,221 +84,83 @@ const strings = {
           </div>
         </div>
 
-        {
-          /*
-          Email and phone share a row once the panel itself is wide enough. Both
-          answer "how do we reach you", so they belong on one line where there is
-          room, and stack on a phone where there is not.
-        */
-        }
-        <div class="form-pair">
-          <div class="form-field">
-            <label class="form-label" for={`${id}-email`}>
-              {t(lang, 'formEmail')}
-            </label>
-            <div class="form-control">
-              <input
-                class="field"
-                id={`${id}-email`}
-                name="email"
-                type="email"
-                autocomplete="email"
-                required
-                maxlength="200"
-              />
-            </div>
-          </div>
-
-          <div class="form-field">
-            <label class="form-label" for={`${id}-phone`}>
-              {t(lang, 'formPhone')}
-            </label>
-            <div class="form-control">
-              <input
-                class="field"
-                id={`${id}-phone`}
-                name="phone"
-                type="tel"
-                inputmode="tel"
-                autocomplete="tel"
-                maxlength="32"
-              />
-            </div>
-          </div>
-        </div>
-
         <fieldset class="form-choice">
           <legend class="form-label">{t(lang, 'formPreferred')}</legend>
-          <div class="segmented">
-            <label class="segmented__item">
+          <div class="form-choice__options">
+            <label>
               <input type="radio" name="preferredContact" value="email" checked />
               <span>{t(lang, 'formPreferEmail')}</span>
             </label>
-            <label class="segmented__item">
+            <label>
               <input type="radio" name="preferredContact" value="phone" />
               <span>{t(lang, 'formPreferPhone')}</span>
             </label>
           </div>
         </fieldset>
-      </section>
 
-      {
-        /*
-        Each topic's extra questions. The page shows only the group matching the
-        chosen topic (CSS, in global.css), and the script sends only that group,
-        so a visitor who switches topics never submits the answers they left.
-      */
-      }
-      <section
-        class="form-section form-topic form-enter-row"
-        data-topic-fields="partner"
-        style="--i: 3"
-      >
-        <h3 class="form-section__label">{t(lang, 'formSectionPartner')}</h3>
-        <div class="form-field">
-          <label class="form-label" for={`${id}-organization`}>
-            {t(lang, 'formOrganization')}
+        {/* Only the field matching the choice above shows, and only it is sent. */}
+        <div class="form-field" data-contact-field="email">
+          <label class="form-label" for={`${id}-email`}>
+            {t(lang, 'formEmail')}
           </label>
           <div class="form-control">
             <input
+              placeholder={t(lang, 'formEmail')}
               class="field"
-              id={`${id}-organization`}
-              name="organization"
-              type="text"
-              autocomplete="organization"
-              maxlength="160"
+              id={`${id}-email`}
+              name="email"
+              type="email"
+              autocomplete="email"
+              maxlength="200"
             />
           </div>
         </div>
-        <div class="form-pair">
-          <div class="form-field">
-            <label class="form-label" for={`${id}-role`}>{t(lang, 'formRole')}</label>
-            <div class="form-control">
-              <input
-                class="field"
-                id={`${id}-role`}
-                name="role"
-                type="text"
-                autocomplete="organization-title"
-                maxlength="120"
-              />
-            </div>
-          </div>
-          <div class="form-field">
-            <label class="form-label" for={`${id}-country`}>{t(lang, 'formCountry')}</label>
-            <div class="form-control">
-              <input
-                class="field"
-                id={`${id}-country`}
-                name="country"
-                type="text"
-                autocomplete="country-name"
-                maxlength="80"
-              />
-            </div>
+
+        <div class="form-field" data-contact-field="phone">
+          <label class="form-label" for={`${id}-phone`}>
+            {t(lang, 'formPhone')}
+          </label>
+          <div class="form-control">
+            <input
+              placeholder={t(lang, 'formPhone')}
+              class="field"
+              id={`${id}-phone`}
+              name="phone"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              maxlength="32"
+            />
           </div>
         </div>
+
         <div class="form-field">
-          <label class="form-label" for={`${id}-partnershipType`}
-            >{t(lang, 'formPartnershipType')}</label
-          >
+          <label class="form-label" for={`${id}-country`}>{t(lang, 'formCountry')}</label>
           <div class="form-control">
-            <select class="field field--select" id={`${id}-partnershipType`} name="partnershipType">
-              <option value=""></option>
-              {partnershipTypes.map((key) => <option value={t('en', key)}>{t(lang, key)}</option>)}
+            <input
+              placeholder={t(lang, 'formCountry')}
+              class="field"
+              id={`${id}-country`}
+              name="country"
+              type="text"
+              autocomplete="country-name"
+              maxlength="80"
+            />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for={`${id}-helpWith`}>{t(lang, 'contactHelpTitle')}</label>
+          <div class="form-control">
+            <select class="field field--select" id={`${id}-helpWith`} name="helpWith">
+              <option value="">{t(lang, 'contactHelpTitle')}</option>
+              {helpTopics.map((key) => <option value={t('en', key)}>{t(lang, key)}</option>)}
             </select>
           </div>
         </div>
       </section>
 
-      <section
-        class="form-section form-topic form-enter-row"
-        data-topic-fields="volunteer"
-        style="--i: 3"
-      >
-        <h3 class="form-section__label">{t(lang, 'formSectionVolunteer')}</h3>
-        <fieldset class="form-choice">
-          <legend class="form-label">{t(lang, 'formVolunteerType')}</legend>
-          <div class="segmented">
-            <label class="segmented__item">
-              <input type="radio" name="volunteerType" value="Volunteer" checked />
-              <span>{t(lang, 'volunteerTypeVolunteer')}</span>
-            </label>
-            <label class="segmented__item">
-              <input type="radio" name="volunteerType" value="Internship" />
-              <span>{t(lang, 'volunteerTypeIntern')}</span>
-            </label>
-          </div>
-        </fieldset>
-        <div class="form-pair">
-          <div class="form-field">
-            <label class="form-label" for={`${id}-availability`}
-              >{t(lang, 'formAvailability')}</label
-            >
-            <div class="form-control">
-              <input
-                class="field"
-                id={`${id}-availability`}
-                name="availability"
-                type="text"
-                maxlength="200"
-                placeholder={t(lang, 'formAvailabilityHint')}
-              />
-            </div>
-          </div>
-          <div class="form-field">
-            <label class="form-label" for={`${id}-languages`}>{t(lang, 'formLanguages')}</label>
-            <div class="form-control">
-              <input
-                class="field"
-                id={`${id}-languages`}
-                name="languages"
-                type="text"
-                maxlength="120"
-              />
-            </div>
-          </div>
-        </div>
-        <p class="form-note">{t(lang, 'formVolunteerNote')}</p>
-      </section>
-
-      <section
-        class="form-section form-topic form-enter-row"
-        data-topic-fields="media"
-        style="--i: 3"
-      >
-        <h3 class="form-section__label">{t(lang, 'formSectionMedia')}</h3>
-        <div class="form-pair">
-          <div class="form-field">
-            <label class="form-label" for={`${id}-outlet`}>{t(lang, 'formOutlet')}</label>
-            <div class="form-control">
-              <input
-                class="field"
-                id={`${id}-outlet`}
-                name="outlet"
-                type="text"
-                autocomplete="organization"
-                maxlength="160"
-              />
-            </div>
-          </div>
-          <div class="form-field">
-            <label class="form-label" for={`${id}-deadline`}>{t(lang, 'formDeadline')}</label>
-            <div class="form-control">
-              <input
-                class="field"
-                id={`${id}-deadline`}
-                name="deadline"
-                type="text"
-                maxlength="40"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="form-section form-enter-row" style="--i: 4">
-        <h3 class="form-section__label">{t(lang, 'formSectionMessage')}</h3>
+      <section class="form-section form-section--message form-enter-row" style="--i: 3">
         <div class="form-field">
           <label class="form-label" for={`${id}-message`}>
             {t(lang, 'formMessage')}
@@ -362,16 +199,15 @@ const strings = {
     <div class="form-panel-foot form-enter-row" style="--i: 5">
       {
         turnstileSiteKey && (
-          <div class="form-field mb-4">
-            <span class="form-label">{t(lang, 'formVerifyLabel')}</span>
-            <div
-              class="cf-turnstile"
-              data-sitekey={turnstileSiteKey}
-              data-language={lang}
-              data-theme="light"
-              data-size="flexible"
-            />
-          </div>
+          <div
+            class="cf-turnstile"
+            data-sitekey={turnstileSiteKey}
+            data-action="contact"
+            data-language={lang}
+            data-theme="light"
+            data-size="flexible"
+            data-appearance="interaction-only"
+          />
         )
       }
       <button type="submit" class="btn btn-primary btn-block">
@@ -411,7 +247,7 @@ const strings = {
 
   declare global {
     interface Window {
-      turnstile?: { reset(container?: Element): void };
+      turnstile?: { reset(container?: Element): void; render(container: Element): void };
     }
   }
 
@@ -429,6 +265,14 @@ const strings = {
       const column = widget.parentElement?.clientWidth ?? Infinity;
       if (column < 300) widget.dataset.size = 'compact';
     }
+    // After a client-side navigation the script is already running and only
+    // auto-renders widgets it saw on its first load.
+    if (window.turnstile) {
+      widgets.forEach(
+        (widget) => widget.childElementCount === 0 && window.turnstile?.render(widget),
+      );
+      return;
+    }
     if (document.querySelector(`script[src="${TURNSTILE_SRC}"]`)) return;
     const script = document.createElement('script');
     script.src = TURNSTILE_SRC;
@@ -441,160 +285,186 @@ const strings = {
     return (field.type === 'radio' || field.type === 'checkbox') && !field.checked;
   }
 
-  /** Only the chosen topic's extra questions are sent. */
+  /** Of email and phone, only the one the visitor chose to be reached by is sent. */
   function fieldValues(form: HTMLFormElement): Record<string, string> {
     const elements = Array.from(form.elements) as HTMLInputElement[];
     const chosen = form.elements.namedItem('formType') as HTMLSelectElement | null;
     const topic = chosen?.value || form.dataset.formType || 'general';
+    const reachBy =
+      (form.elements.namedItem('preferredContact') as RadioNodeList | null)?.value || 'email';
     const body: Record<string, string> = { formType: topic };
     for (const field of elements) {
       if (!field.name || field.disabled || field.name === 'formType' || isUnchosen(field)) continue;
-      const group = field.closest?.<HTMLElement>('[data-topic-fields]');
-      if (group && group.dataset.topicFields !== topic) continue;
+      const only = field.closest?.<HTMLElement>('[data-contact-field]');
+      if (only && only.dataset.contactField !== reachBy) continue;
       body[field.name] = field.value;
     }
     return body;
   }
 
-  document.querySelectorAll<HTMLFormElement>('form[data-form-type]').forEach((form) => {
-    const toast = document.querySelector<HTMLElement>(`[data-toast="${form.id}"]`);
-    const status = form.querySelector<HTMLElement>('.form-status');
-    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-    const buttonLabel = button?.querySelector('span');
-    if (!toast || !status || !button || !buttonLabel) return;
+  const initForms = () => {
+    document.querySelectorAll<HTMLFormElement>('form[data-form-type]').forEach((form) => {
+      const toast = document.querySelector<HTMLElement>(`[data-toast="${form.id}"]`);
+      const status = form.querySelector<HTMLElement>('.form-status');
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const buttonLabel = button?.querySelector('span');
+      if (!toast || !status || !button || !buttonLabel) return;
 
-    let strings: Strings = {};
-    try {
-      strings = JSON.parse(form.dataset.strings ?? '{}');
-    } catch {
-      strings = {};
-    }
-    const idleLabel = buttonLabel.textContent ?? '';
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let busy = false;
-
-    const showToast = () => {
-      clearTimeout(timer);
-      toast.hidden = false;
-      // Next frame, so the transition runs from the hidden state.
-      requestAnimationFrame(() => toast.classList.add('is-shown'));
-      timer = setTimeout(() => {
-        toast.classList.remove('is-shown');
-        const done = () => {
-          toast.hidden = true;
-          toast.removeEventListener('transitionend', done);
-        };
-        toast.addEventListener('transitionend', done);
-      }, HOLD_MS);
-    };
-
-    const clearStatus = () => {
-      status.hidden = true;
-      status.textContent = '';
-      for (const element of Array.from(form.elements)) {
-        element.removeAttribute('aria-invalid');
-        element.removeAttribute('aria-describedby');
-      }
-    };
-
-    const showStatus = (message: string) => {
-      status.textContent = message;
-      status.hidden = false;
-    };
-
-    /** A general failure: the fixed sentence plus the inbox to fall back on. */
-    const showFailure = (body: string) => {
-      const email = strings.fallbackEmail ? ` ${strings.fallbackEmail}` : '';
-      showStatus(`${strings.errorTitle ?? ''} ${body}${email}`.trim());
-    };
-
-    const markFields = (fieldErrors: Record<string, string>) => {
-      let first: HTMLElement | null = null;
-      for (const [name, code] of Object.entries(fieldErrors)) {
-        const field = form.elements.namedItem(name);
-        if (!(field instanceof HTMLElement)) continue;
-        field.setAttribute('aria-invalid', 'true');
-        field.setAttribute('aria-describedby', status.id);
-        if (!first) {
-          first = field;
-          showStatus(strings[code] ?? strings.invalid ?? '');
-        }
-      }
-      first?.focus();
-    };
-
-    const resetTurnstile = () => {
-      const widget = form.querySelector('.cf-turnstile');
-      if (widget && window.turnstile) {
-        try {
-          window.turnstile.reset(widget);
-        } catch {
-          /* the widget had not rendered yet — nothing to reset */
-        }
-      }
-    };
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (busy) return;
-      clearStatus();
-
-      if (form.dataset.enabled !== 'true') {
-        showFailure(strings.unavailable ?? '');
-        return;
-      }
-
-      busy = true;
-      button.disabled = true;
-      buttonLabel.textContent = strings.sending ?? idleLabel;
-
+      let strings: Strings = {};
       try {
-        const response = await fetch(form.dataset.endpoint ?? '/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(fieldValues(form)),
-        });
-        let reply: Reply = {};
-        try {
-          reply = (await response.json()) as Reply;
-        } catch {
-          reply = {};
+        strings = JSON.parse(form.dataset.strings ?? '{}');
+      } catch {
+        strings = {};
+      }
+      const idleLabel = buttonLabel.textContent ?? '';
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let busy = false;
+
+      const showToast = () => {
+        clearTimeout(timer);
+        toast.hidden = false;
+        // Next frame, so the transition runs from the hidden state.
+        requestAnimationFrame(() => toast.classList.add('is-shown'));
+        timer = setTimeout(() => {
+          toast.classList.remove('is-shown');
+          const done = () => {
+            toast.hidden = true;
+            toast.removeEventListener('transitionend', done);
+          };
+          toast.addEventListener('transitionend', done);
+        }, HOLD_MS);
+      };
+
+      const clearStatus = () => {
+        status.hidden = true;
+        status.textContent = '';
+        for (const element of Array.from(form.elements)) {
+          element.removeAttribute('aria-invalid');
+          element.removeAttribute('aria-describedby');
+        }
+      };
+
+      const showStatus = (message: string) => {
+        status.textContent = message;
+        status.hidden = false;
+      };
+
+      /** A general failure: the fixed sentence plus the inbox to fall back on. */
+      const showFailure = (body: string) => {
+        const email = strings.fallbackEmail ? ` ${strings.fallbackEmail}` : '';
+        showStatus(`${strings.errorTitle ?? ''} ${body}${email}`.trim());
+      };
+
+      const markFields = (fieldErrors: Record<string, string>) => {
+        let first: HTMLElement | null = null;
+        for (const [name, code] of Object.entries(fieldErrors)) {
+          const field = form.elements.namedItem(name);
+          if (!(field instanceof HTMLElement)) continue;
+          field.setAttribute('aria-invalid', 'true');
+          field.setAttribute('aria-describedby', status.id);
+          if (!first) {
+            first = field;
+            showStatus(strings[code] ?? strings.invalid ?? '');
+          }
+        }
+        first?.focus();
+      };
+
+      const resetTurnstile = () => {
+        const widget = form.querySelector('.cf-turnstile');
+        if (widget && window.turnstile) {
+          try {
+            window.turnstile.reset(widget);
+          } catch {
+            /* the widget had not rendered yet — nothing to reset */
+          }
+        }
+      };
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (busy) return;
+        clearStatus();
+
+        if (form.dataset.enabled !== 'true') {
+          showFailure(strings.unavailable ?? '');
+          return;
         }
 
-        if (response.ok && reply.ok) {
-          form.reset();
-          showToast();
-          return;
+        busy = true;
+        button.disabled = true;
+        buttonLabel.textContent = strings.sending ?? idleLabel;
+
+        try {
+          const response = await fetch(form.dataset.endpoint ?? '/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(fieldValues(form)),
+          });
+          let reply: Reply = {};
+          try {
+            reply = (await response.json()) as Reply;
+          } catch {
+            reply = {};
+          }
+
+          if (response.ok && reply.ok) {
+            form.reset();
+            showToast();
+            return;
+          }
+          if (reply.fieldErrors) {
+            markFields(reply.fieldErrors);
+            return;
+          }
+          switch (reply.error) {
+            case 'rate_limited':
+              showStatus(strings.rate_limited ?? '');
+              break;
+            case 'verification_failed':
+              showStatus(strings.verification ?? '');
+              break;
+            case 'preview_disabled':
+              showFailure(strings.unavailable ?? '');
+              break;
+            default:
+              showFailure(strings.errorBody ?? '');
+          }
+        } catch {
+          showFailure(strings.errorBody ?? '');
+        } finally {
+          // Turnstile tokens are single-use: whatever happened, the next attempt
+          // needs a fresh one.
+          resetTurnstile();
+          busy = false;
+          button.disabled = false;
+          buttonLabel.textContent = idleLabel;
         }
-        if (reply.fieldErrors) {
-          markFields(reply.fieldErrors);
-          return;
-        }
-        switch (reply.error) {
-          case 'rate_limited':
-            showStatus(strings.rate_limited ?? '');
-            break;
-          case 'verification_failed':
-            showStatus(strings.verification ?? '');
-            break;
-          case 'preview_disabled':
-            showFailure(strings.unavailable ?? '');
-            break;
-          default:
-            showFailure(strings.errorBody ?? '');
-        }
-      } catch {
-        showFailure(strings.errorBody ?? '');
-      } finally {
-        // Turnstile tokens are single-use: whatever happened, the next attempt
-        // needs a fresh one.
-        resetTurnstile();
-        busy = false;
-        button.disabled = false;
-        buttonLabel.textContent = idleLabel;
-      }
+      });
+    });
+
+    loadTurnstile();
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initForms, { once: true });
+  } else {
+    initForms();
+  }
+</script>
+
+<script>
+  import { onPageLoad } from '~/lib/page-load';
+
+  // Links elsewhere on the site arrive as /contact/?topic=partner and so on;
+  // the topic decides which inbox the message is filed to.
+  const TOPICS = ['general', 'partner', 'volunteer', 'media'];
+  onPageLoad(() => {
+    const requested = new URLSearchParams(window.location.search).get('topic') ?? '';
+    const topic = TOPICS.includes(requested) ? requested : 'general';
+    document.querySelectorAll<HTMLFormElement>('form[data-form-type]').forEach((form) => {
+      const field = form.elements.namedItem('formType');
+      if (field instanceof HTMLInputElement) field.value = topic;
+      form.dataset.topic = topic;
     });
   });
-
-  loadTurnstile();
 </script>

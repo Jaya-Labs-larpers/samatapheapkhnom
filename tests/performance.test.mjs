@@ -20,7 +20,7 @@ test('every font the layout preloads is declared in the theme', () => {
   const preloaded = [...layout.matchAll(/'((?:[a-z0-9]+-)+(?:latin|khmer))'/g)].map(
     (m) => `${m[1]}.woff2`,
   );
-  assert.ok(preloaded.length >= 3);
+  assert.ok(preloaded.length >= 2);
   for (const file of preloaded)
     assert.ok(declared.includes(file), `${file} is preloaded but not declared`);
 });
@@ -51,12 +51,17 @@ test('static files are cached for at least 30 days', () => {
   }
 });
 
-test('GTM starts after the page has loaded, not in the head', () => {
-  assert.match(layout, /addEventListener\('load'/);
-  assert.match(layout, /requestIdleCallback/);
+test('no Google Tag Manager or Google Analytics is loaded', () => {
+  for (const file of ['src/layouts/BaseLayout.astro', 'src/lib/config.ts', 'scripts/csp.mjs']) {
+    assert.doesNotMatch(
+      read(file),
+      /googletagmanager|google-analytics|analytics\.google|GTM-/i,
+      file,
+    );
+  }
 });
 
 test('the contact form styles load only with the form', () => {
   assert.match(read('src/components/forms/ContactForm.astro'), /styles\/forms\.css/);
-  assert.doesNotMatch(read('src/styles/global.css'), /\.topic-picker|\.form-panel/);
+  assert.doesNotMatch(read('src/styles/global.css'), /\.topic-cards|\.topic-card|\.form-panel/);
 });

@@ -1,0 +1,73 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getPage } from '~/lib/content';
+import { langAttr, pick } from '~/lib/i18n/utils';
+import { blocksToPlainText } from '~/lib/portable-text';
+import { resolveSeo } from '~/lib/seo';
+import { faqItems, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import RichText from '~/components/content/RichText.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
+import Accordion from '~/components/page/Accordion.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const page = await getPage('faq');
+const title = pick(page?.title, lang);
+const intro = pick(page?.intro, lang);
+const heading = title.value ?? tStrict(lang, 'pageFaq');
+const seo = resolveSeo(page?.seo, lang, {
+  title: heading,
+  description: intro.value ?? blocksToPlainText(pick(page?.body, lang).value),
+  image: page?.heroImage,
+});
+const faqs = faqItems(page?.faqs, lang);
+const hasBody = Boolean(pick(page?.body, lang).value?.length);
+---
+
+<BaseLayout
+  lang={lang}
+  title={seo.title}
+  description={seo.description}
+  ogImage={seo.ogImage}
+  noindex
+  darkHero
+>
+  <PageSolo
+    full
+    lang={lang}
+    title={heading}
+    titleLang={langAttr(title)}
+    intro={intro.value}
+    introLang={langAttr(intro)}
+    trail={[{ label: heading }]}
+  />
+
+  {
+    hasBody && (
+      <section class="pg-section pg-section--tight">
+        <div class="pg-wrap">
+          <div class="pg-prose">
+            <RichText blocks={page?.body} lang={lang} />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    faqs.length > 0 && (
+      <section class:list={['pg-section', hasBody && 'pg-section--tint']}>
+        <div class="pg-wrap">
+          <SectionHead heading={tStrict(lang, 'faqHeading')} />
+          <Accordion items={faqs} />
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>

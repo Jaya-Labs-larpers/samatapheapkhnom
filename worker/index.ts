@@ -40,6 +40,10 @@ function json(body: unknown, status: number, headers: Record<string, string> = {
     headers: {
       'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff',
+      'Strict-Transport-Security': 'max-age=31536000',
+      'Cross-Origin-Resource-Policy': 'same-origin',
+      'X-Frame-Options': 'DENY',
+      'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
       ...headers,
     },
   });

@@ -2,6 +2,7 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { Partner } from '~/lib/content/types';
 import { hasImage } from '~/lib/sanity/image';
+import { safeHref } from '~/lib/safe-href';
 import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 
 interface Props {
@@ -22,14 +23,15 @@ const { lang, partners, columns = 5 } = Astro.props;
 >
   {
     partners.map((partner, index) => {
-      const Tag = partner.url ? 'a' : 'div';
+      const href = safeHref(partner.url);
+      const Tag = href ? 'a' : 'div';
       return (
         <li class="contents">
           <Tag
             style={`--i:${index}`}
-            {...(partner.url
+            {...(href
               ? {
-                  href: partner.url,
+                  href,
                   rel: 'noopener noreferrer',
                   target: '_blank',
                 }

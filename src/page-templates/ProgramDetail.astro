@@ -1,10 +1,11 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
-import type { LocaleBlocks, PortableBlock, Program } from '~/lib/content/types';
+import type { LocaleBlocks, PortableBlock, Program, Story } from '~/lib/content/types';
 import { getPartners, getPrograms, getStories } from '~/lib/content';
 import { ACTIVITY_LIMITS, blockText } from '~/lib/content/sections';
 import { localizePath, pick, t } from '~/lib/i18n/utils';
 import { resolveSeo } from '~/lib/seo';
+import { hasImage } from '~/lib/sanity/image';
 import { serviceJsonLd } from '~/lib/seo/page-schema';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
@@ -19,14 +20,15 @@ import CtaBand from '~/components/content/CtaBand.astro';
 interface Props {
   lang: Locale;
   program: Program;
+  featuredStory?: Story;
 }
 
-const { lang, program } = Astro.props;
+const { lang, program, featuredStory } = Astro.props;
 
 const [programs, partners, stories] = await Promise.all([
   getPrograms(),
   getPartners(),
-  getStories(),
+  featuredStory ? [featuredStory] : getStories(),
 ]);
 
 const title = pick(program.title, lang);
@@ -35,6 +37,7 @@ const heading = title.value ?? '';
 const stats = program.impactStats ?? [];
 const position = programs.findIndex((entry) => entry.slug === program.slug) + 1;
 const others = programs.filter((entry) => entry.slug !== program.slug);
+const photo = hasImage(program.image) ? program.image : null;
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /*
@@ -67,7 +70,7 @@ if (story && program.body) {
   }
 }
 const hasImpact = Object.values(impact).some((blocks) => blocks && blocks.length > 0);
-const pullQuote = story ? { ...story, body: hasImpact ? impact : null } : null;
+const pullQuote = story ? { ...story, body: hasImpact ? impact : story.body } : null;
 
 const seo = resolveSeo(program.seo, lang, {
   title: heading,
@@ -83,18 +86,26 @@ const service = serviceJsonLd({
 ---
 
 <BaseLayout
-  headerOverlay
   lang={lang}
   title={seo.title}
   description={seo.description}
   ogImage={seo.ogImage}
-  noindex={seo.noindex}
+  noindex={Boolean(featuredStory) || seo.noindex}
   jsonLd={service}
 >
-  <section class="hero-overlap program-hero border-b border-[color:var(--color-line-subtle)]">
-    <div class="program-hero__media [view-transition-name:card-media]" data-morph-hero>
-      <ResponsiveImage image={program.image} lang={lang} aspect="auto" eager sizes="100vw" />
-    </div>
+  <section
+    class:list={[
+      'program-hero border-b border-[color:var(--color-line-subtle)]',
+      photo && 'program-hero--photo',
+    ]}
+  >
+    {
+      photo && (
+        <div class="program-hero__media">
+          <ResponsiveImage image={photo} lang={lang} eager sizes="100vw" />
+        </div>
+      )
+    }
     <div class="wrap program-hero__inner">
       <div class="program-hero__text">
         <Breadcrumbs
@@ -164,7 +175,7 @@ const service = serviceJsonLd({
   }
 
   {
-    others.length > 0 && (
+    !featuredStory && others.length > 0 && (
       <section class="section">
         <div class="wrap">
           <div class="flex flex-wrap items-end justify-between gap-5">
@@ -203,3 +214,78 @@ const service = serviceJsonLd({
 <script>
   import '~/lib/card-morph';
 </script>
+
+<style>
+  .program-hero--photo {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .program-hero__media {
+    position: relative;
+    height: clamp(14rem, 56vw, 32rem);
+  }
+
+  .program-hero__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(to top, var(--color-surface-subtle), transparent 28%);
+  }
+
+  .program-hero--photo .program-hero__inner {
+    padding-block-start: 1rem;
+  }
+
+  @media (min-width: 64rem) {
+    .program-hero__media {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      height: auto;
+    }
+
+    .program-hero__media::after {
+      background: linear-gradient(
+        to right,
+        var(--color-surface-subtle) 0%,
+        rgb(245 247 253 / 0.94) 38%,
+        rgb(245 247 253 / 0.4) 62%,
+        transparent 80%
+      );
+    }
+
+    .program-hero--photo .program-hero__inner {
+      display: flex;
+      align-items: center;
+      min-height: 33rem;
+      padding-block: 3.5rem 4rem;
+    }
+
+    .program-hero--photo .program-hero__text {
+      max-width: 34rem;
+    }
+  }
+</style>
+
+<style is:global>
+@layer components {
+  /* --- Programme detail ---------------------------------------------------- */
+  .program-hero {
+    background: var(--color-surface-subtle);
+  }
+  .program-hero__inner {
+    padding-block: 2.5rem 3rem;
+  }
+  @media (min-width: 64rem) {
+    .program-hero__inner {
+      padding-block: 3.5rem 4.5rem;
+    }
+    .program-hero__text {
+      max-width: 40rem;
+    }
+  }
+}
+</style>

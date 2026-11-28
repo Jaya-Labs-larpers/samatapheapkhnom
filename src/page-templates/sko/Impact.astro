@@ -1,0 +1,182 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getImpactStats, getPage, getPrograms, getStories } from '~/lib/content';
+import { countsUp } from '~/lib/content/stats';
+import { langAttr, localizePath, pick } from '~/lib/i18n/utils';
+import { resolveSeo } from '~/lib/seo';
+import { ctaActions, programRow, statItem, storyCard, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import SectionedBody from '~/components/content/SectionedBody.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
+import BandCta from '~/components/page/BandCta.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const [stats, page, programs, stories] = await Promise.all([
+  getImpactStats(),
+  getPage('impact'),
+  getPrograms(),
+  getStories(),
+]);
+
+const title = pick(page?.title, lang);
+const intro = pick(page?.intro, lang);
+const heading = title.value ?? tStrict(lang, 'pageImpact');
+const introText = intro.value ?? tStrict(lang, 'introImpact');
+const story = stories[0] ? storyCard(stories[0], lang) : null;
+const seo = resolveSeo(page?.seo, lang, {
+  title: heading,
+  description: introText,
+  image: page?.heroImage,
+});
+
+const statItems = [...stats]
+  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  .flatMap((stat) => {
+    const item = statItem(stat, lang);
+    return item.value ? [{ ...item, countTo: countsUp(stat) ? stat.value : null }] : [];
+  });
+
+const programItems = programs.map((program, index) => programRow(program, index, lang));
+---
+
+<BaseLayout
+  lang={lang}
+  title={seo.title}
+  description={seo.description}
+  ogImage={seo.ogImage}
+  noindex
+  darkHero
+>
+  <PageSolo
+    full
+    lang={lang}
+    title={heading}
+    titleLang={langAttr(title)}
+    intro={introText}
+    introLang={langAttr(intro)}
+    trail={[{ label: heading }]}
+  />
+
+  {
+    statItems.length > 0 && (
+      <section class="pg-section pg-section--results" id="results">
+        <div class="pg-wrap">
+          <SectionHead heading={tStrict(lang, 'resultsAtAGlance')} />
+          <div class="pg-results">
+            <div class="pg-results__content">
+              <ul class="pg-results__grid">
+                {statItems.map((stat) => (
+                  <li class="pg-results__stat">
+                    <span class="pg-results__value">
+                      {stat.prefix && (
+                        <span class="pg-results__prefix" lang={stat.prefixLang}>
+                          {stat.prefix}
+                        </span>
+                      )}
+                      <b>
+                        {stat.countTo !== null ? (
+                          <span data-count-to={stat.countTo} data-count-once>
+                            {stat.value}
+                          </span>
+                        ) : (
+                          stat.value
+                        )}
+                        {stat.suffix && <small>{stat.suffix}</small>}
+                      </b>
+                    </span>
+                    {stat.label && (
+                      <span class="pg-results__label" lang={stat.labelLang}>
+                        {stat.label}
+                      </span>
+                    )}
+                    {stat.context && (
+                      <span class="pg-results__context" lang={stat.contextLang}>
+                        {stat.context}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <a href={localizePath('/reports', lang)} class="pg-link pg-results__link">
+                {tStrict(lang, 'seeReports')} <span aria-hidden="true">→</span>
+              </a>
+            </div>
+            <div class="pg-results__map">
+              <img src="/maps/cambodia-phnom-penh.svg" alt="" width="1000" height="896" />
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <SectionedBody lang={lang} body={page?.body} />
+
+  {
+    programItems.length > 0 && (
+      <section class="pg-section pg-section--tint" id="programs">
+        <div class="pg-wrap">
+          <SectionHead
+            heading={tStrict(lang, 'ourPrograms')}
+            more={{ label: tStrict(lang, 'viewAll'), href: localizePath('/programs', lang) }}
+          />
+          <div class="pg-grid pg-grid--2">
+            {programItems.map((item) => (
+              <article class="pg-card">
+                <div class="pg-card__body">
+                  <h3 class="pg-h3" lang={item.titleLang}>
+                    <a href={item.href}>{item.title}</a>
+                  </h3>
+                  {item.body && <p lang={item.bodyLang}>{item.body}</p>}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    story && (
+      <section class="pg-section pg-section--tint">
+        <div class="pg-wrap">
+          <div class="pg-quote pg-quote--solo">
+            <div>
+              {story.quote && <blockquote lang={story.quoteLang}>{story.quote}</blockquote>}
+              <cite>
+                — <b>{story.cite}</b>
+                {story.citeRole && (
+                  <>
+                    ,{' '}
+                    {story.citeHref ? (
+                      <a href={story.citeHref} lang={story.citeRoleLang}>
+                        {story.citeRole}
+                      </a>
+                    ) : (
+                      <span lang={story.citeRoleLang}>{story.citeRole}</span>
+                    )}
+                  </>
+                )}
+              </cite>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <BandCta heading={tStrict(lang, 'ctaImpactTitle')} actions={ctaActions(lang)} />
+</BaseLayout>
+
+<script>
+  import { countUpOnEntry } from '~/lib/count-up';
+  import { onPageLoad } from '~/lib/page-load';
+
+  onPageLoad(() => countUpOnEntry());
+</script>

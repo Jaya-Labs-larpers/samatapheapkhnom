@@ -32,6 +32,18 @@ interface Env {
   PARTNER_TO_EMAIL?: string;
   RATE_LIMIT_KV?: KVNamespaceLike;
   RATE_LIMIT_WAF_ENABLED?: string;
+  SITE_URL?: string;
+}
+
+const TURNSTILE_ACTION = 'contact';
+
+function productionSite(env: Env): URL | null {
+  try {
+    const url = new URL(env.SITE_URL ?? '');
+    return url.protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
 }
 
 function productionConfigured(env: Env): boolean {
@@ -39,7 +51,8 @@ function productionConfigured(env: Env): boolean {
   if (
     (!env.RATE_LIMIT_KV && env.RATE_LIMIT_WAF_ENABLED !== 'true') ||
     !env.RESEND_API_KEY?.startsWith('re_') ||
-    !env.TURNSTILE_SECRET_KEY?.startsWith('0x')
+    !env.TURNSTILE_SECRET_KEY?.startsWith('0x') ||
+    !productionSite(env)
   )
     return false;
   for (const value of [env.MAIL_FROM, env.CONTACT_TO_EMAIL, env.PARTNER_TO_EMAIL]) {
@@ -129,10 +142,17 @@ const schema = z
   .object({
     formType: z.enum(['general', 'partner', 'volunteer', 'media']).default('general'),
     name: z.string().trim().min(2).max(120),
-    email: z.email().trim().max(200),
+    /** Required only when the visitor picks email as the way to reach them. */
+    email: z
+      .string()
+      .trim()
+      .max(200)
+      .optional()
+      .default('')
+      .refine((value) => value === '' || z.email().safeParse(value).success, { error: 'email' }),
     /**
-     * Optional. An empty string is a legitimate value — the field is not
-     * required — so the shape check only runs once something was typed. 7-15
+     * Required only when the visitor picks phone, so the shape check only runs
+     * once something was typed. 7-15
      * digits is the E.164 range; the punctuation people type is allowed around
      * them and stripped before counting.
      */
@@ -154,7 +174,7 @@ const schema = z
     organization: optionalText(160),
     country: optionalText(80),
     role: optionalText(120),
-    partnershipType: optionalText(60),
+    helpWith: optionalText(60),
     volunteerType: optionalText(40),
     availability: optionalText(200),
     languages: optionalText(120),
@@ -166,12 +186,9 @@ const schema = z
     'cf-turnstile-response': z.string().max(4096).optional().default(''),
   })
   .superRefine((data, ctx) => {
-    if (data.formType === 'partner' && data.organization === '') {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['organization'],
-        message: 'required',
-      });
+    const reachBy = data.preferredContact || 'email';
+    if (data[reachBy] === '') {
+      ctx.addIssue({ code: 'custom', path: [reachBy], message: 'required' });
     }
   });
 
@@ -189,8 +206,9 @@ function codeFor(issue: {
   origin?: unknown;
   format?: unknown;
 }): ErrorCode {
-  // The phone refine and the partner rule set their own message, which is the code itself.
+  // The email and phone refines and the reach-by rule set their own message, which is the code itself.
   if (issue.message === 'phone') return 'phone';
+  if (issue.message === 'email') return 'email';
   if (issue.message === 'required') return 'required';
   // zod v4 reports string formats as invalid_format with `format: 'email'`.
   if (issue.code === 'invalid_format' && (issue.format === 'email' || issue.origin === 'email')) {
@@ -209,6 +227,10 @@ function json(body: unknown, status = 200): Response {
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff',
+      'Strict-Transport-Security': 'max-age=31536000',
+      'Cross-Origin-Resource-Policy': 'same-origin',
+      'X-Frame-Options': 'DENY',
+      'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
     },
   });
 }
@@ -235,10 +257,20 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-/** Hash the IP so the rate-limit store never holds an identifiable address. */
-async function hashIp(ip: string): Promise<string> {
-  const data = new TextEncoder().encode(`sko:${ip}`);
-  const digest = await crypto.subtle.digest('SHA-256', data);
+/**
+ * Keyed so the stored hash cannot be reversed by hashing all 2^32 IPv4
+ * addresses, which an unkeyed digest with a public prefix allows.
+ */
+async function hashIp(env: Env, ip: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(env.TURNSTILE_SECRET_KEY || 'sko-dev-rate-limit'),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const digest = await crypto.subtle.sign('HMAC', key, encoder.encode(ip));
   return Array.from(new Uint8Array(digest).slice(0, 12))
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
@@ -249,9 +281,9 @@ async function hashIp(ip: string): Promise<string> {
  * TTL on every write) means a burst can never extend its own window, and the
  * count for a given IP is bounded per window regardless of write ordering.
  */
-async function rateLimitKey(ip: string, now = Date.now()): Promise<string> {
+async function rateLimitKey(env: Env, ip: string, now = Date.now()): Promise<string> {
   const window = Math.floor(now / 1000 / RATE_LIMIT_WINDOW_SECONDS);
-  return `rl:${await hashIp(ip)}:${window}`;
+  return `rl:${await hashIp(env, ip)}:${window}`;
 }
 
 function rateLimitTtl(now = Date.now()): number {
@@ -285,7 +317,7 @@ async function isRateLimited(env: Env, ip: string): Promise<boolean> {
   }
   try {
     const current = Number(
-      (await bounded(env.RATE_LIMIT_KV.get(await rateLimitKey(ip)), KV_TIMEOUT_MS)) ?? '0',
+      (await bounded(env.RATE_LIMIT_KV.get(await rateLimitKey(env, ip)), KV_TIMEOUT_MS)) ?? '0',
     );
     return current >= RATE_LIMIT_MAX;
   } catch {
@@ -306,7 +338,7 @@ async function isRateLimited(env: Env, ip: string): Promise<boolean> {
 async function recordSubmission(env: Env, ip: string): Promise<void> {
   if (!rateLimitingConfigured(env)) return;
   try {
-    const key = await rateLimitKey(ip);
+    const key = await rateLimitKey(env, ip);
     const current = Number((await bounded(env.RATE_LIMIT_KV.get(key), KV_TIMEOUT_MS)) ?? '0');
     await bounded(
       env.RATE_LIMIT_KV.put(key, String(current + 1), {
@@ -319,7 +351,17 @@ async function recordSubmission(env: Env, ip: string): Promise<void> {
   }
 }
 
-async function verifyTurnstile(secret: string, token: string, ip: string): Promise<boolean> {
+/**
+ * In production the token must also have been minted on the live hostname for
+ * this form: the rehearsal and local builds can share the widget, and their
+ * tokens would otherwise be accepted here.
+ */
+async function verifyTurnstile(
+  env: Env,
+  secret: string,
+  token: string,
+  ip: string,
+): Promise<boolean> {
   const body = new FormData();
   body.append('secret', secret);
   body.append('response', token);
@@ -331,8 +373,14 @@ async function verifyTurnstile(secret: string, token: string, ip: string): Promi
     signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS),
   });
   if (!response.ok) throw new Error('Turnstile unavailable');
-  const result = (await response.json()) as { success?: boolean };
-  return result.success === true;
+  const result = (await response.json()) as {
+    success?: boolean;
+    hostname?: string;
+    action?: string;
+  };
+  if (result.success !== true) return false;
+  if (env.PUBLIC_DEPLOYMENT_ENV !== 'production') return true;
+  return result.hostname === productionSite(env)?.hostname && result.action === TURNSTILE_ACTION;
 }
 
 async function sendEmail(env: Env, to: string, subject: string, html: string, replyTo: string) {
@@ -346,7 +394,7 @@ async function sendEmail(env: Env, to: string, subject: string, html: string, re
     body: JSON.stringify({
       from: env.MAIL_FROM,
       to: [to],
-      reply_to: replyTo,
+      ...(replyTo ? { reply_to: replyTo } : {}),
       subject,
       html,
     }),
@@ -372,6 +420,13 @@ async function handlePost(context: FunctionContext): Promise<Response> {
   const contentType = request.headers.get('Content-Type') ?? '';
   if (contentType.split(';')[0]?.trim().toLowerCase() !== 'application/json') {
     return json({ ok: false, error: 'unsupported_media_type' }, 415);
+  }
+
+  if (env.PUBLIC_DEPLOYMENT_ENV === 'production') {
+    const origin = request.headers.get('Origin');
+    if (origin !== null && origin !== productionSite(env)?.origin) {
+      return json({ ok: false, error: 'forbidden_origin' }, 403);
+    }
   }
 
   const declaredLength = Number(request.headers.get('Content-Length') ?? '0');
@@ -435,7 +490,7 @@ async function handlePost(context: FunctionContext): Promise<Response> {
     return json({ ok: false, error: 'verification_failed' }, 403);
   }
   try {
-    if (!(await verifyTurnstile(env.TURNSTILE_SECRET_KEY, token, ip))) {
+    if (!(await verifyTurnstile(env, env.TURNSTILE_SECRET_KEY, token, ip))) {
       return json({ ok: false, error: 'verification_failed' }, 403);
     }
   } catch {
@@ -466,7 +521,7 @@ async function handlePost(context: FunctionContext): Promise<Response> {
     ['Organization', clean(data.organization, 160)],
     ['Role', clean(data.role, 120)],
     ['Country', clean(data.country, 80)],
-    ['Partnership', clean(data.partnershipType, 60)],
+    ['Help with', clean(data.helpWith, 60)],
     ['Wants to', clean(data.volunteerType, 40)],
     ['Availability', clean(data.availability, 200)],
     ['Languages', clean(data.languages, 120)],
@@ -475,7 +530,7 @@ async function handlePost(context: FunctionContext): Promise<Response> {
   ];
   const rows: [string, string][] = [
     ['Name', name],
-    ['Email', email],
+    ...(email ? ([['Email', email]] as [string, string][]) : []),
     ...optionalRows.filter(([, value]) => value !== ''),
     ['Form', data.formType],
   ];

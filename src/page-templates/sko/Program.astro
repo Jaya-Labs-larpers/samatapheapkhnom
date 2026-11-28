@@ -1,0 +1,275 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { LocaleBlocks, PortableBlock, Program } from '~/lib/content/types';
+import { getPartners, getPrograms, getStories } from '~/lib/content';
+import { ACTIVITY_LIMITS, blockText } from '~/lib/content/sections';
+import { langAttr, localizePath, pick, t } from '~/lib/i18n/utils';
+import { resolveSeo } from '~/lib/seo';
+import { serviceJsonLd } from '~/lib/seo/page-schema';
+import { programCard, statItem, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import RichText from '~/components/content/RichText.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SectionedBody from '~/components/content/SectionedBody.astro';
+import PageHero from '~/components/page/PageHero.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
+import BandCta from '~/components/page/BandCta.astro';
+
+interface Props {
+  lang: Locale;
+  program: Program;
+}
+
+const { lang, program } = Astro.props;
+
+const [programs, partners, stories] = await Promise.all([
+  getPrograms(),
+  getPartners(),
+  getStories(),
+]);
+
+const title = pick(program.title, lang);
+const summary = pick(program.summary, lang);
+const heading = title.value ?? '';
+const stats = program.impactStats ?? [];
+
+/* With a story, the body's "Impact" section is told once, in the story band. */
+const story = stories.find((entry) => entry.program?.slug === program.slug);
+const isImpactHeading = (block: PortableBlock) =>
+  block._type === 'block' && block.style === 'h2' && /impact|លទ្ធផល/i.test(blockText(block));
+
+let body: LocaleBlocks | null | undefined = program.body;
+const impact: LocaleBlocks = {};
+if (story && program.body) {
+  body = {};
+  for (const [locale, blocks] of Object.entries(program.body) as [
+    Locale,
+    PortableBlock[] | null,
+  ][]) {
+    const start = (blocks ?? []).findIndex(isImpactHeading);
+    if (!blocks || start < 0) {
+      body[locale] = blocks;
+      continue;
+    }
+    const next = blocks.findIndex(
+      (block, i) => i > start && block._type === 'block' && block.style === 'h2',
+    );
+    const end = next < 0 ? blocks.length : next;
+    body[locale] = [...blocks.slice(0, start), ...blocks.slice(end)];
+    impact[locale] = blocks.slice(start + 1, end);
+  }
+}
+const hasImpact = Object.values(impact).some((blocks) => blocks && blocks.length > 0);
+const quote = story ? pick(story.quote, lang) : null;
+const storyRole = story ? pick(story.personRole, lang) : null;
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const activitiesLink = tStrict(lang, 'activitiesFromProgram');
+
+const otherPrograms = programs.filter((entry) => entry.slug !== program.slug);
+const statCards = stats.map((stat) => {
+  const item = statItem(stat, lang);
+  const percent = /^\d+(\.\d+)?%$/.test(item.value) ? Number.parseFloat(item.value) : null;
+  return { ...item, percent };
+});
+
+const seo = resolveSeo(program.seo, lang, {
+  title: heading,
+  description: summary.value,
+  image: program.image,
+});
+const service = serviceJsonLd({
+  slug: program.slug,
+  pathname: Astro.url.pathname,
+  name: heading,
+  description: seo.description,
+});
+---
+
+<BaseLayout
+  lang={lang}
+  title={seo.title}
+  description={seo.description}
+  ogImage={seo.ogImage}
+  noindex
+  darkHero
+  jsonLd={service}
+>
+  <PageHero
+    lang={lang}
+    title={heading}
+    titleLang={langAttr(title)}
+    intro={summary.value}
+    introLang={langAttr(summary)}
+    trail={[{ label: tStrict(lang, 'pagePrograms'), path: '/programs' }, { label: heading }]}
+    image={program.image}
+    caption={pick(program.image?.caption ?? program.image?.alt, lang).value}
+  />
+
+  {
+    statCards.length > 0 && (
+      <section class="pg-section">
+        <div class="pg-wrap">
+          <SectionHead heading={tStrict(lang, 'resultsAtAGlance')} />
+          <div class="pg-bento">
+            {statCards[0] && (
+              <div class="pg-bento__stat pg-bento__stat--blue">
+                <span lang={statCards[0].labelLang}>{statCards[0].label}</span>
+                <div>
+                  {statCards[0].prefix && (
+                    <span lang={statCards[0].prefixLang}>{statCards[0].prefix}</span>
+                  )}
+                  <b>
+                    {statCards[0].value}
+                    {statCards[0].suffix && <small>{statCards[0].suffix}</small>}
+                  </b>
+                  {statCards[0].context && (
+                    <span lang={statCards[0].contextLang}>{statCards[0].context}</span>
+                  )}
+                </div>
+              </div>
+            )}
+            {program.cardImage && (
+              <div class="pg-bento__photo clip-reveal">
+                <ResponsiveImage
+                  image={program.cardImage}
+                  lang={lang}
+                  aspect="4/3"
+                  sizes="(min-width: 64rem) 45vw, 100vw"
+                />
+              </div>
+            )}
+            {statCards.slice(1).map((stat) => (
+              <div class="pg-bento__stat">
+                <span lang={stat.labelLang}>{stat.label}</span>
+                <div>
+                  {stat.percent !== null && (
+                    <div class="pg-bento__bar" aria-hidden="true">
+                      <i style={`width:${Math.min(stat.percent, 100)}%`} />
+                    </div>
+                  )}
+                  {stat.prefix && <span lang={stat.prefixLang}>{stat.prefix}</span>}
+                  <b>
+                    {stat.value}
+                    {stat.suffix && <small>{stat.suffix}</small>}
+                  </b>
+                  {stat.context && <span lang={stat.contextLang}>{stat.context}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <SectionedBody lang={lang} body={body} limits={ACTIVITY_LIMITS} partners={partners} />
+
+  {
+    story && (
+      <section class="pg-section pg-section--tint">
+        <div class="pg-wrap">
+          <div class="pg-quote pg-quote--solo">
+            <div>
+              {hasImpact ? (
+                <div class="pg-quote__message">
+                  <RichText blocks={impact} lang={lang} />
+                </div>
+              ) : (
+                quote?.value && <blockquote lang={langAttr(quote)}>{quote.value}</blockquote>
+              )}
+              <cite>
+                — <b>{story.personName}</b>
+                {storyRole?.value && <span lang={langAttr(storyRole)}>, {storyRole.value}</span>}
+              </cite>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    otherPrograms.length > 0 && (
+      <section class="pg-section">
+        <div class="pg-wrap">
+          <SectionHead
+            heading={tStrict(lang, 'otherPrograms')}
+            more={{ label: tStrict(lang, 'viewAll'), href: localizePath('/programs', lang) }}
+          />
+          <div class="pg-grid pg-grid--3">
+            {otherPrograms.map((entry, index) => {
+              const card = programCard(entry, lang, tStrict(lang, 'learnMore'));
+              return (
+                <article class="pg-card">
+                  <div class="pg-card__media clip-reveal">
+                    {card.image && (
+                      <ResponsiveImage
+                        image={card.image}
+                        lang={lang}
+                        aspect="16/10"
+                        sizes="(min-width: 64rem) 30vw, 100vw"
+                      />
+                    )}
+                  </div>
+                  <div class="pg-card__body">
+                    <span class="pg-card__index" aria-hidden="true">
+                      {pad(index + 1)}
+                    </span>
+                    <h3 class="pg-h3">
+                      <a href={card.href}>{card.title}</a>
+                    </h3>
+                    <p lang={card.bodyLang}>{card.body}</p>
+                    <span class="pg-card__arrow" aria-hidden="true">
+                      →
+                    </span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <BandCta
+    heading={tStrict(lang, 'ctaProgramTitle')}
+    actions={[
+      { label: t(lang, 'contactUs'), href: localizePath('/contact', lang) },
+      { label: t(lang, 'seeReports'), href: localizePath('/reports', lang), outline: true },
+    ]}
+  />
+
+  {
+    activitiesLink && (
+      <section class="pg-section pg-section--tight">
+        <div class="pg-wrap">
+          <a href={localizePath('/activities', lang)} class="pg-link">
+            {activitiesLink} <span aria-hidden="true">→</span>
+          </a>
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .pg-card__index {
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-blue-700);
+  }
+  .pg-card__arrow {
+    display: inline-block;
+    margin-top: auto;
+    padding-top: 0.25rem;
+    color: var(--color-blue-700);
+    font-weight: 600;
+    transition: transform var(--duration-fast) var(--ease-out-soft);
+  }
+  .pg-card:hover .pg-card__arrow {
+    transform: translateX(4px);
+  }
+</style>

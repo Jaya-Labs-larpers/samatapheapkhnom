@@ -1,8 +1,8 @@
 ---
 import { getActivities } from '~/lib/content';
-import ActivitiesPage from '~/page-templates/ActivitiesPage.astro';
 import { PER_PAGE } from '~/lib/pagination';
 import type { Activity } from '~/lib/content/types';
+import Activities from '~/page-templates/sko/Activities.astro';
 
 export async function getStaticPaths() {
   const all = await getActivities();
@@ -28,12 +28,7 @@ const { activities, currentPage, totalPages } = Astro.props as {
 };
 ---
 
-<!--
-  Route shell. All page markup lives in src/page-templates/ so the English and
-  Khmer routes render from one source and can never drift apart.
-  Locale: en
--->
-<ActivitiesPage
+<Activities
   lang="en"
   activities={activities}
   currentPage={currentPage}

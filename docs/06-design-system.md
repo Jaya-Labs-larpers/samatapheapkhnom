@@ -102,9 +102,11 @@ at 24px/1.75 in Khmer**. Khmer has no serif tradition; faking one looks wrong.
   container 1200px.
 - Radius: 8px buttons/inputs, 12px cards, 16px panels. No pills except the language toggle and pagination —
   fully rounded reads consumer-app, and this site needs to read institutional.
-- Motion: 140ms hover, 220ms panels, one easing curve. **No scroll reveals, no parallax, and no count-up
-  on the impact numbers** — a figure that animates on scroll reads as marketing. Everything collapses under
-  `prefers-reduced-motion`.
+- Motion: 140ms hover, 220ms panels, one easing curve. **Scroll may change what is shown** — a statement
+  written out as it is read, a figure that grows, the active chapter of a section — but never hides
+  content: everything is in the page, and every effect has a finished static state. Decoration that carries
+  no content stays out. Everything collapses under `prefers-reduced-motion` and without JS. See
+  [17-scroll-motion.md](17-scroll-motion.md).
 
 ## 5. The two agreed special treatments
 

@@ -1,56 +1,58 @@
 ---
-import type { Locale } from '~/lib/i18n/config';
+import { htmlLang, type Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
-import { localizePath, t, text } from '~/lib/i18n/utils';
+import { localizePath, parsePath, t, text } from '~/lib/i18n/utils';
 import { mainNav, mobileNav } from '~/lib/nav';
 import LanguageToggle from './LanguageToggle.astro';
-import Icon from '~/components/Icon.astro';
 import Logo from '~/components/Logo.astro';
 
 interface Props {
   lang: Locale;
   pathname: string;
   settings: SiteSettings;
-  /** Float the header over a full-bleed hero until the page scrolls. */
-  overlay?: boolean;
+  darkHero?: boolean;
 }
 
-const { lang, pathname, settings, overlay = false } = Astro.props;
+const { lang, pathname, settings, darkHero = false } = Astro.props;
 
 const orgName = text(settings.orgName, lang);
 
-function isCurrent(path: string): boolean {
-  const target = localizePath(path, lang);
-  return pathname === target || pathname.startsWith(target);
-}
+const current = parsePath(pathname).path.replace(/\/$/, '') || '/';
+const isCurrent = (path: string) => current === path || current.startsWith(`${path}/`);
 ---
 
-<header
-  class="site-header sticky top-0 z-20"
-  data-overlay={overlay ? '' : undefined}
-  data-at-top={overlay ? '' : undefined}
->
-  <div
-    class="flex h-full w-full items-center gap-6 pt-[var(--safe-top)] pr-[var(--gutter-right)] pl-[var(--gutter-left)]"
-  >
-    <a href={localizePath('/', lang)} class="flex flex-none items-center no-underline">
+<header class="hdr site-header" data-header data-home={current === '/' ? '' : undefined}>
+  <script is:inline>
+    // Inline so the bar is marked before it first paints.
+    try {
+      const bar = document.currentScript.parentElement;
+      if (bar.hasAttribute('data-home')) {
+        if (sessionStorage.getItem('sko-header-intro')) bar.setAttribute('data-skip-intro', '');
+        sessionStorage.setItem('sko-header-intro', '1');
+      }
+    } catch {}
+  </script>
+  <div class="hdr__bar">
+    <a href={localizePath('/', lang)} class="hdr__brand">
+      <Logo variant="full" height={74} title={orgName} class="hdr__logo" lazy={darkHero} />
       <Logo
-        variant="full"
-        height={92}
+        variant="reversed"
+        height={74}
         title={orgName}
-        class="h-[68px] w-auto sm:h-[92px] lg:h-[118px]"
+        class="hdr__logo hdr__logo--reversed"
+        lazy={!darkHero}
       />
     </a>
 
-    <nav class="ml-auto hidden lg:flex lg:gap-0.5" aria-label={t(lang, 'mainNavLabel')}>
+    <nav class="hdr__nav" aria-label={t(lang, 'mainNavLabel')}>
       {
         mainNav.map((item) => (
           <a
             href={localizePath(item.path, lang)}
+            class="hdr__link"
             aria-current={isCurrent(item.path) ? 'page' : undefined}
-            class="nav-link"
           >
-            <span class="roll">
+            <span class="hdr__label roll" lang={htmlLang[lang]}>
               <span class="roll__text" data-text={t(lang, item.key)}>
                 {t(lang, item.key)}
               </span>
@@ -60,265 +62,589 @@ function isCurrent(path: string): boolean {
       }
     </nav>
 
-    <div
-      class="ml-auto flex items-center gap-3 lg:ml-0 lg:border-l lg:border-[color:var(--color-line)] lg:pl-3.5"
-    >
-      <LanguageToggle lang={lang} pathname={pathname} />
-      <a
-        href={localizePath('/contact', lang)}
-        class="btn btn-primary btn-fill hidden sm:inline-flex"
-      >
-        <span class="btn-fill__blob" aria-hidden="true"></span>
-        <span class="roll">
-          <span class="roll__text" data-text={t(lang, 'contactUs')}>{t(lang, 'contactUs')}</span>
+    <div class="hdr__tools">
+      <span class="hdr__toggle-desktop">
+        <LanguageToggle lang={lang} pathname={pathname} />
+      </span>
+      <span class="hdr__swap">
+        <span class="hdr__toggle-phone" data-menu-extra>
+          <LanguageToggle lang={lang} pathname={pathname} variant="phone" />
         </span>
-      </a>
+        <a href={localizePath('/contact', lang)} class="hdr__pill">
+          {t(lang, 'contactUs')}
+        </a>
+      </span>
       <button
         type="button"
-        id="menu-toggle"
-        class="grid h-11 w-11 place-items-center rounded-[var(--radius-md)] border border-[color:var(--color-line-strong)] bg-white text-[color:var(--color-ink-900)] lg:hidden"
-        aria-expanded="false"
-        aria-controls="mobile-nav"
+        class="hdr__burger"
         aria-label={t(lang, 'openMenu')}
+        aria-expanded="false"
+        aria-controls="mobile-menu"
         data-label-open={t(lang, 'openMenu')}
         data-label-close={t(lang, 'closeMenu')}
+        data-mobile-open
       >
-        <Icon name="bars-3" size={24} inline class="menu-toggle-icon-open" />
-        <Icon name="x-mark" size={24} inline class="menu-toggle-icon-close hidden" />
+        <span class="hdr__burger-line"></span>
+        <span class="hdr__burger-line"></span>
+        <span class="hdr__burger-line"></span>
       </button>
+    </div>
+  </div>
+
+  <div
+    id="mobile-menu"
+    class="mmenu"
+    role="dialog"
+    aria-modal="true"
+    aria-label={t(lang, 'menu')}
+    data-mobile-panel
+    hidden
+    inert
+  >
+    <div class="mmenu__sheet">
+      <div class="mmenu__scroll">
+        <nav class="mmenu__body" aria-label={t(lang, 'mainNavLabel')}>
+          <ul class="mmenu__list">
+            {
+              mobileNav.map((item) => (
+                <li>
+                  <a
+                    href={localizePath(item.path, lang)}
+                    class="mmenu__link"
+                    aria-current={isCurrent(item.path) ? 'page' : undefined}
+                  >
+                    {t(lang, item.key)}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+          <div class="mmenu__actions">
+            <a href={localizePath('/contact', lang)} class="mmenu__cta mmenu__cta--solid">
+              {t(lang, 'contactUs')}
+            </a>
+            <a href={localizePath('/contact?topic=volunteer', lang)} class="mmenu__cta">
+              {t(lang, 'navVolunteer')}
+            </a>
+          </div>
+        </nav>
+      </div>
     </div>
   </div>
 </header>
 
-{overlay && <div class="header-sentinel" aria-hidden="true" />}
-
-<!-- Mobile navigation panel -->
-<div
-  id="mobile-nav"
-  hidden
-  class="fixed inset-0 z-50 flex flex-col bg-white lg:hidden"
-  role="dialog"
-  aria-modal="true"
-  aria-label={t(lang, 'menu')}
->
-  <div
-    class="wrap flex h-[var(--header-h)] flex-none items-center border-b border-[color:var(--color-line-subtle)] pt-[var(--safe-top)]"
-  >
-    <span class="text-[14px] font-bold text-[color:var(--color-ink-900)]">{orgName}</span>
-    <button
-      type="button"
-      id="menu-close"
-      class="ml-auto grid h-11 w-11 place-items-center rounded-[var(--radius-md)] border border-[color:var(--color-line-strong)] bg-white text-[color:var(--color-ink-900)]"
-      aria-label={t(lang, 'closeMenu')}
-    >
-      <span class="menu-x" aria-hidden="true"><span></span><span></span></span>
-    </button>
-  </div>
-
-  <nav
-    class="wrap flex-1 overflow-y-auto pt-3 pb-[calc(0.75rem+var(--safe-bottom))]"
-    aria-label={t(lang, 'mainNavLabel')}
-  >
-    {
-      mobileNav.map((item) => (
-        <a
-          href={localizePath(item.path, lang)}
-          aria-current={isCurrent(item.path) ? 'page' : undefined}
-          class="flex items-center justify-between border-b border-[color:var(--color-line-subtle)] py-[15px] text-[17px] font-semibold text-[color:var(--color-ink-900)] no-underline"
-        >
-          {t(lang, item.key)}
-          <span class="text-[color:var(--color-blue-700)]" aria-hidden="true">
-            →
-          </span>
-        </a>
-      ))
-    }
-
-    <a href={localizePath('/contact', lang)} class="btn btn-primary btn-block mt-6 py-4">
-      {t(lang, 'contactUs')}
-    </a>
-    <a
-      href={localizePath('/contact?topic=volunteer', lang)}
-      class="btn btn-secondary btn-block mt-2.5 py-4"
-    >
-      {t(lang, 'navVolunteer')}
-    </a>
-
-    <div class="mt-7 border-t border-[color:var(--color-line)] pt-5 pb-8">
-      <span
-        class="mb-3 block font-mono text-[11px] font-semibold tracking-[0.1em] text-[color:var(--color-ink-400)] uppercase"
-        >{t(lang, 'language')}</span
-      >
-      <LanguageToggle lang={lang} pathname={pathname} full />
-    </div>
-  </nav>
-</div>
-
 <script>
-  /**
-   * Overlay header: transparent while the top of the hero is in view, solid
-   * once the page has scrolled past it. Watching a marker element rather than
-   * the scroll offset means the browser reports the crossing itself — two
-   * callbacks per visit instead of one per frame.
-   */
-  const overlayHeader = document.querySelector<HTMLElement>('.site-header[data-overlay]');
-  const sentinel = document.querySelector('.header-sentinel');
+  import { initMenus } from '~/lib/menu';
+  import { initHeaderMotion } from '~/lib/header-motion';
+  import { onPageLoad } from '~/lib/page-load';
 
-  if (overlayHeader && sentinel) {
-    new IntersectionObserver(([entry]) => {
-      if (!entry) return;
-      overlayHeader.toggleAttribute('data-at-top', entry.isIntersecting);
-    }).observe(sentinel);
-  }
-
-  /**
-   * The header steps out of the way while the visitor reads downward and comes
-   * back on any upward scroll, keyboard focus, or near the top of the page.
-   *
-   * Distances are measured from the last turning point, not frame to frame, so
-   * a slow scroll still registers. Hiding takes a deliberate scroll; showing
-   * takes only a small one — the visitor reaching for the menu should not have
-   * to work for it. Rubber-band overscroll at either end is ignored, or the
-   * bounce at the bottom of a page on iOS would pull the header back in.
-   */
-  const header = document.querySelector<HTMLElement>('header.site-header');
-  const menuPanel = document.getElementById('mobile-nav');
-
-  if (header) {
-    const HIDE_AFTER = 24;
-    const SHOW_AFTER = 6;
-    let turnY = window.scrollY;
-    let ticking = false;
-
-    const setHidden = (hidden: boolean) => {
-      if (header.hasAttribute('data-hidden') !== hidden)
-        header.toggleAttribute('data-hidden', hidden);
-    };
-
-    const update = () => {
-      ticking = false;
-      const maxY = document.documentElement.scrollHeight - window.innerHeight;
-      const y = Math.min(Math.max(window.scrollY, 0), maxY);
-      const hidden = header.hasAttribute('data-hidden');
-      header.toggleAttribute('data-scrolled', y > header.offsetHeight);
-
-      const nearTop = y < header.offsetHeight * 2;
-      const menuOpen = menuPanel ? !menuPanel.hidden : false;
-      if (nearTop || menuOpen || header.contains(document.activeElement)) {
-        setHidden(false);
-        turnY = y;
-        return;
-      }
-
-      if (hidden ? y > turnY : y < turnY) turnY = y;
-      const travelled = y - turnY;
-      if (!hidden && travelled > HIDE_AFTER) {
-        setHidden(true);
-        turnY = y;
-      } else if (hidden && travelled < -SHOW_AFTER) {
-        setHidden(false);
-        turnY = y;
-      }
-    };
-
-    window.addEventListener(
-      'scroll',
-      () => {
-        if (ticking) return;
-        ticking = true;
-        requestAnimationFrame(update);
-      },
-      { passive: true },
-    );
-    header.addEventListener('focusin', () => header.removeAttribute('data-hidden'));
-  }
-
-  const toggle = document.getElementById('menu-toggle');
-  const closeButton = document.getElementById('menu-close');
-  const panel = document.getElementById('mobile-nav');
-  const openIcon = toggle?.querySelector('.menu-toggle-icon-open');
-  const closeIcon = toggle?.querySelector('.menu-toggle-icon-close');
-
-  if (toggle && panel && closeButton) {
-    const FOCUSABLE = 'a[href], button:not([disabled])';
-    let lastFocused: HTMLElement | null = null;
-
-    const open = () => {
-      lastFocused = document.activeElement as HTMLElement | null;
-      panel.hidden = false;
-      document.body.style.overflow = 'hidden';
-      toggle.setAttribute('aria-expanded', 'true');
-      toggle.setAttribute('aria-label', toggle.dataset.labelClose ?? 'Close menu');
-      openIcon?.classList.add('hidden');
-      closeIcon?.classList.remove('hidden');
-      panel.querySelector<HTMLElement>(FOCUSABLE)?.focus();
-    };
-
-    /**
-     * Closing plays an exit animation before the panel is hidden. `hidden`
-     * removes it instantly, so the element has to survive one animation first.
-     *
-     * Guarded three ways: reduced-motion skips it entirely, a missing
-     * animationend event still resolves via the timeout, and re-entry is
-     * blocked while an exit is already running — otherwise a double-tap on the
-     * close button leaves the panel stuck mid-animation.
-     */
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    const finishClose = () => {
-      panel.hidden = true;
-      panel.removeAttribute('data-closing');
-      document.body.style.overflow = '';
-      toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-label', toggle.dataset.labelOpen ?? 'Open menu');
-      openIcon?.classList.remove('hidden');
-      closeIcon?.classList.add('hidden');
-      lastFocused?.focus();
-    };
-
-    const close = () => {
-      if (panel.hidden || panel.hasAttribute('data-closing')) return;
-
-      if (prefersReducedMotion.matches) {
-        finishClose();
-        return;
-      }
-
-      panel.setAttribute('data-closing', '');
-      let done = false;
-      const settle = () => {
-        if (done) return;
-        done = true;
-        finishClose();
-      };
-      panel.addEventListener('animationend', settle, { once: true });
-      window.setTimeout(settle, 400);
-    };
-
-    toggle.addEventListener('click', open);
-    closeButton.addEventListener('click', close);
-
-    document.addEventListener('keydown', (event) => {
-      if (panel.hidden) return;
-      if (event.key === 'Escape') {
-        close();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-
-      // Keep focus inside the panel while it is open.
-      const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (!first || !last) return;
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    });
-  }
+  onPageLoad((signal) => {
+    initMenus(signal);
+    initHeaderMotion(signal);
+  });
 </script>
+
+<style>
+  .hdr {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    box-sizing: border-box;
+    height: var(--header-h);
+    padding: var(--safe-top) var(--gutter-right) 0 var(--gutter-left);
+    background: #fff;
+    border-bottom: 1px solid var(--color-line);
+    box-shadow: 0 4px 20px rgb(14 21 51 / 0.04);
+    --hdr-ink: var(--color-ink-900);
+    color: var(--hdr-ink);
+    font-family: var(--font-sans);
+    --hdr-control-h: 40px;
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui),
+      color var(--duration-ui) var(--ease-ui),
+      box-shadow var(--duration-ui) var(--ease-ui);
+  }
+  :global(html[data-astro-transition]) .hdr {
+    transition: none;
+  }
+  .hdr__bar {
+    max-width: var(--container-page);
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .hdr__brand {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    text-decoration: none;
+  }
+  .hdr :global(.hdr__logo) {
+    display: block;
+    height: 64px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  .hdr :global(.hdr__logo--reversed) {
+    display: none;
+  }
+
+  /* --- Links ------------------------------------------------------------- */
+  .hdr__nav {
+    display: none;
+    align-items: center;
+    white-space: nowrap;
+  }
+  .hdr__link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: var(--hdr-control-h);
+    padding-inline: 0.75rem;
+    color: inherit;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out-soft);
+  }
+  /* On the label, not the link: the link is as wide as the longer language. */
+  .hdr__label::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-base) var(--ease-out-soft);
+  }
+  .hdr__link:hover {
+    color: var(--color-blue-700);
+  }
+  .hdr__link:hover .hdr__label::after {
+    transform: scaleX(1);
+  }
+  /* Text rolls up and a copy rolls in from below, as on the original site. */
+  .roll {
+    display: inline-block;
+    overflow: hidden;
+    margin-block: -0.3em;
+    padding-block: 0.3em;
+    vertical-align: top;
+  }
+  .roll__text {
+    position: relative;
+    display: inline-block;
+    transition: translate 480ms var(--ease-reveal);
+  }
+  .roll__text::after {
+    content: attr(data-text) / '';
+    position: absolute;
+    top: calc(100% + 0.6em);
+    left: 0;
+    white-space: nowrap;
+  }
+  .hdr__link:is(:hover, :focus-visible) .roll__text {
+    translate: 0 calc(-100% - 0.6em);
+  }
+  .hdr__link[aria-current] {
+    font-weight: 600;
+  }
+  .hdr__link[aria-current] .hdr__label::after {
+    transform: scaleX(1);
+  }
+  .hdr__label {
+    position: relative;
+    font-size: 15.5px;
+    line-height: 1.2;
+  }
+  /* --- Tools: language switch, call to action, menu button ---------------- */
+  .hdr__tools {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  .hdr__toggle-desktop {
+    display: none;
+  }
+  /* Phone, menu open: the language switch joins the call to action at its size. */
+  .hdr__swap {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 0.375rem;
+  }
+  .hdr__toggle-phone {
+    display: none;
+  }
+  .hdr__toggle-phone :global(.lang-toggle) {
+    flex: 1;
+    box-sizing: border-box;
+    height: 44px;
+    border-radius: var(--radius-cta);
+    font-size: 15px;
+  }
+  :global([data-menu-open]) .hdr__toggle-phone {
+    display: flex;
+    transition: opacity 420ms var(--ease-out-soft);
+    @starting-style {
+      opacity: 0;
+    }
+  }
+  .hdr__pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0 1.25rem;
+    border-radius: var(--radius-cta);
+    background: var(--color-blue-700);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color var(--duration-ui) var(--ease-ui);
+  }
+  .hdr__pill:hover {
+    background: var(--color-blue-800);
+  }
+  .hdr__pill:focus-visible {
+    outline: 2px solid var(--color-blue-800);
+    outline-offset: 3px;
+  }
+  .hdr__burger {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 44px;
+    height: 44px;
+    margin-inline-end: -10px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--hdr-ink);
+    cursor: pointer;
+  }
+  .hdr__burger-line {
+    width: 18px;
+    height: 2px;
+    background: currentColor;
+    transition:
+      transform 480ms var(--ease-out-soft),
+      opacity 360ms var(--ease-out-soft);
+  }
+  .hdr__burger[aria-expanded='true'] .hdr__burger-line:nth-child(1) {
+    transform: translate3d(0, 5px, 0) rotate(45deg);
+  }
+  .hdr__burger[aria-expanded='true'] .hdr__burger-line:nth-child(2) {
+    opacity: 0;
+  }
+  .hdr__burger[aria-expanded='true'] .hdr__burger-line:nth-child(3) {
+    transform: translate3d(0, -5px, 0) rotate(-45deg);
+  }
+
+  .hdr__tools :global(.lang-toggle) {
+    border-color: var(--color-line-strong);
+  }
+  .hdr__toggle-desktop :global(.lang-toggle) {
+    height: var(--hdr-control-h);
+    box-sizing: border-box;
+  }
+  .hdr__tools :global(.lang-toggle__link) {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    padding: 0 12px;
+    color: inherit;
+    opacity: 0.72;
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      opacity var(--duration-ui) var(--ease-ui);
+  }
+  .hdr__tools :global(.lang-toggle__link:hover) {
+    opacity: 1;
+  }
+  .hdr__tools :global(.lang-toggle__link.is-current) {
+    background: var(--color-blue-50);
+    font-weight: 600;
+    opacity: 1;
+  }
+  .hdr__tools .hdr__toggle-phone :global(.lang-toggle__link.is-current) {
+    background: var(--color-blue-700);
+    color: #fff;
+  }
+
+  .mmenu {
+    position: fixed;
+    inset: var(--header-h) 0 0;
+    z-index: 1;
+    color: var(--hdr-ink);
+    background: rgb(14 21 51 / 0);
+    visibility: hidden;
+    transition: background-color 240ms var(--ease-out-soft), visibility 0s linear 240ms;
+  }
+  .mmenu[data-state='open'] {
+    background: rgb(14 21 51 / 0.4);
+    visibility: visible;
+    transition: background-color 480ms var(--ease-out-soft), visibility 0s;
+  }
+  .mmenu__sheet {
+    display: grid;
+    grid-template-rows: 0fr;
+    background: #fff;
+    transition: grid-template-rows 240ms var(--ease-out-soft);
+  }
+  .mmenu[data-state='open'] .mmenu__sheet {
+    grid-template-rows: 1fr;
+    transition-duration: 480ms;
+  }
+  .mmenu__scroll {
+    min-height: 0;
+    max-height: calc(100dvh - var(--header-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .mmenu__body {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem var(--gutter-right) calc(2rem + var(--safe-bottom)) var(--gutter-left);
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 200ms var(--ease-out-soft), transform 200ms var(--ease-out-soft);
+  }
+  .mmenu[data-state='open'] .mmenu__body {
+    opacity: 1;
+    transform: none;
+    transition: opacity 420ms var(--ease-out-soft) 90ms, transform 460ms var(--ease-out-soft) 60ms;
+  }
+  .mmenu__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .mmenu__link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    border-bottom: 1px solid var(--color-line);
+    padding: 1rem 0;
+    color: var(--hdr-ink);
+    font-size: 19px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out-soft);
+  }
+  .mmenu__link[aria-current] {
+    color: var(--color-blue-700);
+  }
+  .mmenu a:hover {
+    color: var(--color-blue-700);
+  }
+  .mmenu__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.5rem, 2.2vw, 0.75rem);
+    margin-top: 1.5rem;
+  }
+  .mmenu__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: clamp(2.75rem, 11vw, 3.375rem);
+    padding: clamp(0.75rem, 2.8vw, 1.125rem) clamp(0.5rem, 2.5vw, 1.5rem);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-cta);
+    color: var(--hdr-ink);
+    font-size: clamp(0.8125rem, 3.8vw, 1.125rem);
+    font-weight: 500;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui);
+  }
+  .mmenu__cta:hover {
+    border-color: var(--color-blue-200);
+    background: var(--color-blue-50);
+  }
+  .mmenu .mmenu__cta--solid {
+    border-color: var(--color-blue-700);
+    background: var(--color-blue-700);
+    color: #fff;
+  }
+  .mmenu .mmenu__cta--solid:hover {
+    border-color: var(--color-blue-800);
+    background: var(--color-blue-800);
+    color: #fff;
+  }
+  :global([data-menu-open]) {
+    overflow: hidden;
+  }
+
+  @media (scripting: enabled) {
+    .hdr[data-home]:not([data-solid]):has(> .mmenu[hidden]),
+    :global(
+        body:has(
+          #main > [data-hero-dark]:first-child,
+          #main > :first-child > [data-hero-dark]:first-child
+        )
+      )
+      .hdr:not([data-home], [data-solid]):has(> .mmenu[hidden]) {
+      --hdr-ink: #fff;
+      border-bottom-color: transparent;
+      box-shadow: none;
+      background: linear-gradient(rgb(18 16 14 / 0.65), rgb(18 16 14 / 0.3) 65%, rgb(18 16 14 / 0))
+        border-box;
+
+      :global(.hdr__logo) {
+        display: none;
+      }
+      :global(.hdr__logo--reversed) {
+        display: block;
+      }
+      .hdr__link {
+        text-shadow: 0 1px 8px rgb(0 0 0 / 0.35);
+      }
+      .hdr__link:hover {
+        color: inherit;
+      }
+      .hdr__tools :global(.lang-toggle) {
+        border-color: rgb(255 255 255 / 0.55);
+      }
+      .hdr__tools :global(.lang-toggle__link:not(.is-current):hover) {
+        background: rgb(255 255 255 / 0.14);
+        color: #fff;
+      }
+      .hdr__tools :global(.lang-toggle__link.is-current) {
+        background: rgb(255 255 255 / 0.22);
+      }
+      .hdr__bar > a:focus-visible,
+      .hdr__bar :is(.hdr__link, .hdr__pill, .hdr__burger):focus-visible,
+      .hdr__tools :global(.lang-toggle__link:focus-visible) {
+        outline-color: #fff;
+      }
+    }
+    :global(
+        body:has(
+          #main > [data-hero-dark]:first-child,
+          #main > :first-child > [data-hero-dark]:first-child
+        )
+      )
+      .hdr:not([data-home], [data-solid]):has(> .mmenu[hidden]) {
+      background: var(--color-blue-900);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hdr,
+    .hdr *,
+    .mmenu {
+      transition-duration: 0s !important;
+      transition-delay: 0s !important;
+    }
+  }
+
+  @media (width < 30rem) {
+    .hdr {
+      padding-inline: clamp(0.75rem, 4vw, var(--gutter-left))
+        clamp(0.75rem, 4vw, var(--gutter-right));
+    }
+    .hdr__bar {
+      gap: clamp(0.375rem, 2vw, 0.75rem);
+    }
+    .hdr :global(.hdr__logo) {
+      height: clamp(38px, 12vw, 54px);
+    }
+    .hdr__tools {
+      flex: 1 1 auto;
+      justify-content: flex-end;
+      min-width: 0;
+      gap: clamp(0.25rem, 1.5vw, 0.5rem);
+    }
+    .hdr__swap {
+      flex: 0 1 auto;
+      grid-auto-columns: minmax(0, 1fr);
+      gap: clamp(0.25rem, 1.5vw, 0.375rem);
+      min-width: 0;
+    }
+    :global([data-menu-open]) .hdr__swap {
+      flex: 1 1 auto;
+    }
+    .hdr__pill {
+      height: clamp(36px, 10.5vw, 44px);
+      padding: 0 clamp(0.5rem, 2.8vw, 1.125rem);
+      font-size: clamp(11px, 3.5vw, 15px);
+    }
+    .hdr__toggle-phone :global(.lang-toggle) {
+      width: 100%;
+      height: clamp(36px, 10.5vw, 44px);
+      font-size: clamp(11px, 3.5vw, 15px);
+    }
+    .hdr__toggle-phone :global(.lang-toggle__link) {
+      min-inline-size: 0;
+      padding-inline: clamp(4px, 1.8vw, 10px);
+    }
+    .hdr__burger {
+      width: clamp(34px, 9.5vw, 44px);
+      margin-inline-end: 0;
+      flex-shrink: 0;
+    }
+  }
+  @media (orientation: landscape) and (height <= 32rem) {
+    .hdr :global(.hdr__logo) {
+      height: 44px;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .hdr :global(.hdr__logo) {
+      height: clamp(62px, 5vw + 10px, 74px);
+    }
+    .hdr__toggle-phone,
+    .hdr__burger,
+    .mmenu {
+      display: none;
+    }
+    .hdr__bar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+    }
+    .hdr__nav {
+      display: flex;
+      gap: clamp(0.125rem, 0.8vw, 0.75rem);
+    }
+    .hdr__link {
+      padding-inline: clamp(0.5rem, 1vw - 0.15rem, 0.75rem);
+    }
+    .hdr__label {
+      font-size: clamp(14.5px, 0.8vw + 6px, 15.5px);
+    }
+    .hdr__pill {
+      padding: 0 clamp(1rem, 2vw - 0.25rem, 1.5rem);
+      font-size: clamp(15px, 0.8vw + 6.5px, 16px);
+    }
+    .hdr__tools {
+      justify-self: end;
+      gap: clamp(0.5rem, 1vw - 0.15rem, 0.75rem);
+    }
+    .hdr__toggle-desktop {
+      display: inline-flex;
+    }
+  }
+</style>

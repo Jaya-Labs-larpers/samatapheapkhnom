@@ -1,0 +1,314 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { SkAction, SkCardItem } from '~/lib/skeleton-content';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkSection from './SkSection.astro';
+
+interface Props {
+  lang: Locale;
+  heading: string;
+  items: SkCardItem[];
+  more?: SkAction | null;
+  showDetails?: boolean;
+}
+
+const { lang, heading, items, more, showDetails = false } = Astro.props;
+---
+
+{
+  items.length > 0 && (
+    <SkSection>
+      <div class="cards__head">
+        <h2 class="sk-h2">{heading}</h2>
+        {more && (
+          <a href={more.href} class="sk-link">
+            {more.label} →
+          </a>
+        )}
+      </div>
+      <ul class:list={['cards__grid', showDetails && 'cards__grid--detailed']} data-cards-track>
+        {items.map((item, index) => (
+          <li class="cards__item">
+            <a href={item.href} class="cards__card">
+              <div class="cards__media sk-media clip-reveal">
+                {item.image && (
+                  <ResponsiveImage
+                    image={item.image}
+                    lang={lang}
+                    alt=""
+                    aspect="4/5"
+                    sizes="(min-width: 64rem) 25vw, (min-width: 40rem) 50vw, 80vw"
+                  />
+                )}
+              </div>
+              <div class="cards__caption">
+                {showDetails && (
+                  <span class="cards__index">{String(index + 1).padStart(2, '0')}</span>
+                )}
+                <h3 class="cards__title" lang={item.titleLang}>
+                  {item.title}
+                </h3>
+                {showDetails && (
+                  <span class="cards__arrow" aria-hidden="true">
+                    →
+                  </span>
+                )}
+              </div>
+            </a>
+            {showDetails && item.body && (
+              <p class="sk-text cards__summary" lang={item.bodyLang}>
+                {item.body}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+      {items.length > 1 && (
+        <div class="cards__dots" role="tablist" aria-label={heading} data-cards-dots>
+          {items.map((item, index) => (
+            <button
+              type="button"
+              class="cards__dot"
+              role="tab"
+              aria-selected={index === 0 ? 'true' : 'false'}
+              aria-label={`${index + 1} / ${items.length}: ${item.title}`}
+              data-card-index={index}
+            />
+          ))}
+        </div>
+      )}
+    </SkSection>
+  )
+}
+
+<script>
+  import { onPageLoad } from '~/lib/page-load';
+
+  onPageLoad((signal) => {
+    for (const track of document.querySelectorAll<HTMLElement>('[data-cards-track]')) {
+      const dotsWrap = track.parentElement?.querySelector<HTMLElement>('[data-cards-dots]');
+      if (!dotsWrap) continue;
+      const dots = Array.from(dotsWrap.querySelectorAll<HTMLButtonElement>('[data-card-index]'));
+      const cards = Array.from(track.children) as HTMLElement[];
+      if (!dots.length || !cards.length) continue;
+
+      const setActive = (activeIndex: number) => {
+        dots.forEach((dot, i) => dot.setAttribute('aria-selected', String(i === activeIndex)));
+      };
+
+      let raf = 0;
+      const sync = () => {
+        raf = 0;
+        const left = track.scrollLeft + 24;
+        let best = 0;
+        let bestDist = Infinity;
+        cards.forEach((card, i) => {
+          const dist = Math.abs(card.offsetLeft - left);
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = i;
+          }
+        });
+        setActive(best);
+      };
+
+      track.addEventListener(
+        'scroll',
+        () => {
+          if (!raf) raf = requestAnimationFrame(sync);
+        },
+        { passive: true, signal },
+      );
+
+      dots.forEach((dot, i) => {
+        dot.addEventListener(
+          'click',
+          () => {
+            cards[i]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+            setActive(i);
+          },
+          { signal },
+        );
+      });
+    }
+  });
+</script>
+
+<style>
+  .cards__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px 32px;
+  }
+  .cards__grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(80vw, 300px);
+    gap: 14px;
+    margin: 0 calc(-1 * var(--gutter-right)) 0 calc(-1 * var(--gutter-left));
+    padding: 0 var(--gutter-right) 4px var(--gutter-left);
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline-start: var(--gutter-left);
+    scrollbar-width: none;
+  }
+  .cards__dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: -4px;
+  }
+  .cards__dot {
+    position: relative;
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-line-strong);
+    cursor: pointer;
+    transition:
+      width 420ms var(--ease-out-soft),
+      background-color 420ms var(--ease-out-soft);
+  }
+  .cards__dot::after {
+    content: '';
+    position: absolute;
+    inset: -14px -8px;
+  }
+  .cards__dot[aria-selected='true'] {
+    width: 24px;
+    background: var(--color-blue-700);
+  }
+  .cards__grid::-webkit-scrollbar {
+    display: none;
+  }
+  .cards__item {
+    scroll-snap-align: start;
+  }
+  .cards__card {
+    position: relative;
+    display: block;
+    height: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    color: #fff;
+    text-decoration: none;
+    isolation: isolate;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--duration-base) var(--ease-out-soft);
+  }
+  .cards__media {
+    aspect-ratio: 4 / 5;
+    height: 100%;
+    border-radius: 0;
+  }
+  .cards__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .cards__card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgb(11 27 48 / 0.84) 0%,
+      rgb(11 27 48 / 0.34) 36%,
+      rgb(11 27 48 / 0) 64%
+    );
+    pointer-events: none;
+  }
+  .cards__caption {
+    position: absolute;
+    inset: auto 20px 20px;
+    z-index: 1;
+  }
+  .cards__index {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--color-sky-200);
+    font-variant-numeric: tabular-nums;
+  }
+  .cards__summary {
+    margin-top: 14px;
+    color: var(--color-ink-600);
+  }
+  .cards__arrow {
+    display: inline-block;
+    margin-top: 6px;
+    transition: transform var(--duration-fast) var(--ease-out-soft);
+  }
+  .cards__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 0.85rem + 0.5vw, 1.3rem);
+    font-weight: 600;
+    line-height: 1.15;
+    color: #fff;
+    text-wrap: balance;
+  }
+  .cards__grid--detailed :is(.cards__card, .cards__media) {
+    height: auto;
+  }
+  .cards__card:focus-visible {
+    outline: 3px solid var(--color-blue-700);
+    outline-offset: 3px;
+  }
+  @media (min-width: 40rem) {
+    .cards__grid {
+      grid-auto-flow: row;
+      grid-auto-columns: auto;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin: 0;
+      padding: 0;
+      overflow: visible;
+    }
+    .cards__dots {
+      display: none;
+    }
+  }
+  @media (horizontal-viewport-segments: 2) {
+    .cards__grid {
+      grid-auto-flow: row;
+      grid-auto-columns: auto;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: max(16px, var(--fold-hinge-w, 24px));
+      margin: 0;
+      padding: 0;
+      overflow: visible;
+    }
+    .cards__dots {
+      display: none;
+    }
+  }
+  @media (min-width: 64rem) {
+    .cards__grid {
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+      grid-auto-flow: column;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cards__media :global(img) {
+      transition: transform 600ms var(--ease-reveal);
+    }
+    .cards__card:is(:hover, :focus-visible) {
+      box-shadow: var(--shadow-lg);
+    }
+    .cards__card:is(:hover, :focus-visible) .cards__media :global(img) {
+      transform: scale(1.05);
+    }
+    .cards__card:is(:hover, :focus-visible) .cards__arrow {
+      transform: translateX(4px);
+    }
+  }
+</style>

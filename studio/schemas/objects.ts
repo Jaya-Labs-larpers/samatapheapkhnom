@@ -10,7 +10,8 @@ export const imageWithAlt = defineType({
   name: 'imageWithAlt',
   title: 'Image',
   type: 'image',
-  options: { hotspot: true },
+  // Only lqip is extracted, so phone uploads never publish EXIF or GPS location.
+  options: { hotspot: true, metadata: ['lqip'] },
   fields: [
     defineField({
       name: 'alt',

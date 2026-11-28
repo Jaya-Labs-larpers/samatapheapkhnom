@@ -1,0 +1,101 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { CmsImage } from '~/lib/content/types';
+import type { SkAction } from '~/lib/skeleton-content';
+import InlineLinks from '~/components/content/InlineLinks.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkSection from './SkSection.astro';
+import SkLines from './SkLines.astro';
+import SkButtons from './SkButtons.astro';
+
+interface Props {
+  title: string;
+  buttons?: boolean;
+  titleLang?: string;
+  eyebrow?: string | null;
+  /** Pass null for a real page without an intro; leave out for grey placeholder lines. */
+  intro?: string | null;
+  introLang?: string;
+  note?: string;
+  noteLang?: string;
+  actions?: SkAction[];
+  /** Homepage hero: a photo filling the first screen, text over it. */
+  home?: boolean;
+  image?: CmsImage | null;
+  lang?: Locale;
+}
+
+const {
+  title,
+  buttons = true,
+  titleLang,
+  eyebrow,
+  intro,
+  introLang,
+  note,
+  noteLang,
+  actions,
+  home = false,
+  image,
+  lang = 'en',
+} = Astro.props;
+---
+
+{
+  home ? (
+    <section class="sk-hero--home" data-home-hero data-hero-dark>
+      <div class="sk-hero__media">
+        {image && <ResponsiveImage image={image} lang={lang} eager sizes="100vw" />}
+      </div>
+      <div class="sk-wrap sk-hero__text">
+        {eyebrow && <p class="sk-eyebrow">{eyebrow}</p>}
+        <h1 class="sk-h1" lang={titleLang}>
+          {title}
+        </h1>
+        {intro && (
+          <p class="sk-lead inline-links" lang={introLang}>
+            <InlineLinks text={intro} />
+          </p>
+        )}
+        {note && (
+          <p class="sk-hero__note" lang={noteLang}>
+            <span aria-hidden="true">✓</span> {note}
+          </p>
+        )}
+        {actions && (
+          <div>
+            <SkButtons actions={actions} />
+          </div>
+        )}
+        <slot />
+      </div>
+    </section>
+  ) : (
+    <SkSection tone="tint">
+      <div class="sk-hero__text">
+        <slot name="before" />
+        {eyebrow && <p class="sk-eyebrow">{eyebrow}</p>}
+        <h1 class="sk-h1" lang={titleLang}>
+          {title}
+        </h1>
+        {intro === undefined ? (
+          <SkLines n={2} />
+        ) : (
+          intro && (
+            <p class="sk-lead inline-links" lang={introLang}>
+              <InlineLinks text={intro} />
+            </p>
+          )
+        )}
+        {actions ? (
+          <div>
+            <SkButtons actions={actions} />
+          </div>
+        ) : (
+          buttons && <SkButtons primary="Primary action" secondary="Secondary action" />
+        )}
+        <slot />
+      </div>
+    </SkSection>
+  )
+}

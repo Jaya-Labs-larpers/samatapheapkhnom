@@ -91,5 +91,82 @@ const em = (text: string) =>
 
 <script>
   import { countUpOnEntry } from '~/lib/count-up';
-  countUpOnEntry();
+  import { onPageLoad } from '~/lib/page-load';
+  onPageLoad(() => countUpOnEntry());
 </script>
+
+<style is:global>
+@layer components {
+  .program-stats {
+    display: grid;
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background: var(--color-line);
+  }
+  .program-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.75rem 1.5rem;
+    background: #fff;
+    container-type: inline-size;
+  }
+  /* A long figure such as "33,910 kg" shrinks to its tile rather than clipping
+     at the tile's edge. --value-em is the figure's width in em, estimated by
+     ProgramStats from the glyph widths of the stat font. */
+  .program-stat__value {
+    font-size: min(var(--text-stat), calc(100cqi / var(--value-em, 1)));
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: var(--text-stat--letter-spacing);
+    color: var(--color-blue-700);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .program-stat__label {
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-ink-900);
+  }
+  .program-stat__context {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-ink-400);
+  }
+  @media (min-width: 40rem) {
+    .program-stats {
+      grid-template-columns: repeat(var(--sm-cols), minmax(0, 1fr));
+    }
+    .program-stats--featured > :first-child {
+      grid-column: span 2;
+    }
+  }
+  @media (min-width: 64rem) {
+    .program-stats {
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    }
+    .program-stats--featured > :first-child {
+      grid-column: auto;
+      grid-row: span 2;
+      justify-content: flex-end;
+      padding: 2.25rem 2rem;
+      background: var(--color-blue-900);
+    }
+    .program-stats--featured > :first-child .program-stat__value {
+      font-size: min(calc(var(--text-stat) * 1.6), calc(100cqi / var(--value-em, 1)));
+      color: #fff;
+    }
+    .program-stats--featured > :first-child .program-stat__label {
+      font-size: 1.125rem;
+      color: #fff;
+    }
+    .program-stats--featured > :first-child .program-stat__context {
+      color: var(--color-sky-200);
+    }
+  }
+}
+</style>

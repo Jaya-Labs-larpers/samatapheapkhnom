@@ -1,0 +1,37 @@
+---
+import type { SkStatItem } from '~/lib/skeleton-content';
+
+interface Props {
+  item: SkStatItem;
+}
+
+const { item } = Astro.props;
+---
+
+<div class="sk-stat">
+  {
+    item.prefix && (
+      <span class="sk-stat__prefix" lang={item.prefixLang}>
+        {item.prefix}
+      </span>
+    )
+  }
+  <div class="sk-stat__num">
+    {item.value}
+    {item.suffix && <span style="font-size:.6em">{item.suffix}</span>}
+  </div>
+  {
+    item.label && (
+      <p class="sk-stat__label" lang={item.labelLang}>
+        {item.label}
+      </p>
+    )
+  }
+  {
+    item.context && (
+      <p class="sk-small" lang={item.contextLang}>
+        {item.context}
+      </p>
+    )
+  }
+</div>

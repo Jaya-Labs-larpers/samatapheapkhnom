@@ -1,46 +1,105 @@
 ---
-import { localeName, htmlLang, type Locale } from '~/lib/i18n/config';
+import { localeShort, htmlLang, locales, type Locale } from '~/lib/i18n/config';
 import { alternatePath, t } from '~/lib/i18n/utils';
 
 interface Props {
   lang: Locale;
-  /** Current pathname, so the toggle lands on the same page in the other language. */
+  /** Current pathname, so each link lands on the same page in its language. */
   pathname: string;
-  full?: boolean;
+  /** `header` (S02), `phone` (S02m, 44px tap target) or `footer` (S12.6). */
+  variant?: 'header' | 'phone' | 'footer';
 }
 
-const { lang, pathname, full = false } = Astro.props;
+const { lang, pathname, variant = 'header' } = Astro.props;
 
-/** Flag of the language the link switches TO — a single toggle, not a two-way picker. */
-const otherLocale: Locale = lang === 'en' ? 'km' : 'en';
-const label = otherLocale === 'km' ? t(lang, 'switchToKhmer') : t(lang, 'switchToEnglish');
+const label = (locale: Locale) =>
+  locale === 'km' ? t(lang, 'switchToKhmer') : t(lang, 'switchToEnglish');
 ---
 
-<a
-  href={alternatePath(pathname, otherLocale)}
-  hreflang={htmlLang[otherLocale]}
-  lang={htmlLang[otherLocale]}
-  title={label}
-  aria-label={label}
-  class:list={[
-    'inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--color-line-strong)] bg-white px-2.5 py-2 text-[13px] font-semibold text-[color:var(--color-ink-600)] no-underline transition-colors hover:border-[color:var(--color-blue-200)] hover:bg-[color:var(--color-blue-50)]',
-    full && 'w-full justify-center py-3',
-  ]}
->
+<span class:list={['lang-toggle', `lang-toggle--${variant}`]}>
   {
-    otherLocale === 'km' ? (
-      <span lang="en" class="leading-[14px] tracking-[0.04em]">
-        KH
-      </span>
-    ) : (
-      <img
-        src={`/flags/${otherLocale}.svg`}
-        width="20"
-        height="14"
-        alt=""
-        class="rounded-[2px] ring-1 ring-black/10"
-      />
-    )
+    locales.map((locale) => {
+      const current = locale === lang;
+      return current ? (
+        <span
+          lang={htmlLang[locale]}
+          aria-current="true"
+          class="lang-toggle__link is-current"
+        >
+          {localeShort[locale]}
+        </span>
+      ) : (
+        <a
+          href={alternatePath(pathname, locale)}
+          hreflang={htmlLang[locale]}
+          lang={htmlLang[locale]}
+          aria-label={label(locale)}
+          data-lang-link=""
+          class="lang-toggle__link"
+        >
+          {localeShort[locale]}
+        </a>
+      );
+    })
   }
-  {full && <span>{localeName[otherLocale]}</span>}
-</a>
+</span>
+
+<style>
+  .lang-toggle {
+    display: inline-flex;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 999px;
+    overflow: hidden;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .lang-toggle__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 2.875rem;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    color: var(--color-ink-700);
+    text-decoration: none;
+    line-height: normal;
+    transition:
+      background-color var(--duration-fast) var(--ease-out-soft),
+      color var(--duration-fast) var(--ease-out-soft);
+  }
+  .lang-toggle__link:not(.is-current):hover {
+    background: var(--color-blue-50);
+    color: var(--color-ink-900);
+  }
+  .lang-toggle__link.is-current {
+    background: var(--color-blue-700);
+    color: #fff;
+    font-weight: 600;
+  }
+  .lang-toggle--phone {
+    font-size: 13px;
+  }
+  .lang-toggle--phone .lang-toggle__link {
+    padding: 10px;
+  }
+  .lang-toggle--footer {
+    background: #fff;
+    border-radius: 999px;
+  }
+  .lang-toggle--footer .lang-toggle__link {
+    min-inline-size: 3.25rem;
+    padding: 8px 16px;
+  }
+  .lang-toggle__link:focus-visible {
+    outline-offset: -3px;
+  }
+</style>
+
+<script>
+  import { initLanguageMemory } from '~/lib/lang-choice';
+  import { initLanguagePrefetch } from '~/lib/lang-prefetch';
+  import { onPageLoad } from '~/lib/page-load';
+
+  initLanguageMemory();
+  onPageLoad(() => initLanguagePrefetch());
+</script>

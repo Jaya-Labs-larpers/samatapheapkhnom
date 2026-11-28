@@ -20,8 +20,8 @@ import {
 } from "../../src/lib/butterflies/shape";
 
 loadFont({
-  family: "Inter",
-  url: staticFile("fonts/inter-latin.woff2"),
+  family: "Noto Sans",
+  url: staticFile("fonts/noto-sans-latin.woff2"),
   weight: "400 700",
 });
 
@@ -110,7 +110,7 @@ export const LoadingIntro: React.FC<LoadingIntroProps> = ({
       <Interactive.Div
         name="Label"
         style={{
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "'Noto Sans', sans-serif",
           fontSize: 44,
           fontWeight: 500,
           lineHeight: 1.4,

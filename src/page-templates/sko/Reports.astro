@@ -1,0 +1,58 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getReports } from '~/lib/content';
+import { stripInlineLinks } from '~/lib/inline-links';
+import { collectionPageJsonLd } from '~/lib/seo/page-schema';
+import { tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import EmptyState from '~/components/content/EmptyState.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import DocumentList from '~/components/page/DocumentList.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+
+const reports = await getReports();
+const years = [...new Set(reports.map((report) => report.year ?? 0))].sort((a, b) => b - a);
+const heading = tStrict(lang, 'pageReports');
+const title = tStrict(lang, 'seoReports') || heading;
+const description = tStrict(lang, 'metaReports') || stripInlineLinks(tStrict(lang, 'introReports'));
+const collection = collectionPageJsonLd({ pathname: Astro.url.pathname, name: title, description });
+---
+
+<BaseLayout lang={lang} title={title} description={description} noindex darkHero jsonLd={collection}>
+  <PageSolo
+    full
+    lang={lang}
+    title={heading}
+    intro={tStrict(lang, 'introReports')}
+    trail={[{ label: heading }]}
+  />
+
+  <section class="pg-section">
+    <div class="pg-wrap">
+      {
+        reports.length === 0 ? (
+          <EmptyState message={tStrict(lang, 'emptyReports')} />
+        ) : (
+          <div class="pg-stack">
+            {years.map((year) => (
+              <div>
+                <h2 class="pg-h2" style="margin-bottom:1rem">
+                  {year || '—'}
+                </h2>
+                <DocumentList
+                  lang={lang}
+                  reports={reports.filter((report) => (report.year ?? 0) === year)}
+                />
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

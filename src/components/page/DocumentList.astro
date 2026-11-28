@@ -1,0 +1,66 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Report } from '~/lib/content/types';
+import { formatFileSize, pick, t } from '~/lib/i18n/utils';
+import { isDirectFileHref, safeHref } from '~/lib/safe-href';
+
+interface Props {
+  lang: Locale;
+  reports: Report[];
+}
+
+const { lang, reports } = Astro.props;
+
+const typeLabels: Record<string, Record<Locale, string>> = {
+  'annual-report': { en: 'Annual report', km: 'របាយការណ៍ប្រចាំឆ្នាំ' },
+  financial: { en: 'Financial', km: 'ហិរញ្ញវត្ថុ' },
+  policy: { en: 'Policy', km: 'គោលការណ៍' },
+  other: { en: 'Document', km: 'ឯកសារ' },
+};
+---
+
+<ul class="pg-docs">
+  {
+    reports.map((report) => {
+      const title = pick(report.title, lang);
+      const file = lang === 'km' && report.fileKm?.url ? report.fileKm : report.file;
+      const fileLanguage =
+        lang === 'km' && report.fileKm?.url ? t(lang, 'languageKhmer') : t(lang, 'languageEnglish');
+      const typeLabel = report.type ? typeLabels[report.type]?.[lang] : null;
+      const size = formatFileSize(file?.size);
+      const meta = [typeLabel, fileLanguage, size].filter(Boolean).join(' · ');
+      const cover = [typeLabel ?? t(lang, 'download'), report.year].filter(Boolean).join(' ');
+      const href = safeHref(file?.url);
+      const Tag = href ? 'a' : 'span';
+
+      return (
+        <li class="pg-doc">
+          <Tag
+            class="pg-doc__link"
+            {...(href
+              ? isDirectFileHref(href)
+                ? { href, download: '' }
+                : { href, target: '_blank', rel: 'noopener noreferrer' }
+              : { 'aria-disabled': 'true' })}
+          >
+            <span class="pg-doc__cover" aria-hidden="true">
+              <span>SKO</span>
+              <span>{cover}</span>
+            </span>
+            <span>
+              <h3 class="pg-doc__title">
+                <span lang={title.isFallback ? title.lang : undefined}>{title.value}</span>
+                {report.year && ` (${report.year})`}
+              </h3>
+              <span class="pg-doc__meta">{meta}</span>
+            </span>
+            <span class="pg-dl">
+              {t(lang, 'download')}
+              <span aria-hidden="true">↓</span>
+            </span>
+          </Tag>
+        </li>
+      );
+    })
+  }
+</ul>

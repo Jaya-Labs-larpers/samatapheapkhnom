@@ -1,10 +1,11 @@
 ---
 import type { Locale } from '~/lib/i18n/config';
 import type { SiteSettings } from '~/lib/content/types';
-import { localizePath, parsePath, pick, t, text } from '~/lib/i18n/utils';
-import { footerNav } from '~/lib/nav';
-import Icon from '~/components/Icon.astro';
-import Logo from '~/components/Logo.astro';
+import { localizePath, t, text } from '~/lib/i18n/utils';
+import { footerColumns } from '~/lib/nav';
+import { safeHref } from '~/lib/safe-href';
+import LanguageToggle from './LanguageToggle.astro';
+import SocialIcon, { type SocialPlatform } from '~/components/design/SocialIcon.astro';
 
 interface Props {
   lang: Locale;
@@ -14,117 +15,83 @@ interface Props {
 
 const { lang, settings, pathname } = Astro.props;
 
-/** The contact page is the invitation already; closing on it again would repeat the page. */
-const showClosing = parsePath(pathname).path.replace(/\/$/, '') !== '/contact';
-
-const orgName = text(settings.orgName, lang);
-const address = pick(settings.address, lang);
-const registration = pick(settings.registration, lang);
+const socialLabels = {
+  facebook: 'menuFacebookLabel',
+  telegram: 'menuTelegramLabel',
+  instagram: 'menuInstagramLabel',
+  youtube: 'menuYoutubeLabel',
+} as const;
+const socials = (Object.keys(socialLabels) as SocialPlatform[])
+  .map((platform) => ({
+    platform,
+    label: t(lang, socialLabels[platform]),
+    url:
+      safeHref(
+        settings.socials?.find((social) => social.platform.toLowerCase() === platform)?.url,
+      ) ?? '',
+  }))
+  .filter((social) => /^https?:\/\//.test(social.url));
 const year = new Date().getFullYear();
-
-/** CMS platform names are free text (e.g. "Facebook"); map the known ones to a sprite icon. */
-const socialIcon: Record<string, string> = {
-  facebook: 'sko-facebook',
-  telegram: 'paper-airplane',
-};
-function iconForPlatform(platform: string): string {
-  return socialIcon[platform.toLowerCase()] ?? 'link';
-}
+const orgName = text(settings.orgName, lang);
+const address = text(settings.address, lang);
+const { email, phone } = settings;
 ---
 
-<footer
-  class="site-footer on-inverse bg-[color:var(--color-blue-900)] pt-[60px] pb-[calc(1.75rem+var(--safe-bottom))] text-[14.5px] text-white/70"
->
-  <div class="wrap">
-    {
-      /*
-      Closing line: the invitation and the two direct ways to reach SKO, set
-      as display type, so contact is the last thing every page says.
-    */
-    }
-    {
-      showClosing && (
-        <div class="footer-closing">
-          <p class="footer-closing__title">{t(lang, 'contactUs')}</p>
-          <div class="footer-closing__links">
-            {settings.email && (
-              <a href={`mailto:${settings.email}`} class="footer-closing__link">
-                <span class="roll">
-                  <span class="roll__text" data-text={settings.email}>
-                    {settings.email}
-                  </span>
-                </span>
-              </a>
-            )}
-            {settings.phone && (
-              <a href={`tel:${settings.phone.replace(/[^+\d]/g, '')}`} class="footer-closing__link">
-                <span class="roll">
-                  <span class="roll__text" data-text={settings.phone}>
-                    {settings.phone}
-                  </span>
-                </span>
-              </a>
-            )}
-          </div>
-        </div>
-      )
-    }
-
-    <div class="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
-      <div class="col-span-2 md:col-span-1">
-        <Logo variant="reversed" width={220} lazy />
-
+<footer class="ftr">
+  <div class="ftr__inner">
+    <div class="ftr__top">
+      <nav class="ftr__nav" aria-label={t(lang, 'footerNavLabel')}>
         {
-          address.value && (
-            <p
-              class="mt-4 flex max-w-[34ch] gap-2 whitespace-pre-line text-[color:var(--color-sky-400)]"
-              lang={address.isFallback ? address.lang : undefined}
-            >
-              <Icon name="map-pin" size={20} class="mt-0.5 flex-none" />
-              <span class="text-white/70">{address.value}</span>
-            </p>
-          )
+          footerColumns.map((column) => (
+            <div class="ftr__col">
+              <h2 class="ftr__heading">{t(lang, column.headingKey)}</h2>
+              <ul class="ftr__list">
+                {column.links.map((link) => (
+                  <li>
+                    <a href={localizePath(link.path, lang)} class="ftr__link">
+                      {t(lang, link.key)}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
         }
+      </nav>
 
-        <p class="mt-2.5 space-y-1.5 text-[color:var(--color-sky-400)]">
+      <div class="ftr__col">
+        <h2 class="ftr__heading">{t(lang, 'footerContactHeading')}</h2>
+        <address class="ftr__contact">
+          {address && <p class="ftr__address">{address}</p>}
           {
-            settings.phone && (
-              <span class="flex items-center gap-2">
-                <Icon name="phone" size={20} />
-                <span class="text-white/70">{settings.phone}</span>
-              </span>
-            )
-          }
-          {
-            settings.email && (
-              <a
-                href={`mailto:${settings.email}`}
-                class="flex items-center gap-2 text-white/70 no-underline hover:text-white"
-              >
-                <Icon name="envelope" size={20} class="text-[color:var(--color-sky-400)]" />
-                {settings.email}
+            email && (
+              <a href={`mailto:${email}`} class="ftr__link">
+                {email}
               </a>
             )
           }
-        </p>
-
+          {
+            phone && (
+              <a href={`tel:${phone.replace(/\s+/g, '')}`} class="ftr__link">
+                {phone}
+              </a>
+            )
+          }
+        </address>
+        <a href={localizePath('/contact', lang)} class="ftr__btn">{t(lang, 'navContact')}</a>
         {
-          settings.socials && settings.socials.length > 0 && (
-            <ul class="mt-4 flex list-none flex-col gap-2 p-0">
-              {settings.socials.map((social) => (
+          socials.length > 0 && (
+            <ul class="ftr__socials">
+              {socials.map((social) => (
                 <li>
                   <a
                     href={social.url}
-                    rel="noopener noreferrer"
+                    class="ftr__social"
+                    aria-label={social.label}
                     target="_blank"
-                    class="flex items-center gap-2 text-white/70 no-underline hover:text-white"
+                    rel="noopener noreferrer"
                   >
-                    <Icon
-                      name={iconForPlatform(social.platform)}
-                      size={20}
-                      class="text-[color:var(--color-sky-400)]"
-                    />
-                    {social.platform}
+                    <SocialIcon platform={social.platform} />
                   </a>
                 </li>
               ))}
@@ -132,53 +99,189 @@ function iconForPlatform(platform: string): string {
           )
         }
       </div>
-
-      {
-        footerNav.map((group) => (
-          <nav aria-label={t(lang, group.heading)}>
-            <h2 class="mb-4 text-[13px] tracking-[0.1em] text-white uppercase">
-              {t(lang, group.heading)}
-            </h2>
-            <ul class="list-none p-0">
-              {group.items.map((item) => (
-                <li>
-                  <a
-                    href={localizePath(item.path, lang)}
-                    class="block py-1 text-white/70 no-underline hover:text-white"
-                  >
-                    {t(lang, item.key)}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        ))
-      }
     </div>
 
-    <div
-      class="mt-11 flex flex-wrap justify-between gap-5 border-t border-white/15 pt-5.5 text-[13px] text-white/55"
-    >
-      <span
-        class="flex items-center gap-1.5"
-        lang={registration.isFallback ? registration.lang : undefined}
-      >
-        {
-          registration.value && (
-            <Icon name="check-badge" size={16} class="text-[color:var(--color-sky-400)]" />
-          )
-        }
-        © {year}
-        {orgName}. {registration.value}
-      </span>
-      <span class="flex gap-4.5">
-        <a href={localizePath('/privacy', lang)} class="text-white/55 no-underline hover:text-white"
-          >{t(lang, 'navPrivacy')}</a
-        >
-        <a href={localizePath('/contact', lang)} class="text-white/55 no-underline hover:text-white"
-          >{t(lang, 'navContact')}</a
-        >
+    <div class="ftr__legal">
+      <span>© {year} {orgName}</span>
+      <a href={localizePath('/privacy', lang)} class="ftr__legal-link">{t(lang, 'navPrivacy')}</a>
+      <span class="ftr__lang">
+        <LanguageToggle lang={lang} pathname={pathname} variant="footer" />
       </span>
     </div>
   </div>
 </footer>
+
+<style>
+  .ftr {
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--color-surface-subtle);
+    border-top: 1px solid var(--color-line);
+    color: var(--color-ink-600);
+    padding: clamp(2.5rem, 4vw, 3.5rem) var(--gutter-right) calc(1.5rem + var(--safe-bottom))
+      var(--gutter-left);
+    font-family: var(--font-sans);
+  }
+  .ftr__inner {
+    max-width: var(--container-page);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .ftr__top {
+    display: grid;
+    gap: 28px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ftr__nav {
+    display: grid;
+    align-content: start;
+    gap: 24px 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ftr__col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .ftr__heading {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: normal;
+    color: var(--color-ink-900);
+  }
+  .ftr__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ftr__link {
+    color: var(--color-ink-600);
+    text-decoration: none;
+    font-size: 15px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    transition: color var(--duration-fast) var(--ease-out-soft);
+  }
+  .ftr__link:hover {
+    color: var(--color-blue-700);
+  }
+  .ftr__contact .ftr__link {
+    font-size: 14px;
+  }
+  .ftr__contact {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-style: normal;
+  }
+  .ftr__address {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-line;
+  }
+  .ftr__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    min-height: 2.75rem;
+    margin-top: 4px;
+    padding: 0.6875rem 1.375rem;
+    border-radius: var(--radius-cta);
+    background: var(--color-blue-700);
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.15;
+    text-decoration: none;
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      transform var(--duration-fast) var(--ease-out-soft);
+  }
+  .ftr__btn:hover {
+    background: var(--color-blue-800);
+  }
+  .ftr__btn:active {
+    transform: scale(0.98);
+  }
+  .ftr__socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ftr__social {
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-line-strong);
+    background: #fff;
+    color: var(--color-blue-700);
+    align-items: center;
+    justify-content: center;
+    transition:
+      background-color var(--duration-fast) var(--ease-out-soft),
+      border-color var(--duration-fast) var(--ease-out-soft),
+      color var(--duration-fast) var(--ease-out-soft),
+      transform var(--duration-fast) var(--ease-out-soft);
+  }
+  .ftr__social:hover {
+    background: var(--color-blue-700);
+    border-color: var(--color-blue-700);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+  .ftr__legal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 18px;
+    border-top: 1px solid var(--color-line);
+    padding-top: 16px;
+    font-size: 14px;
+    color: var(--color-ink-400);
+  }
+  .ftr__legal-link {
+    color: var(--color-ink-600);
+    text-decoration: underline;
+    text-decoration-color: var(--color-line-strong);
+    text-underline-offset: 3px;
+    transition:
+      color var(--duration-fast) var(--ease-out-soft),
+      text-decoration-color var(--duration-fast) var(--ease-out-soft);
+  }
+  .ftr__legal-link:hover {
+    color: var(--color-blue-700);
+    text-decoration-color: currentColor;
+  }
+  .ftr__lang {
+    margin-left: auto;
+  }
+  :global(:lang(km)) .ftr__heading {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  @media (min-width: 48rem) {
+    .ftr__top {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      gap: 32px;
+    }
+    .ftr__nav {
+      column-gap: 32px;
+    }
+  }
+</style>

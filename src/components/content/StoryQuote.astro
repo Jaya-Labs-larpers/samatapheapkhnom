@@ -2,15 +2,11 @@
 import type { Locale } from '~/lib/i18n/config';
 import type { Story } from '~/lib/content/types';
 import { localizePath, pick } from '~/lib/i18n/utils';
-import { hasImage } from '~/lib/sanity/image';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
 import RichText from '~/components/content/RichText.astro';
 
 interface Props {
   lang: Locale;
   story: Story;
-  /** Show the person's avatar alongside the attribution. */
-  showAvatar?: boolean;
   /** Set large, in white, for the navy story band on the home page. */
   inverse?: boolean;
   /** Set a long account at body size rather than lead size. */
@@ -24,7 +20,6 @@ interface Props {
 const {
   lang,
   story,
-  showAvatar = false,
   inverse = false,
   compact = false,
   quoteOnly = false,
@@ -38,13 +33,6 @@ const hasBody =
 const role = pick(story.personRole, lang);
 const programHref =
   linkProgram && story.program ? localizePath(`/programs/${story.program.slug}`, lang) : null;
-
-/**
- * A photo is only shown when one exists AND staff have not asked for the
- * silhouette. The illustrated avatar is the compliant option for the common
- * case: a real story where no publishable photo exists.
- */
-const usePhoto = !story.useSilhouette && hasImage(story.photo);
 
 const quoteClass = inverse
   ? lang === 'km'
@@ -92,19 +80,6 @@ const quoteClass = inverse
       inverse ? 'mt-8 text-white/70' : 'mt-4.5 text-[color:var(--color-ink-400)]',
     ]}
   >
-    {
-      showAvatar &&
-        (usePhoto ? (
-          <span class="h-11 w-11 flex-none overflow-hidden rounded-full">
-            <ResponsiveImage image={story.photo} lang={lang} alt="" aspect="1/1" sizes="44px" />
-          </span>
-        ) : (
-          <span
-            class="h-11 w-11 flex-none rounded-full bg-[color:var(--color-aqua-200)]"
-            aria-hidden="true"
-          />
-        ))
-    }
     <span>
       — {story.personName}
       {

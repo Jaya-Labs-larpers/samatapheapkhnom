@@ -1,0 +1,68 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { LocaleBlocks, Partner, PortableBlock } from '~/lib/content/types';
+import { pick } from '~/lib/i18n/utils';
+import { TERM_LIMITS, blockText, splitBody, type TermLimits } from '~/lib/content/sections';
+import RichText from '~/components/content/RichText.astro';
+import PartnerWall from '~/components/content/PartnerWall.astro';
+import SkSection from './SkSection.astro';
+import SkSplit from './SkSplit.astro';
+
+interface Props {
+  lang: Locale;
+  body?: LocaleBlocks | null;
+  limits?: TermLimits;
+  /** Show only these h2 sections (by position). The lead text before the first heading rides with section 0. */
+  only?: number[];
+  /** Force the lead text on or off; by default it shows with the whole body or with section 0. */
+  showLead?: boolean;
+  /** Partners named in a one-paragraph section get their logos under it, as on the old site. */
+  partners?: Partner[];
+}
+
+const { lang, body, limits = TERM_LIMITS, partners = [], only, showLead } = Astro.props;
+
+const picked = pick(body, lang);
+const bodyLang = picked.lang;
+const fallbackLang = picked.isFallback ? bodyLang : undefined;
+const split = splitBody(picked.value, limits);
+const lead = (showLead ?? (!only || only.includes(0))) ? split.lead : [];
+const sections = only
+  ? only.flatMap((position) => (split.sections[position] ? [split.sections[position]] : []))
+  : split.sections;
+const asBlocks = (blocks: PortableBlock[]): LocaleBlocks => ({ [bodyLang]: blocks });
+
+function mentioned(text: string): Partner[] {
+  const haystack = text.toLowerCase();
+  return partners.filter((partner) =>
+    partner.name
+      .split('/')
+      .map((part) => part.trim().toLowerCase())
+      .some((part) => part.length >= 4 && haystack.includes(part)),
+  );
+}
+---
+
+{
+  lead.length > 0 && (
+    <SkSection>
+      <RichText blocks={asBlocks(lead)} lang={lang} />
+    </SkSection>
+  )
+}
+{
+  sections.map((section, index) => {
+    const logos =
+      section.layout === 'statement' ? mentioned(section.blocks.map(blockText).join(' ')) : [];
+    return (
+      <SkSplit
+        heading={section.heading}
+        headingLang={fallbackLang}
+        tone={index % 2 === 1 ? 'tint' : 'default'}
+      >
+        <RichText blocks={asBlocks(section.blocks)} lang={lang} />
+        {logos.length > 0 && <PartnerWall lang={lang} partners={logos} columns={3} />}
+      </SkSplit>
+    );
+  })
+}

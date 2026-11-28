@@ -37,7 +37,15 @@ export function alternatePath(pathname: string, target: Locale): string {
 
 /** Translated UI string. Falls back to English if a key is somehow missing. */
 export function t(lang: Locale, key: UIKey): string {
-  return ui[lang][key] ?? ui[defaultLocale][key];
+  return ui[lang][key] || ui[defaultLocale][key] || '';
+}
+
+/**
+ * `lang` attribute for text rendered with `t()`: "en" when a Khmer string is
+ * still missing and the English one is shown, nothing otherwise.
+ */
+export function tLang(lang: Locale, key: UIKey): 'en' | undefined {
+  return lang !== defaultLocale && !ui[lang][key] ? 'en' : undefined;
 }
 
 /* -------------------------------------------------------------------------
@@ -107,6 +115,19 @@ export function formatDate(value: string | Date | null | undefined, lang: Locale
   return new Intl.DateTimeFormat(dateLocale[lang], {
     year: 'numeric',
     month: 'long',
+    day: 'numeric',
+    timeZone: 'Asia/Phnom_Penh',
+  }).format(date);
+}
+
+/** "4 Nov 2026" — the card date. */
+export function formatDateShort(value: string | Date | null | undefined, lang: Locale): string {
+  if (!value) return '';
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat(dateLocale[lang], {
+    year: 'numeric',
+    month: 'short',
     day: 'numeric',
     timeZone: 'Asia/Phnom_Penh',
   }).format(date);

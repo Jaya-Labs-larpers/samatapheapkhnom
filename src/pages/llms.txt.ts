@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
 import { getPage, getPrograms, getReports, getSiteSettings } from '~/lib/content';
 import type { Page } from '~/lib/content/types';
-import { ui } from '~/lib/i18n/strings';
+import { uiEn } from '~/lib/i18n/strings';
 import { text } from '~/lib/i18n/utils';
 import { stripInlineLinks } from '~/lib/inline-links';
 import { resolveSeo } from '~/lib/seo';
 
-const en = ui.en;
+const en = uiEn;
 
 type Line = { title: string; path: string; description: string };
 

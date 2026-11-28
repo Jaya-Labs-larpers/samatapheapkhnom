@@ -4,14 +4,12 @@ These files are committed and served from this origin. **Nothing is requested fr
 runtime** — no third-party font request, no privacy question for European institutional donors, and
 a simpler CSP (`font-src 'self'`).
 
-| File                         | Family         | Covers                          | Size  |
-| ---------------------------- | -------------- | ------------------------------- | ----- |
-| `inter-latin.woff2`          | Inter          | Latin, weights 400–700          | 47 KB |
-| `inter-latin-ext.woff2`      | Inter          | Latin Extended, weights 400–700 | 83 KB |
-| `kantumruy-pro-khmer.woff2`  | Kantumruy Pro  | Khmer block, weights 400–700    | 56 KB |
-| `source-serif-4-latin.woff2` | Source Serif 4 | Latin, weight 600               | 51 KB |
+| File                    | Family          | Covers                       | Size  |
+| ----------------------- | --------------- | ---------------------------- | ----- |
+| `noto-sans-khmer.woff2` | Noto Sans Khmer | Khmer block, weights 400–700 | 57 KB |
 
-All are SIL Open Font Licence.
+All are SIL Open Font Licence. Noto Sans sets headings, navigation and controls; Source Serif 4 sets
+reading text; Noto Sans Khmer supplies Khmer, designed to match Noto Sans.
 
 ## Two things that matter about these files
 

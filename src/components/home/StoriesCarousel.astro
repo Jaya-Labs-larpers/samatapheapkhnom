@@ -1,0 +1,197 @@
+---
+import '~/styles/design.css';
+import type { Locale } from '~/lib/i18n/config';
+import type { Story } from '~/lib/content/types';
+import { localizePath, pick, t, tLang } from '~/lib/i18n/utils';
+import { getHomeData } from '~/data';
+
+interface Props {
+  lang: Locale;
+  stories: Story[];
+}
+
+const { lang, stories } = Astro.props;
+const { data, fallback } = getHomeData(lang);
+
+const cards = stories.slice(0, 3).map((story) => {
+  const copy = data.stories[story._id] ?? fallback.stories[story._id];
+  const linkLabel = copy?.linkLabel ?? t(lang, 'readTheStory');
+  return {
+    href: localizePath(`/stories/${story.slug ?? story._id}`, lang),
+    quote: pick(story.quote, lang),
+    program: story.program ? pick(story.program.title, lang) : null,
+    khan: copy?.khan ?? null,
+    linkLabel,
+    linkLabelLang: copy?.linkLabel ? 'en' : tLang(lang, 'readTheStory'),
+  };
+});
+---
+
+{
+  cards.length > 0 && (
+    <section class="d-section" data-carousel>
+      <div class="d-container">
+        <div class="d-head">
+          <h2 class="d-h2 stories__title" lang={tLang(lang, 'storiesHeading')}>
+            {t(lang, 'storiesHeading')}
+          </h2>
+          <div class="stories__buttons">
+            <button
+              type="button"
+              class="stories__btn"
+              aria-label={t(lang, 'storiesPrevious')}
+              data-carousel-prev
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              class="stories__btn"
+              aria-label={t(lang, 'storiesNext')}
+              data-carousel-next
+            >
+              →
+            </button>
+          </div>
+        </div>
+        <ul class="stories__track" data-carousel-track>
+          {cards.map((card) => (
+            <li class="stories__item">
+              <a href={card.href} class="story">
+                <div class="story__body">
+                  {(card.khan || card.program?.value) && (
+                    <div class="story__tag">
+                      {card.khan && <span aria-hidden="true">📍 </span>}
+                      {card.khan && <span>{card.khan}</span>}
+                      {card.khan && card.program?.value && ' · '}
+                      {card.program?.value && (
+                        <span lang={card.program.isFallback ? card.program.lang : undefined}>
+                          {card.program.value}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div
+                    class="story__quote"
+                    lang={card.quote.isFallback ? card.quote.lang : undefined}
+                  >
+                    {card.quote.value}
+                  </div>
+                  <div class="story__more" lang={card.linkLabelLang}>
+                    {card.linkLabel} →
+                  </div>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  import { initCarousels } from '~/lib/carousel';
+  import { onPageLoad } from '~/lib/page-load';
+
+  onPageLoad(() => initCarousels());
+</script>
+
+<style>
+  .stories__title {
+    max-width: 640px;
+    line-height: 1.15;
+  }
+  .stories__buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .stories__btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--color-line-strong);
+    background: #fff;
+    color: var(--color-ink-700);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .stories__btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .stories__btn:not(:disabled):hover {
+    border-color: var(--color-blue-700);
+    color: var(--color-blue-700);
+  }
+  .stories__track {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(min(300px, 100%), 1fr);
+    gap: 20px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .stories__track::-webkit-scrollbar {
+    display: none;
+  }
+  .stories__item {
+    display: flex;
+    scroll-snap-align: start;
+  }
+  .story {
+    flex: 1;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--color-surface-subtle);
+    display: flex;
+    flex-direction: column;
+  }
+  .story__body {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .story__tag {
+    align-self: flex-start;
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--color-aqua-50);
+    border: 1px solid var(--color-aqua-200);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-blue-800);
+  }
+  .story__quote {
+    font-family: var(--font-display);
+    font-size: 20px;
+    line-height: 1.4;
+    color: var(--color-ink-900);
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .story__more {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-blue-700);
+  }
+  .story:hover .story__more {
+    text-decoration: underline;
+  }
+  :global(:lang(km)) .story__quote {
+    line-height: 1.8;
+  }
+</style>

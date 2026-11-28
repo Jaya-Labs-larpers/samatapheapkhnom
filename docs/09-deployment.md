@@ -209,8 +209,7 @@ automatically retried: a timeout can occur after delivery, so retries need an id
 
 Cloudflare → **Web Analytics** → **Add a site**. Copy the token into `PUBLIC_CF_ANALYTICS_TOKEN`.
 
-Cookieless and privacy-preserving — no consent banner needed, which is why the site sets no cookies
-at all. The beacon host is already allowed in the CSP.
+The Cloudflare beacon uses cookieless analytics and loads after page load. Production pages with Google Tag Manager ask visitors to accept or decline optional analytics before loading the container. Visitors can change their choice in Cookie settings in the footer.
 
 ## 10. Rebuild on publish
 

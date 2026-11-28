@@ -1,0 +1,107 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import { getPrograms } from '~/lib/content';
+import { localizePath, pick } from '~/lib/i18n/utils';
+import { stripInlineLinks } from '~/lib/inline-links';
+import { canonicalUrl, collectionPageJsonLd } from '~/lib/seo/page-schema';
+import { ctaActions, statItem, tStrict } from '~/lib/skeleton-content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import EmptyState from '~/components/content/EmptyState.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import PageSolo from '~/components/page/PageSolo.astro';
+import SectionHead from '~/components/page/SectionHead.astro';
+import BandCta from '~/components/page/BandCta.astro';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const programs = await getPrograms();
+const heading = tStrict(lang, 'pagePrograms');
+const sectionTitle = tStrict(lang, 'programsSectionTitle');
+const title = tStrict(lang, 'seoPrograms') || heading;
+const description =
+  tStrict(lang, 'metaPrograms') || stripInlineLinks(tStrict(lang, 'introPrograms'));
+const collection = collectionPageJsonLd({
+  pathname: Astro.url.pathname,
+  name: title,
+  description,
+  items: programs.map((program) => ({
+    name: pick(program.title, lang).value ?? '',
+    url: canonicalUrl(localizePath(`/programs/${program.slug}`, lang)),
+  })),
+});
+---
+
+<BaseLayout lang={lang} title={title} description={description} noindex darkHero jsonLd={collection}>
+  <PageSolo
+    full
+    lang={lang}
+    title={heading}
+    intro={tStrict(lang, 'introPrograms')}
+    trail={[{ label: heading }]}
+  />
+
+  <section class="pg-section">
+    <div class="pg-wrap">
+      {
+        programs.length === 0 ? (
+          <EmptyState message={tStrict(lang, 'emptyGeneric')} />
+        ) : (
+          <>
+            {sectionTitle ? (
+              <SectionHead heading={sectionTitle} />
+            ) : (
+              <h2 class="sr-only">{tStrict(lang, 'ourPrograms')}</h2>
+            )}
+            <div class="pg-rows">
+              {programs.map((program) => {
+                const programTitle = pick(program.title, lang);
+                const summary = pick(program.summary, lang);
+                const href = localizePath(`/programs/${program.slug}`, lang);
+                const image = program.cardImage ?? program.image ?? null;
+                const stat = program.impactStats?.[0]
+                  ? statItem(program.impactStats[0], lang)
+                  : null;
+                return (
+                  <article class="pg-row">
+                    <div class="pg-row__media clip-reveal">
+                      {image && (
+                        <ResponsiveImage
+                          image={image}
+                          lang={lang}
+                          aspect="4/3"
+                          sizes="(min-width: 64rem) 45vw, 100vw"
+                        />
+                      )}
+                    </div>
+                    <div class="pg-row__body">
+                      <h3 lang={programTitle.isFallback ? programTitle.lang : undefined}>
+                        <a href={href}>{programTitle.value}</a>
+                      </h3>
+                      <p lang={summary.isFallback ? summary.lang : undefined}>{summary.value}</p>
+                      {stat?.value && (
+                        <span class="pg-pill">
+                          <b>{stat.value}</b>
+                          <span lang={stat.labelLang}>{stat.label}</span>
+                        </span>
+                      )}
+                      <div>
+                        <a class="pg-link" href={href} style="margin-top:0.875rem">
+                          {tStrict(lang, 'learnMore')} <span aria-hidden="true">→</span>
+                        </a>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </>
+        )
+      }
+    </div>
+  </section>
+
+  <BandCta heading={tStrict(lang, 'ctaProgramsTitle')} actions={ctaActions(lang)} />
+</BaseLayout>

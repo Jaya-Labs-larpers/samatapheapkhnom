@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact page directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink-900:#0E1533; --ink-600:#3E4869; --ink-400:#5C6689; --line:#E1E8E5; --band:#F4F8F6;
+    --blue-700:#2B4CC7; --blue-800:#1E3894; --blue-600:#4A6BDB; --blue-200:#B9C6EE; --blue-50:#EEF2FD; --blue-900:#14235C;
+    --aqua:#C3E9E8; --sky:#9BE1FF;
+    --sans:'Noto Sans',system-ui,sans-serif; --serif:'Source Serif 4',Georgia,serif;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#E9ECF2; font-family:var(--sans); color:var(--ink-900); }
+  .intro { max-width:1180px; margin:0 auto; padding:32px 24px 8px; }
+  .intro h1 { font-size:22px; margin:0 0 6px; }
+  .intro p { margin:0; color:var(--ink-600); font-size:15px; line-height:1.55; max-width:70ch; }
+  .dir { max-width:1180px; margin:28px auto 56px; padding:0 24px; }
+  .dir-head { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
+  .dir-head .letter { width:36px; height:36px; border-radius:8px; background:var(--ink-900); color:#fff; display:grid; place-items:center; font-weight:700; }
+  .dir-head h2 { font-size:18px; margin:0; }
+  .dir-head p { margin:2px 0 0; color:var(--ink-600); font-size:14px; }
+  .pick { margin-left:auto; border:1.5px solid var(--blue-700); color:var(--blue-700); background:#fff; border-radius:8px; padding:8px 16px; font:600 14px var(--sans); cursor:pointer; }
+  .pick.selected, .dir.selected .pick { background:var(--blue-700); color:#fff; }
+  .browser { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 12px 40px rgba(14,21,51,.14); }
+  .chrome { height:30px; background:#F1F3F7; display:flex; align-items:center; gap:6px; padding:0 12px; border-bottom:1px solid var(--line); }
+  .chrome i { width:10px; height:10px; border-radius:50%; background:#D5D9E2; }
+  .chrome span { margin-left:12px; font-size:11px; color:var(--ink-400); }
+
+  /* shared site bits */
+  .nav { display:flex; align-items:center; justify-content:space-between; padding:14px 48px; border-bottom:1px solid var(--line); background:#fff; position:relative; z-index:2; }
+  .logo { display:flex; align-items:center; gap:8px; font-weight:700; color:#1aa6c8; font-size:12px; letter-spacing:.02em; }
+  .logo svg { width:34px; }
+  .nav ul { display:flex; gap:28px; list-style:none; margin:0; padding:0; font-size:14px; color:var(--blue-800); }
+  .nav .cta { background:var(--blue-700); color:#fff; border-radius:8px; padding:8px 16px; font-size:13px; font-weight:600; }
+  .eyebrow { display:inline-flex; flex-direction:column; gap:10px; font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--blue-700); }
+  .eyebrow::before { content:''; width:44px; height:3px; background:var(--blue-700); border-radius:2px; }
+  .h1 { font-family:var(--sans); font-weight:700; font-size:46px; line-height:1.08; letter-spacing:-.02em; margin:14px 0 16px; color:var(--ink-900); }
+  .lede { font-family:var(--serif); font-size:18px; line-height:1.65; color:var(--ink-600); margin:0; max-width:46ch; }
+  .chip { width:40px; height:40px; border-radius:10px; background:var(--aqua); color:var(--blue-800); display:grid; place-items:center; flex:none; }
+  .chip svg { width:20px; height:20px; }
+  .label { font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-400); }
+  .val { font-size:16px; font-weight:600; color:var(--ink-900); margin-top:4px; }
+  .meta { font-size:14px; color:var(--ink-400); margin-top:2px; line-height:1.5; }
+  .act { display:inline-block; margin-top:10px; font-size:14px; font-weight:600; color:var(--blue-700); text-decoration:none; border-bottom:1.5px solid var(--blue-200); }
+  .field { border:1px solid #CBD3E1; border-radius:8px; padding:12px 14px; font-size:14px; color:var(--ink-400); background:#fff; }
+  .flabel { font-size:13px; font-weight:600; color:var(--ink-900); margin-bottom:6px; }
+  .form { display:grid; gap:16px; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .radios { display:flex; gap:20px; font-size:14px; color:var(--ink-600); align-items:center; }
+  .radios b { width:16px; height:16px; border-radius:50%; border:1.5px solid var(--ink-400); display:inline-block; vertical-align:-3px; margin-right:6px; }
+  .radios b.on { border:5px solid var(--blue-700); }
+  .ta { height:120px; }
+  .send { background:var(--blue-700); color:#fff; border-radius:8px; padding:13px 22px; font-weight:600; font-size:15px; justify-self:start; }
+  .ftitle { font-weight:700; font-size:24px; margin:0 0 4px; letter-spacing:-.01em; }
+  .footer-stub { height:56px; border-top:1px solid var(--line); background:#fff; display:flex; align-items:center; padding:0 48px; color:var(--ink-400); font-size:12px; }
+  .bfly { position:absolute; pointer-events:none; }
+
+  /* A */
+  .a-hero { position:relative; background:linear-gradient(180deg, #F2FBFF 0%, #fff 100%); padding:56px 48px 40px; display:grid; grid-template-columns:1.05fr .95fr; gap:48px; align-items:center; overflow:hidden; }
+  .a-photo { position:relative; }
+  .a-photo img { width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:16px; display:block; }
+  .a-photo::before { content:''; position:absolute; inset:18px -18px -18px 18px; border-radius:16px; background:var(--aqua); z-index:-1; }
+  .a-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; padding:8px 48px 56px; background:#fff; }
+  .a-card { border:1px solid var(--line); border-radius:12px; padding:22px; display:flex; gap:14px; transition:box-shadow .14s; }
+  .a-card:hover { box-shadow:0 8px 24px rgba(14,21,51,.08); }
+  .a-band { background:var(--band); padding:56px 48px; display:grid; grid-template-columns:.8fr 1.2fr; gap:48px; }
+  .a-formcard { background:#fff; border:1px solid var(--line); border-radius:16px; padding:32px; }
+  .a-side p { font-family:var(--serif); color:var(--ink-600); line-height:1.6; font-size:16px; }
+
+  /* B */
+  .b-wrap { position:relative; background:radial-gradient(1200px 380px at 50% -40px, #DDF4FF 0%, #F4F8F6 55%, #F4F8F6 100%); padding:60px 48px 64px; overflow:hidden; }
+  .b-head { text-align:center; max-width:720px; margin:0 auto 36px; }
+  .b-head .eyebrow { align-items:center; }
+  .b-head .lede { margin:0 auto; }
+  .b-panel { display:grid; grid-template-columns:380px 1fr; background:#fff; border-radius:16px; overflow:hidden; border:1px solid var(--line); box-shadow:0 20px 50px rgba(14,21,51,.08); max-width:1000px; margin:0 auto; }
+  .b-dark { background:var(--blue-900); color:#fff; padding:36px 32px; position:relative; overflow:hidden; }
+  .b-dark h3 { font-size:20px; margin:0 0 24px; }
+  .b-row { display:flex; gap:14px; padding:18px 0; border-top:1px solid rgba(255,255,255,.14); }
+  .b-row .chip { background:rgba(155,225,255,.16); color:var(--sky); }
+  .b-row .label { color:#AFC0EE; }
+  .b-row .val { color:#fff; }
+  .b-row .meta { color:#C9D3F2; }
+  .b-row .act { color:var(--sky); border-color:rgba(155,225,255,.4); }
+  .b-dark .donate { margin-top:20px; display:inline-block; color:#fff; font-weight:600; font-size:14px; }
+  .b-form { padding:36px 40px; }
+
+  /* C */
+  .c-top { position:relative; padding:56px 48px 64px; display:grid; grid-template-columns:1fr 1fr; gap:56px; background:#fff; overflow:hidden; }
+  .c-list { margin-top:28px; display:grid; gap:18px; }
+  .c-item { display:flex; gap:14px; align-items:flex-start; }
+  .c-formcard { background:#fff; border:1px solid var(--line); border-top:4px solid var(--blue-700); border-radius:16px; padding:30px; box-shadow:0 16px 40px rgba(14,21,51,.07); }
+  .c-band { position:relative; min-height:380px; display:flex; align-items:flex-end; padding:48px; overflow:hidden; }
+  .c-band img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .c-band::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(20,35,92,.92) 0%, rgba(20,35,92,.72) 45%, rgba(20,35,92,.25) 100%); }
+  .c-band-in { position:relative; z-index:1; width:100%; display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; }
+  .c-band h3 { position:absolute; top:44px; left:48px; z-index:1; color:#fff; font-size:28px; margin:0; display:flex; flex-direction:column; gap:12px; }
+  .c-band h3::before { content:''; width:44px; height:3px; background:var(--sky); border-radius:2px; }
+  .glass { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.22); backdrop-filter:blur(10px); border-radius:12px; padding:20px; color:#fff; }
+  .glass .label { color:#BFD0F5; }
+  .glass .val { color:#fff; }
+  .glass .meta { color:#D5DEF7; }
+  .glass .act { color:var(--sky); border-color:rgba(155,225,255,.45); }
+  .note { margin-top:12px; font-size:13px; color:var(--ink-600); line-height:1.5; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 40 36" fill="none" stroke="#1aa6c8" stroke-width="2"><path d="M20 3 37 33H3z"/></symbol>
+</svg>
+
+<div class="intro">
+  <h1>Three directions for /contact, all built from SKO's own design system</h1>
+  <p>Same content in all three: welcome title and body, email, phone and hours, address with map link, Donate link, and the same form. INHF gave the ideas (depth from a photo band, a clear "how to reach us" moment, warmer surfaces). The look comes from SKO: white surfaces with hairlines, rationed brand blue, aqua/sky tints, the butterfly from the logo, and real SKO photos. Desktop only for now. Mobile comes once you pick one.</p>
+</div>
+
+<!-- ============ A ============ -->
+<section class="dir" data-dir="a">
+  <div class="dir-head">
+    <div class="letter">A</div>
+    <div><h2>Open door</h2><p>Photo-led welcome, three "how to reach us" cards, form on a soft tinted band.</p></div>
+    <button class="pick" data-choice="a" onclick="toggleSelect(this)">Pick A</button>
+  </div>
+  <div class="browser">
+    <div class="chrome"><i></i><i></i><i></i><span>samatapheapkhnom.org/contact</span></div>
+    <div class="nav"><div class="logo"><svg viewBox="0 0 40 36"><use href="#i-logo"/></svg>SKO</div><ul><li>About</li><li>Our work</li><li>Impact</li><li>Get involved</li></ul><span class="cta">Contact us</span></div>
+
+    <div class="a-hero">
+      <img class="bfly" src="http://localhost:4321/images/butterfly.svg" alt="" style="width:180px; top:28px; left:42%; opacity:.7">
+      <div>
+        <span class="eyebrow">Contact us</span>
+        <h2 class="h1">We're here to listen.</h2>
+        <p class="lede">Whether you have a question, an idea for working together, or simply want to know more about our work, write to us in your own words. Every message is read by a member of our team, and we will get back to you as soon as we can.</p>
+      </div>
+      <div class="a-photo"><img src="http://localhost:4321/images/home-hero-community-1200.webp" alt=""></div>
+    </div>
+
+    <div class="a-cards">
+      <div class="a-card"><div class="chip"><svg><use href="#i-mail"/></svg></div><div><div class="label">Email</div><div class="val">info@samatapheapkhnom.org</div><a class="act">Write an email</a></div></div>
+      <div class="a-card"><div class="chip"><svg><use href="#i-phone"/></svg></div><div><div class="label">Call</div><div class="val">+855 12 781 203</div><div class="meta">Monday–Friday, 8:00–17:00 (ICT)</div><a class="act">Tap to call</a></div></div>
+      <div class="a-card"><div class="chip"><svg><use href="#i-pin"/></svg></div><div><div class="label">Visit</div><div class="val">Office #8AE1, Street 138</div><div class="meta">Sangkat Veal Vong, Khan 7 Makara, Phnom Penh, Cambodia</div><a class="act">Open in Google Maps</a></div></div>
+    </div>
+
+    <div class="a-band">
+      <div class="a-side">
+        <span class="eyebrow">What can we help with?</span>
+        <h3 class="ftitle" style="margin-top:14px">Send us a message</h3>
+        <p style="margin-top:22px"><a class="act" style="margin:0">Donate →</a></p>
+      </div>
+      <div class="a-formcard">
+        <div class="form">
+          <div><div class="flabel">Your name</div><div class="field">Your name</div></div>
+          <div class="pair"><div><div class="flabel">Email</div><div class="field">Email</div></div><div><div class="flabel">Phone</div><div class="field">Phone</div></div></div>
+          <div><div class="flabel">Best way to reach you</div><div class="radios"><span><b class="on"></b>Email</span><span><b></b>Phone</span></div></div>
+          <div><div class="flabel">Message</div><div class="field ta">Tell us a little about what you need.</div></div>
+          <div class="send">Send message</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-stub">Footer (unchanged)</div>
+  </div>
+  <p class="note"><b>Feels:</b> warm, welcoming, photo first. <b>Trade-off:</b> longest page, and the form sits further down (third screen on a phone).</p>
+</section>
+
+<!-- ============ B ============ -->
+<section class="dir" data-dir="b">
+  <div class="dir-head">
+    <div class="letter">B</div>
+    <div><h2>The desk</h2><p>One calm, centred welcome, then a single panel: dark-blue contact column + form side by side.</p></div>
+    <button class="pick" data-choice="b" onclick="toggleSelect(this)">Pick B</button>
+  </div>
+  <div class="browser">
+    <div class="chrome"><i></i><i></i><i></i><span>samatapheapkhnom.org/contact</span></div>
+    <div class="nav"><div class="logo"><svg viewBox="0 0 40 36"><use href="#i-logo"/></svg>SKO</div><ul><li>About</li><li>Our work</li><li>Impact</li><li>Get involved</li></ul><span class="cta">Contact us</span></div>
+
+    <div class="b-wrap">
+      <img class="bfly" src="http://localhost:4321/images/butterfly.svg" alt="" style="width:220px; top:30px; right:7%; opacity:.8">
+      <div class="b-head">
+        <span class="eyebrow">Contact us</span>
+        <h2 class="h1">We're here to listen.</h2>
+        <p class="lede">Whether you have a question, an idea for working together, or simply want to know more about our work, write to us in your own words. Every message is read by a member of our team, and we will get back to you as soon as we can.</p>
+      </div>
+
+      <div class="b-panel">
+        <div class="b-dark">
+          <img class="bfly" src="http://localhost:4321/images/butterfly.svg" alt="" style="width:260px; bottom:-30px; right:-60px; opacity:.12">
+          <h3>Contact us</h3>
+          <div class="b-row"><div class="chip"><svg><use href="#i-mail"/></svg></div><div><div class="label">Email</div><div class="val">info@samatapheapkhnom.org</div><a class="act">Write an email</a></div></div>
+          <div class="b-row"><div class="chip"><svg><use href="#i-phone"/></svg></div><div><div class="label">Call</div><div class="val">+855 12 781 203</div><div class="meta">Monday–Friday, 8:00–17:00 (ICT)</div></div></div>
+          <div class="b-row"><div class="chip"><svg><use href="#i-pin"/></svg></div><div><div class="label">Visit</div><div class="meta" style="color:#fff">Office #8AE1, Street 138,<br>Sangkat Veal Vong, Khan 7 Makara,<br>Phnom Penh, Cambodia</div><a class="act">Open in Google Maps</a></div></div>
+          <a class="donate">Donate →</a>
+        </div>
+        <div class="b-form">
+          <h3 class="ftitle">Send us a message</h3>
+          <p class="meta" style="margin:0 0 22px">What can we help with?</p>
+          <div class="form">
+            <div><div class="flabel">Your name</div><div class="field">Your name</div></div>
+            <div class="pair"><div><div class="flabel">Email</div><div class="field">Email</div></div><div><div class="flabel">Phone</div><div class="field">Phone</div></div></div>
+            <div><div class="flabel">Best way to reach you</div><div class="radios"><span><b class="on"></b>Email</span><span><b></b>Phone</span></div></div>
+            <div><div class="flabel">Message</div><div class="field ta">Tell us a little about what you need.</div></div>
+            <div class="send">Send message</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-stub">Footer (unchanged)</div>
+  </div>
+  <p class="note"><b>Feels:</b> focused, institutional, "one desk to talk to". Uses the dark-blue surface the design system allows once per page. <b>Trade-off:</b> no photo, so it has less warmth than A or C.</p>
+</section>
+
+<!-- ============ C ============ -->
+<section class="dir" data-dir="c">
+  <div class="dir-head">
+    <div class="letter">C</div>
+    <div><h2>Community band</h2><p>Welcome + details beside a raised form, then a full-width community photo band with "Email / Call / Visit".</p></div>
+    <button class="pick" data-choice="c" onclick="toggleSelect(this)">Pick C</button>
+  </div>
+  <div class="browser">
+    <div class="chrome"><i></i><i></i><i></i><span>samatapheapkhnom.org/contact</span></div>
+    <div class="nav"><div class="logo"><svg viewBox="0 0 40 36"><use href="#i-logo"/></svg>SKO</div><ul><li>About</li><li>Our work</li><li>Impact</li><li>Get involved</li></ul><span class="cta">Contact us</span></div>
+
+    <div class="c-top">
+      <img class="bfly" src="http://localhost:4321/images/butterfly.svg" alt="" style="width:200px; bottom:24px; left:28%; opacity:.6">
+      <div>
+        <span class="eyebrow">Contact us</span>
+        <h2 class="h1">We're here to listen.</h2>
+        <p class="lede">Whether you have a question, an idea for working together, or simply want to know more about our work, write to us in your own words. Every message is read by a member of our team, and we will get back to you as soon as we can.</p>
+        <div class="c-list">
+          <div class="c-item"><div class="chip"><svg><use href="#i-mail"/></svg></div><div><div class="val" style="margin:0">info@samatapheapkhnom.org</div><div class="meta">Write an email</div></div></div>
+          <div class="c-item"><div class="chip"><svg><use href="#i-phone"/></svg></div><div><div class="val" style="margin:0">+855 12 781 203</div><div class="meta">Monday–Friday, 8:00–17:00 (ICT)</div></div></div>
+        </div>
+      </div>
+      <div class="c-formcard">
+        <h3 class="ftitle">Send us a message</h3>
+        <p class="meta" style="margin:0 0 20px">What can we help with?</p>
+        <div class="form">
+          <div><div class="flabel">Your name</div><div class="field">Your name</div></div>
+          <div class="pair"><div><div class="flabel">Email</div><div class="field">Email</div></div><div><div class="flabel">Phone</div><div class="field">Phone</div></div></div>
+          <div><div class="flabel">Best way to reach you</div><div class="radios"><span><b class="on"></b>Email</span><span><b></b>Phone</span></div></div>
+          <div><div class="flabel">Message</div><div class="field ta">Tell us a little about what you need.</div></div>
+          <div class="send">Send message</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="c-band">
+      <img src="http://localhost:4321/images/home-hero-community-1600.webp" alt="">
+      <h3>Visit</h3>
+      <div class="c-band-in">
+        <div class="glass"><div class="label">Visit</div><div class="val">Office #8AE1, Street 138</div><div class="meta">Sangkat Veal Vong, Khan 7 Makara, Phnom Penh, Cambodia</div><a class="act">Open in Google Maps</a></div>
+        <div class="glass"><div class="label">Call</div><div class="val">+855 12 781 203</div><div class="meta">Monday–Friday, 8:00–17:00 (ICT)</div><a class="act">Tap to call</a></div>
+        <div class="glass"><div class="label">Email</div><div class="val" style="font-size:15px">info@samatapheapkhnom.org</div><div class="meta">&nbsp;</div><a class="act">Write an email</a></div>
+      </div>
+    </div>
+    <div class="footer-stub">Footer (unchanged) · Donate link moves into footer area of the band</div>
+  </div>
+  <p class="note"><b>Feels:</b> closest to INHF's depth, but SKO-blue and SKO's own people. <b>Trade-off:</b> contact details appear twice (beside the form and in the band). On mobile the photo sits above the cards, never behind text (design-system rule).</p>
+</section>
+
+</body>
+</html>

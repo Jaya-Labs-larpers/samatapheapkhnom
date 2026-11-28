@@ -1,0 +1,104 @@
+---
+import '~/styles/pages.css';
+import type { Locale } from '~/lib/i18n/config';
+import type { CmsImage } from '~/lib/content/types';
+import type { Crumb } from '~/lib/breadcrumbs';
+import type { SkAction } from '~/lib/skeleton-content';
+import Breadcrumbs from '~/components/layout/Breadcrumbs.astro';
+import InlineLinks from '~/components/content/InlineLinks.astro';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+
+interface Props {
+  lang: Locale;
+  title: string;
+  titleLang?: string;
+  intro?: string | null;
+  introLang?: string;
+  trail: Crumb[];
+  eyebrow?: string | null;
+  image?: CmsImage | null;
+  caption?: string | null;
+  captionLang?: string;
+  badge?: { value: string; label: string; labelLang?: string } | null;
+  chips?: { label: string; href: string }[];
+  actions?: SkAction[];
+}
+
+const {
+  lang,
+  title,
+  titleLang,
+  intro,
+  introLang,
+  trail,
+  eyebrow,
+  image,
+  caption,
+  captionLang,
+  badge,
+  chips = [],
+  actions = [],
+} = Astro.props;
+---
+
+<section class="pg-hero" data-hero-dark>
+  <div class="pg-hero__grid">
+    <div class="pg-hero__panel">
+      <Breadcrumbs lang={lang} trail={trail} />
+      {eyebrow && <span class="pg-kicker pg-hero__eyebrow">{eyebrow}</span>}
+      <h1 class="pg-hero__title" lang={titleLang}>
+        {title}
+      </h1>
+      {
+        intro && (
+          <p class="pg-hero__lead" lang={introLang}>
+            <InlineLinks text={intro} />
+          </p>
+        )
+      }
+      {
+        chips.length > 0 && (
+          <ul class="pg-chips">
+            {chips.map((chip) => (
+              <li>
+                <a class="pg-chip" href={chip.href}>
+                  {chip.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      {
+        actions.length > 0 && (
+          <div class="pg-actions">
+            {actions.map((action, index) => (
+              <a class:list={['pg-btn', index > 0 && 'pg-btn--ghost']} href={action.href}>
+                {action.label}
+              </a>
+            ))}
+          </div>
+        )
+      }
+      <slot />
+    </div>
+    {
+      image && (
+        <figure class="pg-hero__media">
+          <ResponsiveImage image={image} lang={lang} eager sizes="(min-width: 64rem) 50vw, 100vw" />
+          {caption && (
+            <figcaption class="pg-caption" lang={captionLang}>
+              {caption}
+            </figcaption>
+          )}
+          {badge && (
+            <div class="pg-badge">
+              <b>{badge.value}</b>
+              <span lang={badge.labelLang}>{badge.label}</span>
+            </div>
+          )}
+        </figure>
+      )
+    }
+  </div>
+</section>

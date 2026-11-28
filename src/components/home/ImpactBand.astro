@@ -1,0 +1,115 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { ImpactStat } from '~/lib/content/types';
+import { countsUp } from '~/lib/content/stats';
+import { formatNumber, pick, t, tLang } from '~/lib/i18n/utils';
+
+interface Props {
+  lang: Locale;
+  stats: ImpactStat[];
+}
+
+const { lang, stats } = Astro.props;
+
+const sorted = [...stats].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+const display = (stat: ImpactStat) =>
+  (
+    stat.displayValue ?? (typeof stat.value === 'number' ? formatNumber(stat.value, lang) : '')
+  ).replace(/\d{4,}/g, (digits) =>
+    digits.length === 4 && /^(19|20)/.test(digits) ? digits : formatNumber(Number(digits), lang),
+  );
+---
+
+{
+  sorted.length > 0 && (
+    <section class="impact">
+      <div class="impact__inner">
+        <h2 class="impact__title" lang={tLang(lang, 'impactHeadline')}>
+          {t(lang, 'impactHeadline')}
+        </h2>
+        <ul class="impact__stats">
+          {sorted.map((stat) => {
+            const label = pick(stat.label, lang);
+            return (
+              <li class="impact__stat">
+                <div class="impact__number">
+                  {countsUp(stat) ? (
+                    <span data-count-to={stat.value}>{display(stat)}</span>
+                  ) : (
+                    display(stat)
+                  )}
+                </div>
+                <div class="impact__label" lang={label.isFallback ? label.lang : undefined}>
+                  {label.value}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  import { countUpOnEntry } from '~/lib/count-up';
+  import { onPageLoad } from '~/lib/page-load';
+
+  onPageLoad(() => countUpOnEntry());
+</script>
+
+<style>
+  .impact {
+    box-sizing: border-box;
+    width: 100%;
+    padding: clamp(56px, 7vw, 88px) 20px;
+    background: var(--color-ink-900);
+    color: #fff;
+    font-family: var(--font-sans);
+  }
+  .impact__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .impact__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(30px, 2.6vw + 12px, 44px);
+    line-height: 1.15;
+    color: #fff;
+  }
+  .impact__stats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+    gap: 0;
+    border-top: 1px solid var(--color-ink-700);
+  }
+  .impact__stat {
+    padding: 28px 24px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .impact__number {
+    font-family: var(--font-display);
+    font-size: clamp(44px, 4vw + 8px, 64px);
+    font-weight: 500;
+    color: var(--color-sky-200);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .impact__label {
+    font-size: 15px;
+    color: var(--color-surface-sunken);
+  }
+  :global(:lang(km)) .impact__title {
+    line-height: 1.5;
+  }
+</style>

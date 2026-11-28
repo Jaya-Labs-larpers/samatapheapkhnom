@@ -8,6 +8,7 @@ import PageHero from '~/components/content/PageHero.astro';
 import ContactForm from '~/components/forms/ContactForm.astro';
 import InlineLinks from '~/components/content/InlineLinks.astro';
 import { stripInlineLinks } from '~/lib/inline-links';
+import { safeHref } from '~/lib/safe-href';
 import { contactPageJsonLd, officeOpeningHours } from '~/lib/seo/page-schema';
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 const { lang } = Astro.props;
 
 const settings = await getSiteSettings();
+const mapHref = safeHref(settings.mapUrl);
 const address = pick(settings.address, lang);
 const hours = pick(settings.officeHours, lang);
 const safeguarding = pick(settings.safeguardingContact, lang);
@@ -33,7 +35,6 @@ const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: titl
 ---
 
 <BaseLayout
-  headerOverlay
   lang={lang}
   title={title}
   description={description}
@@ -92,9 +93,9 @@ const contactPage = contactPageJsonLd({ pathname: Astro.url.pathname, name: titl
                 >
                   {address.value}
                 </span>
-                {settings.mapUrl && (
+                {mapHref && (
                   <a
-                    href={settings.mapUrl}
+                    href={mapHref}
                     rel="noopener noreferrer"
                     target="_blank"
                     class="contact-details__meta"

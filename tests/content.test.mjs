@@ -24,13 +24,15 @@ function placeholders() {
   return exports;
 }
 
-function content(production, result, local = false) {
+function content(production, result, local = false, now = Date.now) {
   const exports = {};
   vm.runInNewContext(compiled, {
     exports,
+    Date: { now },
     require(path) {
       if (path === '../sanity/client')
-        return { sanityClient: local ? null : { fetch: async () => result } };
+        return { sanityClient: local ? null : { fetch: typeof result === 'function' ? result : async () => result } };
+      if (path === '../sanity/image') return { localCmsImage: (name) => ({ asset: { _ref: name } }) };
       if (path === '../sanity/queries') return { directorMessageQuery: 'directorMessage' };
       if (path === './fixtures') return { directorMessage: { name: { en: 'Fixture director' } } };
       if (path === '../config')
@@ -92,4 +94,20 @@ test('an unfinished content marker never survives a read, from either source', a
   assert.ok(isPlaceholderText('[EXAMPLE] Child protection training'));
   assert.ok(isPlaceholderText('[PLACEHOLDER — ORG CHART IMAGE]'));
   assert.ok(!isPlaceholderText('Reg. No. 0000 [Ministry of Interior]'));
+});
+
+test('published reads share concurrent requests, expire, and retry a failed refresh', async () => {
+  let now = 0;
+  let reads = 0;
+  const api = content(true, async () => {
+    reads++;
+    if (reads === 2) throw Error('Temporary failure');
+    return { name: { en: String(reads) } };
+  }, false, () => now);
+
+  await Promise.all([api.getDirectorMessage(), api.getDirectorMessage()]);
+  assert.equal((await api.getDirectorMessage()).name.en, '1');
+  now = 15_001;
+  await assert.rejects(api.getDirectorMessage(), /Temporary failure/);
+  assert.equal((await api.getDirectorMessage()).name.en, '3');
 });

@@ -1,0 +1,190 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { SiteSettings } from '~/lib/content/types';
+import { localizePath, pick, t, tLang } from '~/lib/i18n/utils';
+import ButterflyField from '~/components/media/ButterflyField.astro';
+
+interface Props {
+  lang: Locale;
+  settings: SiteSettings;
+}
+
+const { lang, settings } = Astro.props;
+
+const headline = pick(settings.tagline, lang);
+---
+
+<section class="hero" data-home-hero>
+  <ButterflyField />
+
+  <div class="hero__content">
+    <h1
+      class="hero__title"
+      lang={headline.isFallback ? headline.lang : undefined}
+      data-butterfly-shelter
+    >
+      {headline.value}
+    </h1>
+    <p class="hero__lead" lang={tLang(lang, 'heroSubtitle')} data-butterfly-shelter>
+      {t(lang, 'heroSubtitle')}
+    </p>
+    <div class="hero__card" data-butterfly-shelter>
+      <div class="hero__actions">
+        <a href={localizePath('/contact?topic=partner', lang)} class="hero__btn hero__btn--solid">
+          <span lang={tLang(lang, 'navPartnerWithUs')}>{t(lang, 'navPartnerWithUs')}</span>
+        </a>
+        <a
+          href={localizePath('/contact?topic=volunteer', lang)}
+          class="hero__btn hero__btn--outline"
+        >
+          <span lang={tLang(lang, 'heroVolunteer')}>{t(lang, 'heroVolunteer')}</span>
+        </a>
+      </div>
+      <div class="hero__meta">
+        <span class="hero__permit">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"></path>
+            <path d="M9 12l2 2 4-4"></path>
+          </svg>
+          <span lang={tLang(lang, 'heroRegistered')}>{t(lang, 'heroRegistered')}</span>
+        </span>
+        <a href={localizePath('/reports', lang)} class="hero__reports">
+          <span lang={tLang(lang, 'heroAnnualReports')}>{t(lang, 'heroAnnualReports')}</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: clamp(420px, calc(80svh - var(--header-h)), 720px);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: var(--color-blue-50);
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-ink-700);
+    font-family: var(--font-sans);
+  }
+  .hero__content {
+    position: relative;
+    z-index: 2;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: clamp(28px, 7vh, 96px) clamp(20px, 4vw, 24px) clamp(44px, 8vh, 96px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 2.2vh, 22px);
+  }
+  .hero__title {
+    position: relative;
+    margin: 0;
+    max-width: 640px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(32px, min(4.4vw + 4px, 7vh), 64px);
+    line-height: 1.08;
+    color: var(--color-ink-900);
+  }
+  .hero__lead {
+    position: relative;
+    margin: 0;
+    max-width: 34em;
+    font-size: clamp(16px, min(1.4vw + 4px, 2.6vh), 20px);
+    line-height: 1.5;
+    color: var(--color-ink-600);
+  }
+  .hero__card {
+    position: relative;
+    margin-top: clamp(4px, 1.2vh, 12px);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 560px;
+    background: #fff;
+    color: var(--color-ink-700);
+    padding: clamp(16px, 2.6vh, 28px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid var(--color-line);
+    box-shadow: 0 8px 28px rgb(14 21 51 / 0.08);
+  }
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .hero__btn {
+    position: relative;
+    flex: 1 1 200px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 52px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 17px;
+    line-height: 1;
+    border: 1px solid var(--color-blue-700);
+    border-radius: var(--radius-cta);
+    transition:
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui),
+      color var(--duration-ui) var(--ease-ui);
+  }
+  .hero__btn--solid {
+    background: var(--color-blue-700);
+    color: #fff;
+  }
+  .hero__btn--outline {
+    color: var(--color-blue-700);
+  }
+  .hero__btn:hover {
+    background: var(--color-blue-800);
+    border-color: var(--color-blue-800);
+    color: #fff;
+  }
+  .hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 16px;
+    font-size: 14px;
+    color: var(--color-ink-600);
+  }
+  .hero__permit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero__permit svg {
+    color: var(--color-blue-700);
+  }
+  .hero__reports {
+    color: var(--color-ink-600);
+    text-decoration: underline;
+  }
+  :global(:lang(km)) .hero__title {
+    line-height: 1.4;
+  }
+  :global(:lang(km)) .hero__lead {
+    line-height: 1.8;
+  }
+</style>

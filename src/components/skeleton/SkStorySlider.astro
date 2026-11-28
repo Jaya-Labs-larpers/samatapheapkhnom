@@ -1,0 +1,446 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { Story } from '~/lib/content/types';
+import { langAttr, localizePath, pick, t, tLang } from '~/lib/i18n/utils';
+import { hasImage, imageDimensions } from '~/lib/sanity/image';
+import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import SkSection from './SkSection.astro';
+
+interface Props {
+  lang: Locale;
+  heading?: string;
+  stories: Story[];
+  /** Quote in full, signed "— Name, Program" with the program linked, as on the original site. */
+  attribution?: boolean;
+}
+
+const { lang, heading, stories, attribution = false } = Astro.props;
+const cards = stories.map((story) => {
+  const quote = pick(story.quote, lang);
+  const role = pick(story.personRole, lang);
+  return {
+    href: localizePath(`/stories/${story.slug ?? story._id}`, lang),
+    name: story.personName ?? '',
+    role: role.value,
+    roleLang: langAttr(role),
+    quote: quote.value,
+    quoteLang: langAttr(quote),
+    photo: story.useSilhouette ? null : (story.photo ?? null),
+    programHref: story.program?.slug ? localizePath(`/programs/${story.program.slug}`, lang) : null,
+  };
+});
+const slider = cards.length > 1;
+const single = cards.length === 1;
+const zoom = single && hasImage(cards[0]?.photo);
+const { width, height } = imageDimensions(cards[0]?.photo);
+const singleSizes = '(min-width: 80rem) 1200px, 100vw';
+const photoSizes = zoom
+  ? `(min-height: 38rem) and (prefers-reduced-motion: no-preference) max(112vw, ${Math.ceil((112 * width) / height)}dvh), ${singleSizes}`
+  : single
+    ? singleSizes
+    : '(min-width: 40rem) 360px, 80vw';
+---
+
+{
+  cards.length > 0 && (
+    <SkSection tone="tint" class={zoom ? 'story-zoom' : undefined}>
+      <div data-carousel class="slider">
+        {(heading || slider) && (
+          <div class="slider__head">
+            {heading && (
+              <h2 class="sk-h2" lang={tLang(lang, 'storiesHeading')}>
+                {heading}
+              </h2>
+            )}
+            {slider && (
+              <div class="slider__buttons">
+                <button
+                  type="button"
+                  class="slider__btn"
+                  aria-label={t(lang, 'storiesPrevious')}
+                  data-carousel-prev
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  class="slider__btn"
+                  aria-label={t(lang, 'storiesNext')}
+                  data-carousel-next
+                >
+                  →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        <ul
+          class:list={['slider__track', single && 'slider__track--single']}
+          data-carousel-track
+          data-scrub={zoom ? '' : undefined}
+          data-scrub-start={zoom ? 'top 100%' : undefined}
+          data-scrub-end={zoom ? 'top 0%' : undefined}
+        >
+          {cards.map((card) => (
+            <li class="slider__item">
+              {attribution ? (
+                <div class="slider__card slider__card--signed">
+                  {card.photo && (
+                    <ResponsiveImage
+                      image={card.photo}
+                      lang={lang}
+                      alt=""
+                      defer="visible"
+                      aspect="360/457"
+                      sizes={photoSizes}
+                    />
+                  )}
+                  <div class="slider__bottom">
+                    {card.quote && (
+                      <blockquote class="slider__quote" lang={card.quoteLang}>
+                        {card.quote}
+                      </blockquote>
+                    )}
+                    <p class="slider__sign">
+                      — {card.name}
+                      {card.role && (
+                        <>
+                          ,{' '}
+                          {card.programHref ? (
+                            <a href={card.programHref} lang={card.roleLang}>
+                              {card.role}
+                            </a>
+                          ) : (
+                            <span lang={card.roleLang}>{card.role}</span>
+                          )}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <a href={card.href} class="slider__card">
+                  {card.photo && (
+                    <ResponsiveImage
+                      image={card.photo}
+                      lang={lang}
+                      alt=""
+                      defer="visible"
+                      aspect="360/457"
+                      sizes={photoSizes}
+                    />
+                  )}
+                  <div class="slider__top">
+                    {card.name && <b>{card.name}</b>}
+                    {card.role && <span lang={card.roleLang}>{card.role}</span>}
+                  </div>
+                  <div class="slider__bottom">
+                    {card.quote && (
+                      <p class="slider__quote" lang={card.quoteLang}>
+                        {card.quote}
+                      </p>
+                    )}
+                    {single && (
+                      <span class="slider__more" lang={tLang(lang, 'readTheStory')}>
+                        {t(lang, 'readTheStory')} →
+                      </span>
+                    )}
+                  </div>
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </SkSection>
+  )
+}
+
+<script>
+  import { initCarousels } from '~/lib/carousel';
+  import { onPageLoad } from '~/lib/page-load';
+
+  onPageLoad(() => initCarousels());
+</script>
+
+<style>
+  .slider {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .slider__head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .slider__buttons {
+    display: flex;
+    gap: 8px;
+  }
+  .slider__btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 50%;
+    background: #fff;
+    font-size: 18px;
+    color: var(--color-ink-900);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-fast) var(--ease-out-soft),
+      border-color var(--duration-fast) var(--ease-out-soft),
+      color var(--duration-fast) var(--ease-out-soft);
+  }
+  .slider__btn:not(:disabled):hover {
+    border-color: var(--color-blue-700);
+    background: var(--color-blue-50);
+    color: var(--color-blue-700);
+  }
+  .slider__btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .slider__track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(80vw, 360px);
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .slider__track::-webkit-scrollbar {
+    display: none;
+  }
+  .slider__item {
+    scroll-snap-align: start;
+  }
+  .slider__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 457px;
+    padding: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--color-ink-900);
+    color: #fff;
+    text-decoration: none;
+  }
+  .slider__card :global(.blur-up) {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .slider__card :global(img) {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .slider__card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.7),
+      rgb(0 0 0 / 0) 40%,
+      rgb(0 0 0 / 0) 55%,
+      rgb(0 0 0 / 0.75)
+    );
+  }
+  .slider__top {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .slider__top b {
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+  .slider__top span {
+    font-size: 0.9375rem;
+    opacity: 0.9;
+  }
+  .slider__quote {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+  .slider__bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .slider__more {
+    font-weight: 600;
+  }
+  .slider__track--single {
+    grid-auto-columns: 100%;
+    overflow: visible;
+  }
+  .slider__track--single .slider__card {
+    min-height: min(72svh, 640px);
+    padding: clamp(24px, 5vw, 64px);
+    border-radius: var(--radius-2xl);
+  }
+  .slider__track--single .slider__card::after {
+    background: linear-gradient(
+      to bottom,
+      rgb(11 27 48 / 0.7),
+      rgb(11 27 48 / 0) 35%,
+      rgb(11 27 48 / 0.2) 50%,
+      rgb(11 27 48 / 0.88)
+    );
+  }
+  @media (min-width: 48rem) {
+    .slider__track--single .slider__card::after {
+      background:
+        linear-gradient(
+          to right,
+          rgb(11 27 48 / 0.85),
+          rgb(11 27 48 / 0.6) 34%,
+          rgb(11 27 48 / 0) 58%
+        ),
+        linear-gradient(to bottom, rgb(11 27 48 / 0.45), rgb(11 27 48 / 0) 30%);
+    }
+  }
+  .slider__track--single .slider__top b {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+  }
+  .slider__track--single .slider__top span {
+    font-size: 1.0625rem;
+  }
+  .slider__track--single .slider__quote {
+    max-width: 46rem;
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+    line-height: 1.4;
+  }
+  @media (min-width: 48rem) {
+    .slider__track--single .slider__quote {
+      max-width: 34rem;
+    }
+  }
+  .slider__card--signed {
+    justify-content: flex-end;
+  }
+  .slider__track--single .slider__card--signed .slider__quote {
+    display: block;
+    -webkit-line-clamp: none;
+    line-clamp: none;
+  }
+  .slider__sign {
+    margin: 0;
+    font-size: 1.0625rem;
+    opacity: 0.9;
+  }
+  .slider__sign a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+  .slider__sign a:hover {
+    text-decoration-thickness: 2px;
+  }
+  .slider__card:focus-visible {
+    outline: 3px solid var(--color-blue-700);
+    outline-offset: 3px;
+  }
+
+  :global(.story-zoom) {
+    --story-gutter: max(clamp(20px, 5.5vw, 80px), calc((100% - 1200px) / 2));
+    padding-inline: 0;
+  }
+  :global(.story-zoom) > :global(.sk-wrap) {
+    max-width: none;
+    padding-inline: 0;
+  }
+  :global(.story-zoom) .slider__head {
+    margin-inline: var(--story-gutter);
+  }
+  :global(.story-zoom) .slider__track--single .slider__card {
+    min-height: clamp(24rem, 58svh, 34rem);
+    margin-inline: var(--gutter-left) var(--gutter-right);
+    padding: clamp(20px, 5vw, 40px);
+    border-radius: var(--radius-xl);
+  }
+  @media (min-width: 40rem) {
+    :global(.story-zoom) .slider__track--single .slider__card {
+      min-height: clamp(28rem, 64svh, 38rem);
+      padding: clamp(28px, 5vw, 56px);
+      border-radius: var(--radius-2xl);
+    }
+  }
+  @media (min-width: 64rem) {
+    :global(.story-zoom) .slider__track--single .slider__card {
+      min-height: calc(100svh - var(--header-h));
+      margin-inline: 0;
+      padding-inline: calc(var(--story-gutter) + clamp(24px, 5vw, 64px));
+      border-radius: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (min-height: 38rem) and (min-width: 64rem) and (hover: hover) and (pointer: fine) {
+    .slider__track[data-scrub-ready] {
+      --story-padding: clamp(24px, 5vw, 64px);
+      --story-top: var(--header-h);
+      --story-bottom: max(0px, 100dvh - var(--story-top) - min(72svh, 640px));
+      --progress: var(--p, 0);
+      --remaining: calc(1 - var(--progress) * var(--progress) * (3 - 2 * var(--progress)));
+      display: block;
+      min-height: 200dvh;
+      margin-top: calc(-1 * var(--story-top));
+    }
+    .slider__track[data-scrub-ready] .slider__item {
+      position: sticky;
+      top: 0;
+    }
+    .slider__track[data-scrub-ready] .slider__card {
+      height: 100dvh;
+      min-height: 0;
+      margin-inline: 0;
+      padding-inline: calc(var(--story-gutter) + var(--story-padding));
+      padding-top: calc(var(--story-top) + var(--story-padding));
+      border-radius: 0;
+      clip-path: inset(
+        calc(var(--story-top) * var(--remaining)) calc(var(--story-gutter) * var(--remaining))
+          calc(var(--story-bottom) * var(--remaining)) round calc(var(--radius-2xl) * var(--remaining))
+      );
+    }
+    .slider__track[data-scrub-ready] .slider__card :global(.blur-up) {
+      transform: scale(calc(1.12 - 0.12 * var(--remaining)));
+    }
+    .slider__track[data-scrub-ready] .slider__bottom {
+      transform: translateY(calc(-1 * var(--story-bottom) * var(--remaining)));
+    }
+    .slider__track[data-scrub-ready] .slider__card:focus-visible .slider__more {
+      text-decoration: underline;
+      text-underline-offset: 0.25em;
+    }
+  }
+</style>

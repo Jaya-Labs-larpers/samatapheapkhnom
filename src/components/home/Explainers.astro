@@ -1,0 +1,104 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { HomeExplainer } from '~/data/home.types';
+import { localizePath, t, tLang } from '~/lib/i18n/utils';
+
+interface Props {
+  lang: Locale;
+  items: HomeExplainer[];
+}
+
+const { lang, items } = Astro.props;
+---
+
+{
+  items.length > 0 && (
+    <section class="explainers">
+      <div class="explainers__inner">
+        <h2 class="explainers__title" lang={tLang(lang, 'explainersHeading')}>
+          {t(lang, 'explainersHeading')}
+        </h2>
+        <ul class="explainers__grid">
+          {items.map((item) => (
+            <li>
+              <a href={localizePath(item.href, lang)} class="expl">
+                <div
+                  class="expl__type"
+                  lang={tLang(lang, item.type === 'facts' ? 'typeFacts' : 'typeExplainer')}
+                >
+                  {t(lang, item.type === 'facts' ? 'typeFacts' : 'typeExplainer')}
+                </div>
+                <div class="expl__title">{item.title}</div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .explainers {
+    box-sizing: border-box;
+    width: 100%;
+    padding: clamp(48px, 6vw, 72px) 20px;
+    background: #fff;
+    color: var(--color-ink-600);
+    font-family: var(--font-sans);
+  }
+  .explainers__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    border-radius: 16px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .explainers__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 32px;
+    color: var(--color-ink-900);
+  }
+  .explainers__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+    gap: 20px;
+  }
+  .expl {
+    height: 100%;
+    box-sizing: border-box;
+    text-decoration: none;
+    background: var(--color-surface-subtle);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .expl__type {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-blue-700);
+  }
+  .expl__title {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--color-ink-900);
+  }
+  .expl:hover .expl__title {
+    color: var(--color-blue-700);
+  }
+  :global(:lang(km)) .expl__type {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+</style>

@@ -1,4 +1,5 @@
 import type { Locale } from './config';
+import { redesignEn, redesignKm } from './strings.redesign';
 
 /**
  * UI chrome strings. Page and article content comes from Sanity — this file is
@@ -34,6 +35,7 @@ const en = {
   switchToKhmer: 'Switch to Khmer',
   switchToEnglish: 'Switch to English',
   breadcrumbLabel: 'Breadcrumb',
+  paginationLabel: 'Pagination',
   mainNavLabel: 'Main navigation',
   footerNavLabel: 'Footer navigation',
 
@@ -62,6 +64,11 @@ const en = {
   directorMessage: 'Message from the Director',
   orgStructure: 'SKO’s Structure',
   ourTeam: 'Our team',
+  aboutApproach: 'Our approach',
+  aboutPartnerships: 'Partnerships',
+  aboutLeadership: 'Leadership and governance',
+  inThisSection: 'In this section',
+  impactProjects: 'Project results',
   relatedProgram: 'Related program',
   programLabel: 'Program',
   otherPrograms: 'Other programs',
@@ -80,6 +87,7 @@ const en = {
   pagePrivacy: 'Privacy',
   pageFaq: 'Common questions',
   navFaq: 'FAQ',
+  navShowSections: 'Show sections',
 
   // --- Footer ---------------------------------------------------------------
   footerOrganisation: 'Organisation',
@@ -218,12 +226,12 @@ const en = {
   formPreferEmail: 'Email',
   formPreferPhone: 'Phone',
   formRole: 'Your role',
-  formPartnershipType: 'Kind of partnership',
-  partnershipFunding: 'Funding',
-  partnershipTechnical: 'Technical support',
-  partnershipReferrals: 'Referrals',
-  partnershipCorporate: 'Corporate giving',
-  partnershipOther: 'Other',
+  helpPartnership: 'Partnership',
+  helpFunding: 'Funding',
+  helpVolunteer: 'Volunteer',
+  helpConcern: 'Report a concern',
+  helpMedia: 'Media',
+  helpOther: 'Others',
   formVolunteerType: 'I would like to',
   volunteerTypeVolunteer: 'Volunteer',
   volunteerTypeIntern: 'Do an internship',
@@ -251,10 +259,10 @@ const en = {
   publishedOn: 'Published',
 } as const;
 
-export type UIKey = keyof typeof en;
+export type UIKey = keyof typeof en | keyof typeof redesignEn;
 
 /** [KHMER REVIEW REQUIRED] — see note at the top of this file. */
-const km: Record<UIKey, string> = {
+const km: Record<keyof typeof en, string> = {
   navHome: 'ទំព័រដើម',
   navAbout: 'អំពីយើង',
   navWork: 'ការងាររបស់យើង',
@@ -278,6 +286,7 @@ const km: Record<UIKey, string> = {
   switchToKhmer: 'ប្តូរទៅភាសាខ្មែរ',
   switchToEnglish: 'ប្តូរទៅភាសាអង់គ្លេស',
   breadcrumbLabel: 'ផ្លូវរុករក',
+  paginationLabel: 'ទំព័រ',
   mainNavLabel: 'ម៉ឺនុយមេ',
   footerNavLabel: 'ម៉ឺនុយបាតទំព័រ',
 
@@ -297,13 +306,18 @@ const km: Record<UIKey, string> = {
   tapToEnlarge: 'ចុចដើម្បីពង្រីក',
 
   faqHeading: 'សំណួរដែលសួរញឹកញាប់',
-  faqMore: '',
+  faqMore: 'សំណួរទូទៅបន្ថែមអំពី SKO',
   latestActivities: 'សកម្មភាពថ្មីៗ',
   whatWeDo: 'អ្វីដែលយើងធ្វើ',
   trustedBy: 'ដៃគូរបស់យើង',
   directorMessage: 'សាររបស់នាយកប្រតិបត្តិ',
   orgStructure: 'រចនាសម្ព័ន្ធ SKO',
   ourTeam: 'ក្រុមការងាររបស់យើង',
+  aboutApproach: 'វិធីសាស្ត្ររបស់យើង',
+  aboutPartnerships: 'ភាពជាដៃគូ',
+  aboutLeadership: 'ភាពជាអ្នកដឹកនាំ និងអភិបាលកិច្ច',
+  inThisSection: 'ក្នុងផ្នែកនេះ',
+  impactProjects: 'លទ្ធផលតាមគម្រោង',
   relatedProgram: 'កម្មវិធីពាក់ព័ន្ធ',
   programLabel: 'កម្មវិធី',
   otherPrograms: 'កម្មវិធីផ្សេងទៀត',
@@ -321,6 +335,7 @@ const km: Record<UIKey, string> = {
   pagePrivacy: 'ឯកជនភាព',
   pageFaq: 'សំណួរដែលសួរញឹកញាប់',
   navFaq: 'សំណួរ​ចម្លើយ',
+  navShowSections: 'បង្ហាញផ្នែកក្នុងទំព័រ',
 
   footerOrganisation: 'អង្គការ',
   footerTransparency: 'តម្លាភាព',
@@ -371,15 +386,15 @@ const km: Record<UIKey, string> = {
 
   seoHome: '',
   metaHome: '',
-  homeAboutLink: '',
-  viewAllPrograms: '',
-  allPartners: '',
+  homeAboutLink: 'វិធីសាស្ត្ររបស់យើងក្នុងការថែរក្សាគ្រួសារ',
+  viewAllPrograms: 'មើលកម្មវិធីគាំទ្រគ្រួសារទាំងអស់',
+  allPartners: 'មើលដៃគូ និងម្ចាស់ជំនួយទាំងអស់',
   seoPrograms: '',
   metaPrograms: '',
-  programsSectionTitle: '',
+  programsSectionTitle: 'កម្មវិធីទាំងបួន ក្រោមកម្មវិធីអភិវឌ្ឍន៍គ្រួសារតែមួយ',
   seoActivities: '',
   metaActivities: '',
-  activitiesFromProgram: '',
+  activitiesFromProgram: 'សកម្មភាពពីកម្មវិធីនេះ',
   seoPartners: '',
   metaPartners: '',
   seoContact: '',
@@ -439,12 +454,12 @@ const km: Record<UIKey, string> = {
   formPreferEmail: 'អ៊ីមែល',
   formPreferPhone: 'ទូរស័ព្ទ',
   formRole: 'តួនាទីរបស់អ្នក',
-  formPartnershipType: 'ប្រភេទភាពជាដៃគូ',
-  partnershipFunding: 'មូលនិធិ',
-  partnershipTechnical: 'ជំនួយបច្ចេកទេស',
-  partnershipReferrals: 'ការបញ្ជូនករណី',
-  partnershipCorporate: 'ការចូលរួមពីក្រុមហ៊ុន',
-  partnershipOther: 'ផ្សេងៗ',
+  helpPartnership: 'ភាពជាដៃគូ',
+  helpFunding: 'មូលនិធិ',
+  helpVolunteer: 'ស្ម័គ្រចិត្ត',
+  helpConcern: 'រាយការណ៍កង្វល់',
+  helpMedia: 'ប្រព័ន្ធផ្សព្វផ្សាយ',
+  helpOther: 'ផ្សេងៗ',
   formVolunteerType: 'ខ្ញុំចង់',
   volunteerTypeVolunteer: 'ស្ម័គ្រចិត្ត',
   volunteerTypeIntern: 'ធ្វើកម្មសិក្សា',
@@ -471,4 +486,9 @@ const km: Record<UIKey, string> = {
   publishedOn: 'ចុះផ្សាយ',
 };
 
-export const ui: Record<Locale, Record<UIKey, string>> = { en, km };
+/** Keys missing in Khmer are empty or absent; `t()` falls back to English. */
+export const uiEn: Record<UIKey, string> = { ...en, ...redesignEn };
+export const ui: Record<Locale, Partial<Record<UIKey, string>>> = {
+  en: uiEn,
+  km: { ...km, ...redesignKm },
+};

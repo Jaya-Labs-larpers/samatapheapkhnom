@@ -1,15 +1,13 @@
 ---
 /**
  * The programs as a numbered list of ruled rows rather than a row of identical
- * cards: index, title and summary, and a small photo at the end of the row.
+ * cards: index, title and summary, and an arrow at the end of the row.
  * Each row is one stretched link, so the whole row is clickable and there is
- * only ever one interactive element per program. The photo carries
- * .card-media so card-morph grows it into the program's hero.
+ * only ever one interactive element per program.
  */
 import type { Locale } from '~/lib/i18n/config';
 import type { Program } from '~/lib/content/types';
-import { localizePath, pick, t } from '~/lib/i18n/utils';
-import ResponsiveImage from '~/components/media/ResponsiveImage.astro';
+import { localizePath, pick } from '~/lib/i18n/utils';
 
 interface Props {
   lang: Locale;
@@ -28,7 +26,7 @@ const { lang, programs, exclude } = Astro.props;
       const title = pick(program.title, lang);
       const summary = pick(program.summary, lang);
       return (
-        <li class="program-row group" data-cursor-label={t(lang, 'learnMore')}>
+        <li class="program-row group">
           <span class="program-row__index" aria-hidden="true">
             {String(index + 1).padStart(2, '0')}
           </span>
@@ -47,15 +45,6 @@ const { lang, programs, exclude } = Astro.props;
               </p>
             )}
           </div>
-          <div class="program-row__media card-media">
-            <ResponsiveImage
-              image={program.cardImage ?? program.image}
-              lang={lang}
-              alt=""
-              aspect="4/3"
-              sizes="(min-width: 64rem) 256px, 0px"
-            />
-          </div>
           <span class="program-row__arrow" aria-hidden="true">
             →
           </span>
@@ -68,3 +57,104 @@ const { lang, programs, exclude } = Astro.props;
 <script>
   import '~/lib/card-morph';
 </script>
+
+<style is:global>
+@layer components {
+  /* --- Program rows (home) ---------------------------------------------- *
+   * Ruled rows on the paper: index, title and summary, a small photo, an
+   * arrow. The photo and arrow only join on wide screens; on a phone a row is
+   * index plus text. */
+  .program-rows {
+    border-top: 1px solid var(--color-line);
+  }
+  /* On a phone the index sits above the title and the summary is cut to three
+     lines: the row is a signpost to the programme page, not the page itself. */
+  .program-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem 1.5rem;
+    align-items: start;
+    padding-block: 1.375rem;
+    border-bottom: 1px solid var(--color-line);
+    transition: background-color var(--duration-base) var(--ease-out-soft);
+  }
+  .program-row__index {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--color-blue-700);
+  }
+  .program-row__title {
+    font-size: clamp(1.125rem, 0.85rem + 1.4vw, 2rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    transition: color var(--duration-fast) var(--ease-out-soft);
+  }
+  .program-row__summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    margin-top: 0.5rem;
+    max-width: 58ch;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--color-ink-400);
+  }
+  .program-row__arrow {
+    display: none;
+  }
+  @media (min-width: 48rem) {
+    .program-row {
+      grid-template-columns: 3.25rem minmax(0, 1fr);
+      gap: 0.75rem 1.5rem;
+      padding-block: 1.75rem;
+    }
+    .program-row__index {
+      padding-top: 0.35rem;
+    }
+    .program-row__summary {
+      -webkit-line-clamp: unset;
+      margin-top: 0.625rem;
+      line-height: 1.6;
+    }
+  }
+  @media (min-width: 64rem) {
+    .program-row {
+      grid-template-columns: 4.5rem minmax(0, 1fr) 2rem;
+      align-items: center;
+      gap: 0 2.5rem;
+      padding-block: 1.5rem;
+    }
+    .program-row__index {
+      align-self: start;
+      padding-top: 0.5rem;
+    }
+    .program-row__summary {
+      -webkit-line-clamp: 4;
+    }
+    .program-row__arrow {
+      display: block;
+      font-size: 1.5rem;
+      color: var(--color-blue-700);
+      transition: translate 480ms var(--ease-reveal);
+    }
+  }
+  .program-row:has(a:focus-visible) {
+    background: var(--color-blue-50);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .program-row:hover {
+      background: var(--color-blue-50);
+    }
+    .program-row:hover .program-row__title {
+      color: var(--color-blue-800);
+    }
+    .program-row:hover .program-row__arrow {
+      translate: 6px 0;
+    }
+  }
+}
+</style>

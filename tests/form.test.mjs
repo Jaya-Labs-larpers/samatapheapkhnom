@@ -126,6 +126,7 @@ function harness({ enabled = true, reply, status = 200, network } = {}) {
       },
       createElement: () => ({}),
       head: { append: (node) => injected.push(node) },
+      addEventListener: (type, callback) => type === 'astro:page-load' && callback(),
     },
     requestAnimationFrame: (callback) => frames.push(callback),
     setTimeout: (callback) => {

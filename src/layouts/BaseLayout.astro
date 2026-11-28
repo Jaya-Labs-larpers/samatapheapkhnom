@@ -2,14 +2,13 @@
 import '~/styles/global.css';
 
 import { htmlLang, type Locale } from '~/lib/i18n/config';
-import { t } from '~/lib/i18n/utils';
+import { parsePath, t } from '~/lib/i18n/utils';
 import { getSiteSettings } from '~/lib/content';
-import { gtmId, hasSanity } from '~/lib/config';
+import { cfAnalyticsToken, hasSanity, smoothScrollEnabled } from '~/lib/config';
 import type { CmsImage } from '~/lib/content/types';
 import Header from '~/components/layout/Header.astro';
 import Footer from '~/components/layout/Footer.astro';
-import ButterflyCursor from '~/components/media/ButterflyCursor.astro';
-import PageLoader from '~/components/layout/PageLoader.astro';
+import MinimalHeader from '~/components/layout/MinimalHeader.astro';
 import SeoHead from '~/components/seo/SeoHead.astro';
 
 interface Props {
@@ -20,18 +19,12 @@ interface Props {
   noindex?: boolean;
   plainTitle?: boolean;
   publishedAt?: string | null;
-  /** Extra schema.org node for this page type, e.g. Article or BreadcrumbList. */
   jsonLd?: Record<string, unknown> | null;
-  /** Extra properties for the Organization node. */
   orgJsonLd?: Record<string, unknown> | null;
-  /**
-   * Float the header over the page's own opening art instead of giving it a
-   * white band. Only for pages whose first element is a full-bleed hero that
-   * reaches the top of the window.
-   */
-  headerOverlay?: boolean;
-  /** Play the intro (PageLoader) when a visit starts on this page. */
-  intro?: boolean;
+  minimal?: boolean;
+  noFooter?: boolean;
+  darkHero?: boolean;
+  serifAboveFold?: boolean;
 }
 
 const {
@@ -44,29 +37,61 @@ const {
   publishedAt,
   jsonLd,
   orgJsonLd,
-  headerOverlay,
-  intro,
+  minimal = false,
+  noFooter = false,
+  darkHero = false,
+  serifAboveFold = true,
 } = Astro.props;
 
 const settings = await getSiteSettings();
 const pathname = Astro.url.pathname;
-/*
-  GTM waits for the page's own load and then for an idle moment, so its download
-  and parse never compete with the first paint. Page views are still counted:
-  GTM fires its own page-view from the dataLayer once it starts.
-*/
-const gtmLoader = gtmId
-  ? `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`
-  : '';
-const gtmSnippet =
-  gtmLoader &&
-  `(function(){var go=function(){${gtmLoader}};var idle=function(){(window.requestIdleCallback||function(f){setTimeout(f,1)})(go,{timeout:4000})};if(document.readyState==='complete')idle();else addEventListener('load',idle);})();`;
-const preloadFonts =
-  lang === 'km' ? ['kantumruy-pro-khmer', 'inter-latin'] : ['inter-latin', 'source-serif-4-latin'];
+const defaultHome = lang === 'en' && parsePath(pathname).path === '/';
+// Runs before first paint, but not while prerendering: the cookie may change before the click.
+const homeRedirect = `(() => {
+  const go = () => {
+    if (/(?:^|; )sko-lang=km(?:;|$)/.test(document.cookie))
+      location.replace('/km/' + location.search + location.hash);
+  };
+  if (document.prerendering) document.addEventListener('prerenderingchange', go, { once: true });
+  else go();
+})();`;
+const speculationRules = JSON.stringify({
+  prerender: [
+    {
+      where: {
+        and: [
+          { href_matches: '/*' },
+          { not: { href_matches: ['/api/*', '/*.*'] } },
+          { not: { selector_matches: '[download], [target=_blank], [rel~=nofollow]' } },
+        ],
+      },
+      eagerness: 'moderate',
+    },
+  ],
+  prefetch: [
+    {
+      where: {
+        and: [{ href_matches: '/*' }, { not: { href_matches: '/api/*' } }],
+      },
+      eagerness: 'conservative',
+    },
+  ],
+});
+const baseFonts =
+  lang === 'km'
+    ? ['noto-sans-khmer', 'noto-sans-latin']
+    : ['noto-sans-latin'];
+const preloadFonts = serifAboveFold ? [...baseFonts, 'source-serif-4-latin'] : baseFonts;
+const preloadLogo =
+  darkHero && !minimal ? '/logo/sko-logo-reversed.svg' : '/logo/sko-logo-full-colour.svg';
 ---
 
 <!doctype html>
-<html lang={htmlLang[lang]}>
+<html
+  lang={htmlLang[lang]}
+  translate="no"
+  data-smooth-scroll={smoothScrollEnabled ? 'on' : undefined}
+>
   <head>
     <meta charset="utf-8" />
     {
@@ -77,10 +102,11 @@ const preloadFonts =
       because a meta-delivered policy cannot set it.
     */
     }
-    <meta http-equiv="Content-Security-Policy" content="__CSP_POLICY__" />
-    {gtmSnippet && <script is:inline set:html={gtmSnippet} />}
+    {import.meta.env.PROD && <meta http-equiv="Content-Security-Policy" content="__CSP_POLICY__" />}
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    {defaultHome && <script is:inline set:html={homeRedirect} />}
     <meta name="generator" content={Astro.generator} />
+    <meta name="google" content="notranslate" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
@@ -88,16 +114,6 @@ const preloadFonts =
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#F5F7FD" />
 
-    {
-      /*
-      Preload what the first paint needs, and no more: the locale's body font and
-      the face its headline is set in (Source Serif 4 in English; Khmer headlines
-      stay on Kantumruy, with Inter for the Latin around them). The other script
-      still loads — the language toggle renders "ខ្មែរ" on English pages — but
-      lazily, under font-display: swap, so it never blocks LCP for one word of
-      chrome.
-    */
-    }
     {
       preloadFonts.map((font) => (
         <link
@@ -109,8 +125,9 @@ const preloadFonts =
         />
       ))
     }
-    {hasSanity && <link rel="preconnect" href="https://cdn.sanity.io" />}
-    <link rel="preload" as="image" type="image/svg+xml" href="/logo/sko-logo-full-colour.svg" />
+    {hasSanity && <link rel="dns-prefetch" href="https://cdn.sanity.io" />}
+    <link rel="preload" as="image" type="image/svg+xml" href={preloadLogo} fetchpriority="low" />
+    <script is:inline type="speculationrules" set:html={speculationRules} />
     <SeoHead
       lang={lang}
       pathname={pathname}
@@ -124,51 +141,8 @@ const preloadFonts =
       jsonLd={jsonLd}
       orgJsonLd={orgJsonLd}
     />
-
-    {
-      /*
-      Marks a page reached by a view transition so it lazy-loads in (Page
-      arrival in global.css). pagereveal fires just before the first frame,
-      so this has to be inline in the head. The mark is dropped once the
-      slowest arrival (270ms late, 900ms long) has played, and on pageswap
-      before this page is captured on the way out, so a page brought back from
-      the back/forward cache arrives afresh.
-    */
-    }
-    <script is:inline>
-      (function () {
-        var root = document.documentElement;
-        var settled = 0;
-        addEventListener('pagereveal', function (event) {
-          if (!event.viewTransition) return;
-          root.setAttribute('data-arriving', '');
-          clearTimeout(settled);
-          settled = setTimeout(function () {
-            root.removeAttribute('data-arriving');
-          }, 1500);
-        });
-        addEventListener('pageswap', function () {
-          clearTimeout(settled);
-          root.removeAttribute('data-arriving');
-        });
-      })();
-    </script>
   </head>
-  <body class="bg-white">
-    {
-      gtmId && (
-        <noscript>
-          <iframe
-            src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
-            height="0"
-            width="0"
-            style="display:none;visibility:hidden"
-          />
-        </noscript>
-      )
-    }
-    {intro && <PageLoader />}
-
+  <body data-cf-token={(!minimal && cfAnalyticsToken) || undefined}>
     <a
       href="#main"
       class="sr-only-focusable absolute top-3 left-3 z-[100] rounded-[var(--radius-md)] bg-[color:var(--color-blue-700)] px-4 py-3 text-[15px] font-semibold text-white no-underline"
@@ -176,20 +150,78 @@ const preloadFonts =
       {t(lang, 'skipToContent')}
     </a>
 
-    <Header lang={lang} pathname={pathname} settings={settings} overlay={headerOverlay} />
+    {
+      minimal ? (
+        <MinimalHeader lang={lang} pathname={pathname} settings={settings} />
+      ) : (
+        <Header lang={lang} pathname={pathname} settings={settings} darkHero={darkHero} />
+      )
+    }
 
     <main id="main" tabindex="-1">
       <slot />
     </main>
 
-    <Footer lang={lang} settings={settings} pathname={pathname} />
-
-    <ButterflyCursor />
+    {!minimal && !noFooter && <Footer lang={lang} settings={settings} pathname={pathname} />}
 
     <script>
       import { revealOnEntry } from '~/lib/reveal';
+      import { initScrollMotion } from '~/lib/scroll-motion';
+      import { onPageLoad } from '~/lib/page-load';
+      import { hydrateDeferredImages, revealWhenLoaded, whenSettled } from '~/lib/lazy';
 
-      revealOnEntry();
+      onPageLoad((signal) => {
+        revealWhenLoaded();
+        hydrateDeferredImages();
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            if (signal.aborted) return;
+            revealOnEntry();
+            initScrollMotion(signal);
+          }),
+        );
+      });
+
+      if (!HTMLScriptElement.supports?.('speculationrules')) {
+        const prefetched = new Set<string>();
+        const canPrefetch = () => {
+          const connection = (
+            navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
+          ).connection;
+          if (connection?.saveData) return false;
+          return !connection?.effectiveType || !/^(slow-)?2g$/.test(connection.effectiveType);
+        };
+        const onIntent = (event: Event) => {
+          if (!canPrefetch()) return;
+          const anchor = (event.target as Element | null)?.closest?.<HTMLAnchorElement>('a[href]');
+          if (!anchor || anchor.target || anchor.hasAttribute('download')) return;
+          if (anchor.origin !== location.origin || anchor.pathname === location.pathname) return;
+          if (anchor.pathname.startsWith('/api/') || prefetched.has(anchor.href)) return;
+          prefetched.add(anchor.href);
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.as = 'document';
+          link.href = anchor.href;
+          document.head.append(link);
+        };
+        document.addEventListener('pointerenter', onIntent, { capture: true, passive: true });
+        document.addEventListener('touchstart', onIntent, { passive: true });
+        document.addEventListener('focusin', onIntent, { passive: true });
+      }
+
+      const token = document.body.dataset.cfToken;
+      if (token) {
+        const loadBeacon = () =>
+          whenSettled(() => {
+            const script = document.createElement('script');
+            script.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+            script.dataset.cfBeacon = JSON.stringify({ token });
+            document.head.append(script);
+          });
+        if ('prerendering' in document && document.prerendering)
+          document.addEventListener('prerenderingchange', loadBeacon, { once: true });
+        else loadBeacon();
+      }
     </script>
   </body>
 </html>

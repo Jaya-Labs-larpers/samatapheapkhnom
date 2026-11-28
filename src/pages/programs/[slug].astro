@@ -1,7 +1,7 @@
 ---
 import { getProgram, getPrograms } from '~/lib/content';
-import ProgramDetail from '~/page-templates/ProgramDetail.astro';
-import type { Program } from '~/lib/content/types';
+import type { Program as ProgramDoc } from '~/lib/content/types';
+import Program from '~/page-templates/sko/Program.astro';
 
 export async function getStaticPaths() {
   const list = await getPrograms();
@@ -11,12 +11,7 @@ export async function getStaticPaths() {
     .filter((route): route is NonNullable<typeof route> => route !== null);
 }
 
-const { program } = Astro.props as { program: Program };
+const { program } = Astro.props as { program: ProgramDoc };
 ---
 
-<!--
-  Route shell. All page markup lives in src/page-templates/ so the English and
-  Khmer routes render from one source and can never drift apart.
-  Locale: en
--->
-<ProgramDetail lang="en" program={program} />
+<Program lang="en" program={program} />

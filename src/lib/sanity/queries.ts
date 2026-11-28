@@ -95,7 +95,13 @@ export const activityBySlugQuery = `*[_type == "activity" && slug.current == $sl
 }`;
 
 export const storiesQuery = `*[_type == "story" && consentConfirmed == true] | order(_createdAt desc){
-  _id, quote, body, personName, personRole, useSilhouette,
+  _id, "slug": slug.current, quote, body, personName, personRole, useSilhouette,
+  photo ${IMAGE},
+  program->${PROGRAM_REF}
+}`;
+
+export const storyBySlugQuery = `*[_type == "story" && coalesce(slug.current, _id) == $slug && consentConfirmed == true][0]{
+  _id, "slug": slug.current, quote, ${BODY}, personName, personRole, useSilhouette,
   photo ${IMAGE},
   program->${PROGRAM_REF}
 }`;

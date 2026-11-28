@@ -1,0 +1,37 @@
+---
+import type { SkAction } from '~/lib/skeleton-content';
+
+interface Props {
+  primary?: string;
+  secondary?: string;
+  href?: string;
+  actions?: SkAction[];
+}
+
+const { primary = 'Button label', secondary, href = '/contact', actions } = Astro.props;
+---
+
+{
+  actions ? (
+    actions.length > 0 && (
+      <div class="sk-actions">
+        {actions.map((action) => (
+          <a href={action.href} class:list={['sk-btn', action.outline && 'sk-btn--outline']}>
+            {action.label}
+          </a>
+        ))}
+      </div>
+    )
+  ) : (
+    <div class="sk-actions">
+      <a href={href} class="sk-btn">
+        {primary}
+      </a>
+      {secondary && (
+        <a href={href} class="sk-btn sk-btn--outline">
+          {secondary}
+        </a>
+      )}
+    </div>
+  )
+}

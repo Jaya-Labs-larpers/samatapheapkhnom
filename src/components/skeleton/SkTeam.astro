@@ -1,0 +1,505 @@
+---
+import type { Locale } from '~/lib/i18n/config';
+import type { TeamMember } from '~/lib/content/types';
+import { langAttr, pick } from '~/lib/i18n/utils';
+import ButterflyGlyph from '~/components/media/ButterflyGlyph.astro';
+
+interface Props {
+  lang: Locale;
+  team: TeamMember[];
+}
+
+const { lang, team } = Astro.props;
+
+const ids = new Set(team.map((member) => member._id));
+const reportsOf = (id: string) => team.filter((member) => member.reportsTo === id);
+const roots = team.filter((member) => !member.reportsTo || !ids.has(member.reportsTo));
+const [head] = roots.length === 1 ? roots : [];
+const columns = head ? reportsOf(head._id) : roots;
+const middle = (columns.length - 1) / 2;
+
+const label = (member: TeamMember) => {
+  const name = pick(member.name, lang);
+  const role = pick(member.role, lang);
+  return { name: name.value, nameLang: langAttr(name), role: role.value, roleLang: langAttr(role) };
+};
+const headLabel = head ? label(head) : null;
+
+const segmenter = new Intl.Segmenter(lang, { granularity: 'grapheme' });
+const monogram = (name: string | null | undefined) =>
+  (name ?? '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => [...segmenter.segment(word)][0]?.segment ?? '')
+    .join('');
+---
+
+<div class="tree" data-team-tree style={`--cols:${columns.length}`}>
+  {
+    head && headLabel && (
+      <div class="tree__root">
+        <div class="node node--head" tabindex="0">
+          <span class="node__photo" aria-hidden="true">
+            {monogram(headLabel.name)}
+          </span>
+          <span class="node__text">
+            <b lang={headLabel.nameLang}>{headLabel.name}</b>
+            <span lang={headLabel.roleLang}>{headLabel.role}</span>
+          </span>
+          <ButterflyGlyph class="node__fly" />
+        </div>
+      </div>
+    )
+  }
+  <ul class="tree__leads">
+    {
+      columns.map((lead, index) => {
+        const leadLabel = label(lead);
+        const staff = reportsOf(lead._id);
+        const side = index < middle ? 'l' : index > middle ? 'r' : 'c';
+        return (
+          <li
+            class="tree__col"
+            data-side={side}
+            style={`--o:${index};--d:${Math.abs(index - middle)}`}
+          >
+            <div class="node node--lead" tabindex="0">
+              <span class="node__photo" aria-hidden="true">
+                {monogram(leadLabel.name)}
+              </span>
+              <span class="node__text">
+                <b lang={leadLabel.nameLang}>{leadLabel.name}</b>
+                <span lang={leadLabel.roleLang}>{leadLabel.role}</span>
+              </span>
+              <ButterflyGlyph class="node__fly" />
+            </div>
+            {staff.length > 0 && (
+              <ul class="tree__staff">
+                {staff.map((member, i) => {
+                  const memberLabel = label(member);
+                  return (
+                    <li class:list={['seat', member.vacancy && 'seat--open']} style={`--i:${i}`}>
+                      {member.vacancy && <ButterflyGlyph class="seat__fly" />}
+                      <b lang={memberLabel.nameLang}>{memberLabel.name}</b>
+                      {memberLabel.role && (
+                        <span lang={memberLabel.roleLang}>{memberLabel.role}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</div>
+
+<script>
+  import { drawTeamTrees } from '~/lib/team-tree';
+
+  drawTeamTrees();
+</script>
+
+<style>
+  .tree {
+    --line: color-mix(in srgb, var(--color-blue-700) 38%, transparent);
+    --line-w: 1.5px;
+    --gap: 32px;
+    --rail: 28px;
+    --k: 1;
+    --uniform: #f3cf5a;
+    --card-bg: #fff;
+    --card-border: var(--color-line);
+    --ink: var(--color-ink-900);
+    --sub: var(--color-ink-400);
+    --mono-bg: var(--color-blue-50);
+    --mono-ink: var(--color-blue-800);
+    --head-bg: var(--color-blue-900);
+    --head-ink: #fff;
+    --head-sub: rgb(255 255 255 / 0.78);
+    --head-mono-bg: var(--uniform);
+    --head-mono-ink: var(--color-blue-900);
+    --open-bg: var(--color-blue-50);
+    --open-border: var(--color-ink-400);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* On the navy band the chart turns light-on-dark, and the director takes the
+     yellow of the team's uniform. */
+  :global(.team-structure) .tree {
+    --line: rgb(255 255 255 / 0.3);
+    --card-bg: rgb(255 255 255 / 0.06);
+    --card-border: rgb(255 255 255 / 0.16);
+    --ink: #fff;
+    --sub: rgb(255 255 255 / 0.68);
+    --mono-bg: rgb(255 255 255 / 0.12);
+    --mono-ink: #fff;
+    --head-bg: var(--uniform);
+    --head-ink: var(--color-blue-900);
+    --head-sub: rgb(11 27 48 / 0.72);
+    --head-mono-bg: var(--color-blue-900);
+    --head-mono-ink: var(--uniform);
+    --open-bg: transparent;
+    --open-border: rgb(255 255 255 / 0.4);
+  }
+
+  :global(.team-structure) .tree :global(:is(.node__fly, .seat__fly)) {
+    filter: brightness(0) invert(0.92);
+  }
+
+  /* ---- Nodes ---------------------------------------------------------- */
+  .node {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    background: var(--card-bg);
+    outline-offset: 3px;
+    transition:
+      translate 280ms var(--ease-reveal),
+      box-shadow 280ms var(--ease-reveal),
+      border-color 200ms ease;
+  }
+  .node:is(:hover, :focus-visible) {
+    translate: 0 -3px;
+    border-color: var(--uniform);
+    box-shadow: 0 14px 28px -14px rgb(0 0 0 / 0.45);
+  }
+  .node--head {
+    background: var(--head-bg);
+    border-color: var(--head-bg);
+    color: var(--head-ink);
+    padding: 16px 22px 16px 16px;
+  }
+  .node--head:is(:hover, :focus-visible) {
+    border-color: var(--head-bg);
+  }
+  .node__photo {
+    flex: none;
+    width: 56px;
+    height: 56px;
+    overflow: hidden;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--mono-bg);
+    color: var(--mono-ink);
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .node--head .node__photo {
+    width: 64px;
+    height: 64px;
+    font-size: 22px;
+    background: var(--head-mono-bg);
+    color: var(--head-mono-ink);
+  }
+  .node__text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .node__text b {
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.3;
+  }
+  .node__text span {
+    color: var(--sub);
+    font-size: 14px;
+    line-height: 1.35;
+  }
+  .node--head .node__text b {
+    color: var(--head-ink);
+  }
+  .node--head .node__text span {
+    color: var(--head-sub);
+  }
+
+  /* A butterfly settles on a card when it is pointed at, flaps, and stills. */
+  :global(.node__fly) {
+    position: absolute;
+    top: -14px;
+    right: 14px;
+    width: 26px;
+    opacity: 0;
+    rotate: 14deg;
+    translate: -8px 10px;
+    pointer-events: none;
+    transition:
+      opacity 220ms ease,
+      translate 420ms var(--ease-pop),
+      rotate 420ms var(--ease-pop);
+  }
+  .node:is(:hover, :focus-visible) :global(.node__fly) {
+    opacity: 1;
+    rotate: -6deg;
+    translate: 0 0;
+  }
+  .node:is(:hover, :focus-visible) :global(.node__fly) :global(.butterfly-wings) {
+    animation: wing-beat 260ms ease-in-out 4;
+  }
+  @keyframes wing-beat {
+    50% {
+      transform: scaleX(0.3);
+    }
+  }
+
+  /* ---- Staff under a lead ---------------------------------------------- */
+  .tree__staff {
+    position: relative;
+    display: grid;
+    gap: 0;
+    margin: 0 0 0 calc(16px + 28px);
+    padding: 14px 0 0 0;
+    list-style: none;
+  }
+  .tree__staff::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 18px;
+    width: var(--line-w);
+    background: var(--line);
+    transform-origin: top;
+    transform: scaleY(var(--k));
+  }
+  .seat {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    padding: 7px 0 7px 22px;
+  }
+  .seat::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 1.05em;
+    width: 14px;
+    height: var(--line-w);
+    background: var(--line);
+    transform-origin: left;
+    transform: scaleX(var(--k));
+  }
+  .seat b {
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .seat span {
+    color: var(--sub);
+    font-size: 13.5px;
+  }
+  .seat--open {
+    align-items: center;
+    margin-top: 6px;
+    padding: 8px 12px 8px 36px;
+    margin-left: 22px;
+    border: 1px dashed var(--open-border);
+    border-radius: 999px;
+    background: var(--open-bg);
+    width: fit-content;
+  }
+  .seat--open::before {
+    left: -22px;
+    width: 22px;
+  }
+  .seat--open b {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  :global(.seat__fly) {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    width: 16px;
+    margin-top: -6px;
+    opacity: 0.7;
+  }
+
+  /* ---- Phone and tablet: one rail down the left ------------------------ */
+  .tree__root {
+    position: relative;
+    padding-bottom: var(--gap);
+  }
+  .tree__root::after {
+    content: '';
+    position: absolute;
+    left: calc(16px + 32px);
+    bottom: 0;
+    width: var(--line-w);
+    height: var(--gap);
+    background: var(--line);
+    transform-origin: top;
+    transform: scaleY(var(--k));
+  }
+  .tree__leads {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    margin: 0 0 0 calc(16px + 32px);
+    padding: 0 0 0 28px;
+    list-style: none;
+  }
+  .tree__leads::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 40px;
+    width: var(--line-w);
+    background: var(--line);
+    transform-origin: top;
+    transform: scaleY(var(--k));
+  }
+  .tree__col {
+    position: relative;
+    --t: calc(280ms + var(--o) * 170ms);
+  }
+  .tree__col::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 42px;
+    width: 28px;
+    height: var(--line-w);
+    background: var(--line);
+    transform-origin: left;
+    transform: scaleX(var(--k));
+  }
+
+  /* ---- Desktop: trunk, bus, drops -------------------------------------- */
+  @media (min-width: 64rem) {
+    .tree__root {
+      display: flex;
+      justify-content: center;
+    }
+    .tree__root::after {
+      left: 50%;
+      margin-left: calc(var(--line-w) / -2);
+    }
+    .tree__leads {
+      display: grid;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+      gap: 0;
+      margin: 0;
+      padding: 0;
+    }
+    .tree__leads::before {
+      display: none;
+    }
+    .tree__col {
+      padding: var(--gap) 10px 0;
+      --t: calc(280ms + var(--d) * 150ms);
+    }
+    /* The bus: each column draws its stretch outward from the middle of the tree. */
+    .tree__col::before {
+      left: 0;
+      right: 0;
+      top: 0;
+      width: auto;
+      transform-origin: center;
+      transform: scaleX(var(--k));
+    }
+    .tree__col[data-side='l']::before {
+      transform-origin: right;
+    }
+    .tree__col[data-side='r']::before {
+      transform-origin: left;
+    }
+    .tree__col:first-child::before {
+      left: 50%;
+    }
+    .tree__col:last-child::before {
+      right: 50%;
+    }
+    .tree__col:only-child::before {
+      display: none;
+    }
+    .tree__col::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: var(--line-w);
+      height: var(--gap);
+      margin-left: calc(var(--line-w) / -2);
+      background: var(--line);
+      transform-origin: top;
+      transform: scaleY(var(--k));
+    }
+  }
+
+  /* ---- Drawing in -------------------------------------------------------
+     Only trees set aside by team-tree.ts (below the fold on arrival) animate.
+     Without the script, or under reduced motion, the whole chart just shows. */
+  .tree[data-tree='pending'] {
+    --k: 0;
+  }
+  .tree[data-tree='pending'] :is(.node, .seat) {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  .tree[data-tree='drawn'] .tree__root::after {
+    transition: transform 420ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .tree[data-tree='drawn'] .tree__leads::before,
+  .tree[data-tree='drawn'] .tree__col::before,
+  .tree[data-tree='drawn'] .tree__col::after {
+    transition: transform 520ms cubic-bezier(0.4, 0, 0.2, 1) var(--t, 0ms);
+  }
+  .tree[data-tree='drawn'] .tree__col::after {
+    transition-delay: calc(var(--t) + 300ms);
+  }
+  .tree[data-tree='drawn'] .node--head {
+    transition:
+      opacity 600ms var(--ease-reveal),
+      translate 700ms var(--ease-pop);
+  }
+  .tree[data-tree='drawn'] .node--lead {
+    transition:
+      opacity 600ms var(--ease-reveal) calc(var(--t) + 480ms),
+      translate 700ms var(--ease-pop) calc(var(--t) + 480ms),
+      box-shadow 280ms var(--ease-reveal),
+      border-color 200ms ease;
+  }
+  .tree[data-tree='drawn'] .tree__staff::before,
+  .tree[data-tree='drawn'] .seat::before {
+    transition: transform 420ms cubic-bezier(0.4, 0, 0.2, 1)
+      calc(var(--t) + 700ms + var(--i, 0) * 70ms);
+  }
+  .tree[data-tree='drawn'] .tree__staff::before {
+    transition-delay: calc(var(--t) + 700ms);
+  }
+  .tree[data-tree='drawn'] .seat {
+    transition:
+      opacity 500ms var(--ease-reveal) calc(var(--t) + 850ms + var(--i, 0) * 70ms),
+      translate 600ms var(--ease-pop) calc(var(--t) + 850ms + var(--i, 0) * 70ms);
+  }
+  .tree[data-tree='drawn'] .tree__root::after {
+    transition-delay: 0ms;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tree :is(:global(.node__fly), .node, .seat),
+    .tree .tree__root::after {
+      transition: none !important;
+    }
+    .tree :global(.node__fly) :global(.butterfly-wings) {
+      animation: none !important;
+    }
+  }
+</style>

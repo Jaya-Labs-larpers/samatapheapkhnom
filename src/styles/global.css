@@ -1,56 +1,25 @@
 @import 'tailwindcss';
 @import './theme.css';
 
-/* ============================================================================
-   Component layer.
-   Deliberately small — only primitives that repeat across many components and
-   would be noise as long utility strings. Everything else uses utilities
-   directly in the .astro file where it can be read in context.
-   ========================================================================= */
-
 /*
  * Tailwind's preflight hides [hidden] with a :where() rule of zero specificity,
- * so any display utility on the same element (e.g. `flex` on the mobile nav
- * panel) wins the cascade and the "hidden" element stays visible. Make the
- * attribute authoritative.
+ * so any display utility on the same element wins the cascade unless !important.
  */
 [hidden] {
   display: none !important;
 }
 
 /* ============================================================================
-   TEXT MEASURE
+   BASE LAYOUT
    ----------------------------------------------------------------------------
-   Every text element inside <main> is capped at one shared width and anchored
-   to the left edge of its .wrap, so running text starts and ends on the same
-   two vertical lines on every page — the same box, page after page. The header
-   and footer sit outside <main> and are deliberately untouched: their job is to
-   span the full width.
-
-   Written with :where() so the rule carries ZERO specificity. It is a default,
-   not a decree — any max-w-* utility in the markup still wins the cascade, so a
-   wide table, a card grid or a full-bleed figure opts out with `max-w-none`
-   without an !important anywhere.
-
-   Responsive behaviour comes for free: a max-width is a cap, not a width, so
-   below ~44rem every one of these elements is simply as wide as its column, and
-   .wrap's fluid --spacing-gutter keeps the side margins identical at every
-   breakpoint. The Khmer value arrives through --measure (theme.css), which the
-   language cascade sets.
+   Pages carry their own widths and tints (see components/design). <main> only
+   guarantees the first screen is filled.
    ========================================================================= */
 @layer base {
-  main :where(p, h1, h2, h3, h4, h5, h6, blockquote, dl, figcaption) {
-    max-width: var(--measure);
+  html {
+    overscroll-behavior-y: none;
   }
 
-  /* Every page but the home page sits on the home hero's cool tint. Long pages
-     band their sections white and --color-surface-sunken in the templates. */
-  main:not(:has(> [data-home-hero])) {
-    background: var(--color-surface-subtle);
-  }
-
-  /* A page with no hero band (404, an activity) still fills the first screen
-     with its own tint before the footer can show. */
   main {
     min-height: calc(100vh - var(--header-h));
     min-height: calc(100svh - var(--header-h));
@@ -63,16 +32,14 @@
    Every animation here is a *continuity transition* or *feedback* — it orients
    the visitor or confirms their action. Nothing decorates.
 
-   Deliberately still absent: parallax. Content boxes rise into place from below
-   as they come into view (.reveal), and chosen impact figures count up
-   (~/lib/count-up); both replay whenever the visitor scrolls back down to
-   them, and neither ever hides something already on screen.
+   Deliberately still absent: parallax. Content boxes and section headings rise
+   into place as they come into view (.reveal), photos unfold (.clip-reveal),
+   and chosen impact figures count up (~/lib/count-up). None of them ever hides
+   something already on screen.
 
-   Script cost: one pageswap listener (card-morph.ts) that names the clicked
-   card's photo, the inline pagereveal listener in BaseLayout that marks a
-   page arriving by a view transition, and the hero butterfly loop. Page
-   transitions are the native cross-document API, so unsupported browsers
-   navigate exactly as before.
+   Page transitions run natively via CSS @view-transition and Speculation Rules
+   (BaseLayout): content crossfades between pages while the header holds still.
+   Browsers without view transitions navigate normally.
    ========================================================================= */
 
 /* Lets the accordion transition between 0 and `auto` height. */
@@ -80,143 +47,84 @@
   interpolate-size: allow-keywords;
 }
 
-/* --- Page transitions ----------------------------------------------------- */
-@view-transition {
-  navigation: auto;
-}
-
-/*
- * The chrome holds still and only the content changes — a *continuity
- * transition*. Crossfading the header too would make the logo and nav flicker
- * on every click, which reads as a page reload rather than a smooth move.
- */
-header.site-header {
-  view-transition-name: site-header;
-  height: var(--header-h);
-  background: var(--color-canvas);
-  border-bottom: 1px solid var(--color-line-subtle);
-  transition:
-    background-color var(--duration-base) var(--ease-out-soft),
-    border-color var(--duration-base) var(--ease-out-soft),
-    box-shadow var(--duration-base) var(--ease-out-soft),
-    translate 300ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: translate;
-}
-
-/* Down the page, a returning header needs a lift to separate it from the text
-   it now sits over. */
-header.site-header[data-scrolled] {
-  box-shadow: var(--shadow-md);
-}
-
-/* Scrolled away while reading down; any upward scroll brings it straight back
-   (the script in Header.astro). Leaving is a touch slower and eases in, so it
-   slides off rather than snapping; returning is quick, because the visitor
-   asked for it. */
-header.site-header[data-hidden] {
-  translate: 0 -100%;
-  box-shadow: none;
-  transition-timing-function:
-    var(--ease-out-soft), var(--ease-out-soft), var(--ease-out-soft), cubic-bezier(0.4, 0, 1, 1);
-  transition-duration: var(--duration-base), var(--duration-base), var(--duration-base), 360ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  header.site-header,
-  header.site-header[data-hidden] {
-    transition-duration: 0s;
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
   }
 }
 
-/* How much of the top of the window the header covers right now: sticky
-   columns sit this far down, and close the gap when the header scrolls away. */
-:root {
-  --header-offset: var(--header-h);
-}
-:root:has(header.site-header[data-hidden]) {
-  --header-offset: 0px;
-}
-
-/*
- * Overlay mode, for pages that open on a full-bleed hero: the header keeps its
- * place but gives up its surface, so the art runs to the top of the window
- * instead of starting under a white band. It takes the paper back as soon as
- * the page scrolls — past that point the nav would sit on running text, and no
- * amount of contrast juggling makes that legible.
- *
- * `data-at-top` is rendered server-side and only corrected by the observer in
- * Header.astro, so a page loaded at the top paints transparent immediately
- * instead of flashing white.
- */
-header.site-header[data-overlay][data-at-top] {
-  background: transparent;
-  border-bottom-color: transparent;
-  box-shadow: none;
-}
-
-/*
- * Marks the scroll depth at which the header takes its background back. A bare
- * marker observed once, rather than a scroll listener that runs every frame.
- */
-.header-sentinel {
-  position: absolute;
-  top: 120px;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  pointer-events: none;
-}
-
-/*
- * The other half of overlay mode: the hero starts at the very top of the
- * window rather than below the header, so its art is what fills that band.
- * Content inside the hero still has to clear the header, which is why the
- * section pays the height back as padding where the art is a background
- * layer rather than a block in the flow.
- *
- * The band alone fills the first screen on every device. svh is the window
- * with a phone's browser bars showing, so nothing else appears above the fold.
- */
-.hero-overlap {
-  margin-top: calc(-1 * var(--header-h));
-  min-height: 100vh;
-  min-height: 100svh;
-}
-
-footer.site-footer {
-  view-transition-name: site-footer;
-}
-main {
-  view-transition-name: page-content;
-}
-
-::view-transition-group(site-header),
-::view-transition-group(site-footer) {
-  animation: none;
-}
-
-@keyframes page-enter {
+@keyframes page-fade-in {
   from {
     opacity: 0;
   }
-}
-@keyframes page-exit {
   to {
-    opacity: 0;
+    opacity: 1;
   }
 }
 
-/*
- * Asymmetric: the outgoing page leaves quickly, the incoming one eases in.
- * Only a crossfade: nothing on either page can be clicked while a transition
- * runs, so it stays short, and the incoming page's slow rise plays on the
- * live page instead (Page arrival, below).
- */
-::view-transition-old(page-content) {
-  animation: page-exit 110ms ease-out both;
+/* Explicit normal blending avoids UA plus-lighter additive white flashes when
+   the outgoing snapshot stays opaque underneath the incoming one. */
+::view-transition-group(root) {
+  animation: none;
 }
-::view-transition-new(page-content) {
-  animation: page-enter 260ms var(--ease-out-soft) both;
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: page-fade-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  mix-blend-mode: normal;
+}
+::view-transition-group(site-header) {
+  z-index: 10;
+  animation: none;
+}
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(site-header) {
+  opacity: 0;
+}
+::view-transition-group(cookie-panel) {
+  z-index: 20;
+  animation: none;
+}
+::view-transition-old(cookie-panel),
+::view-transition-new(cookie-panel) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(cookie-panel) {
+  opacity: 0;
+}
+
+/* The sticky header is lifted into its own transition layer, exposing body
+   behind it in the root snapshot. Matching the dark hero's colour prevents a
+   white strip from flashing behind the transparent home header on switch. */
+body:has(#main > [data-hero-dark]:first-child, #main > :first-child > [data-hero-dark]:first-child) {
+  background: linear-gradient(
+    var(--color-blue-900) var(--header-h),
+    var(--color-canvas) var(--header-h)
+  );
+}
+
+header.site-header {
+  height: var(--header-h);
+  view-transition-name: site-header;
+}
+
+#cookie-panel {
+  view-transition-name: cookie-panel;
+}
+
+:root {
+  --header-offset: var(--header-h);
+}
+
+main > .sk-hero--home[data-hero-dark] {
+  min-height: calc(100lvh - var(--header-h));
 }
 
 /*
@@ -224,7 +132,7 @@ main {
  * The two crops differ, so both snapshots cover the group rather than stretch.
  */
 ::view-transition-group(card-media) {
-  animation-duration: 320ms;
+  animation-duration: 140ms;
   animation-timing-function: var(--ease-out-soft);
 }
 ::view-transition-old(card-media),
@@ -233,28 +141,56 @@ main {
   object-fit: cover;
 }
 
-/* --- Box reveal ----------------------------------------------------------
- * Content boxes (cards, lists, stat and quote panels, the call-to-action
- * band) rise into place from below as they come into view, and again each time
- * the visitor scrolls back down to them. The script (~/lib/reveal) only sets a
- * box aside while it is fully below the window, so nothing visible is hidden,
- * and it does nothing at all under reduced motion. `translate` rather than `transform`, so a card's hover
- * lift is untouched; the transition is removed again once it has played. */
 :root {
   --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-pop: cubic-bezier(0.34, 1.3, 0.64, 1);
-  --reveal-rise: 48px;
-  --reveal-fade: 700ms;
-  --reveal-move: 900ms;
+  --ease-settle: cubic-bezier(0, 0, 0, 1);
+  --ease-unfold: cubic-bezier(0.2, 0, 0.2, 1);
+  --ease-fade-in: cubic-bezier(0.6, 0, 0.2, 1);
+  --reveal-rise: 30px;
+  --reveal-fade: 1000ms;
+  --reveal-move: 1000ms;
+  --clip-move: 1500ms;
+  --clip-fade: 1150ms;
 }
-.reveal[data-reveal='pending'] {
+[data-reveal='pending']:not(.clip-reveal) {
   opacity: 0;
   translate: 0 var(--reveal-rise);
 }
-.reveal[data-reveal='shown'] {
+[data-reveal='shown']:not(.clip-reveal) {
   transition:
-    opacity var(--reveal-fade) var(--ease-reveal) var(--reveal-delay, 0ms),
-    translate var(--reveal-move) var(--ease-pop) var(--reveal-delay, 0ms);
+    opacity var(--reveal-fade) ease var(--reveal-delay, 0ms),
+    translate var(--reveal-move) var(--ease-settle) var(--reveal-delay, 0ms);
+}
+.clip-reveal[data-reveal='pending'] {
+  opacity: 0;
+  clip-path: inset(0 10% 10% 0);
+  scale: 0.9;
+}
+.clip-reveal[data-reveal='pending'] > :is(img, picture, video, .blur-up) {
+  scale: 1.1111;
+}
+.clip-reveal[data-reveal='shown'] {
+  clip-path: inset(0 0 0 0);
+  transition:
+    clip-path var(--clip-move) var(--ease-unfold) var(--reveal-delay, 0ms),
+    opacity var(--clip-fade) var(--ease-fade-in) var(--reveal-delay, 0ms),
+    scale var(--clip-move) var(--ease-settle) var(--reveal-delay, 0ms);
+}
+.clip-reveal[data-reveal='shown'] > :is(img, picture, video, .blur-up) {
+  transition: scale var(--clip-move) var(--ease-settle) var(--reveal-delay, 0ms);
+}
+
+@keyframes header-slide-down {
+  from {
+    translate: 0 -100%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-header[data-home]:not([data-skip-intro]) {
+    animation: header-slide-down 280ms var(--ease-reveal) backwards;
+  }
 }
 
 /* A revealed grid whose cells then arrive one after another (the partner
@@ -287,115 +223,34 @@ main {
   transition-delay: calc(var(--reveal-delay, 0ms) + 320ms + min(var(--i, 0), 10) * 160ms);
 }
 
-/* --- Page arrival -----------------------------------------------------------
- * A page reached by a view transition lazy-loads in the way a box does on
- * scroll: each section of <main> rises into place with the box reveal's
- * motion, 90ms after the one before, and the hero's butterflies follow on
- * beats of their own — as they also do on the first page of a visit, where
- * ButterflyField marks the flock itself. html[data-arriving] comes from the
- * inline script in BaseLayout. `backwards`, so nothing is held once it ends:
- * a box set aside by the reveal keeps its own state underneath. */
-@keyframes arrive-fade {
-  from {
-    opacity: 0;
-  }
+/* --- Scroll motion ----------------------------------------------------------
+ * Smooth scrolling (~/lib/smooth-scroll) needs these four rules, and text
+ * written out on scroll (~/lib/scroll-text) maps its progress to colour here.
+ * Without the scripts none of it applies and the text keeps its own colour. */
+html.lenis,
+html.lenis body {
+  height: auto;
 }
-@keyframes arrive-rise {
-  from {
-    translate: 0 var(--reveal-rise);
-  }
+.lenis.lenis-stopped {
+  overflow: clip;
 }
-@media (prefers-reduced-motion: no-preference) {
-  html[data-arriving] main > *,
-  html[data-arriving] .flock-bird,
-  .butterfly-flock[data-arriving] > .flock-bird {
-    animation:
-      arrive-fade var(--reveal-fade) var(--ease-reveal) var(--arrive-delay, 0ms) backwards,
-      arrive-rise var(--reveal-move) var(--ease-pop) var(--arrive-delay, 0ms) backwards;
-  }
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
 }
-main > :nth-child(2),
-.flock-bird:nth-child(1) {
-  --arrive-delay: 90ms;
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
-main > :nth-child(3),
-.flock-bird:nth-child(2) {
-  --arrive-delay: 180ms;
+.scroll-text__word {
+  display: inline-block;
+  white-space: nowrap;
 }
-main > :nth-child(n + 4),
-.flock-bird:nth-child(3) {
-  --arrive-delay: 270ms;
-}
-
-/* --- Mobile navigation panel ---------------------------------------------- */
-@keyframes panel-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-}
-@keyframes panel-exit {
-  to {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-}
-
-#mobile-nav:not([hidden]) {
-  animation: panel-enter 240ms var(--ease-out-soft) both;
-}
-#mobile-nav[data-closing] {
-  animation: panel-exit 160ms ease-in both;
-}
-
-/* The close button's cross starts as two parallel bars, where the menu icon
-   was, then closes up and turns, so opening reads as the icon becoming an X.
-   Open only: the panel's close listens for its own animationend, and a child
-   animation finishing during the exit would end it early. */
-.menu-x {
-  position: relative;
-  display: block;
-  width: 20px;
-  height: 20px;
-}
-.menu-x > span {
-  position: absolute;
-  left: 1px;
-  right: 1px;
-  top: calc(50% - 0.75px);
-  height: 1.5px;
-  border-radius: 1px;
-  background: currentColor;
-  rotate: 45deg;
-}
-.menu-x > span:last-child {
-  rotate: -45deg;
-}
-#mobile-nav:not([hidden], [data-closing]) .menu-x > span {
-  animation: menu-x-first 420ms var(--ease-reveal) both;
-}
-#mobile-nav:not([hidden], [data-closing]) .menu-x > span:last-child {
-  animation-name: menu-x-last;
-}
-@keyframes menu-x-first {
-  0% {
-    translate: 0 -4px;
-    rotate: 0deg;
-  }
-  40% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
-}
-@keyframes menu-x-last {
-  0% {
-    translate: 0 4px;
-    rotate: 0deg;
-  }
-  40% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
+.scroll-text__u {
+  --t: clamp(0, (var(--p, 1) * var(--n) - var(--i) * 2) / 10, 1);
+  color: color-mix(
+    in oklab,
+    var(--color-ink-400),
+    var(--color-ink-900) calc(var(--t) * (2 - var(--t)) * 100%)
+  );
 }
 
 /* --- Dialogs -------------------------------------------------------------- */
@@ -504,54 +359,68 @@ details[open] > summary > .disclosure-icon {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.8125rem 1.375rem;
+    min-height: 2.875rem;
+    padding: 0.75rem 1.5rem;
     border: 1px solid transparent;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-cta);
     font-size: 0.9375rem;
     font-weight: 600;
-    line-height: 1;
+    line-height: 1.15;
     text-decoration: none;
     white-space: nowrap;
+    max-width: 100%;
+    user-select: none;
     cursor: pointer;
     transition:
-      background-color var(--duration-fast) var(--ease-out-soft),
-      border-color var(--duration-fast) var(--ease-out-soft),
-      color var(--duration-fast) var(--ease-out-soft),
-      box-shadow var(--duration-fast) var(--ease-out-soft);
+      background-color var(--duration-ui) var(--ease-ui),
+      border-color var(--duration-ui) var(--ease-ui),
+      color var(--duration-ui) var(--ease-ui),
+      transform var(--duration-fast) var(--ease-out-soft);
   }
   .btn-sm {
-    padding: 0.5625rem 0.9375rem;
+    min-height: 2.5rem;
+    padding: 0.625rem 1.125rem;
     font-size: 0.875rem;
   }
   .btn-block {
     width: 100%;
   }
+  @media (width < 30rem) {
+    .btn {
+      white-space: normal;
+      text-align: center;
+      padding-inline: 1.125rem;
+    }
+  }
 
   .btn-primary {
     background: var(--color-blue-700);
+    border-color: var(--color-blue-700);
     color: #fff;
   }
   .btn-primary:hover {
     background: var(--color-blue-800);
-    box-shadow: var(--shadow-md);
+    border-color: var(--color-blue-800);
   }
 
   .btn-secondary {
-    background: #fff;
+    background: transparent;
     color: var(--color-blue-800);
     border-color: var(--color-line-strong);
   }
   .btn-secondary:hover {
-    border-color: var(--color-blue-700);
     background: var(--color-blue-50);
+    border-color: var(--color-blue-200);
   }
 
   .btn-inverse {
-    background: #fff;
-    color: var(--color-blue-900);
+    background: var(--color-blue-700);
+    border-color: var(--color-blue-700);
+    color: #fff;
   }
   .btn-inverse:hover {
-    background: var(--color-sky-50);
+    background: var(--color-blue-800);
+    border-color: var(--color-blue-800);
   }
 
   .btn-inverse-outline {
@@ -577,17 +446,18 @@ details[open] > summary > .disclosure-icon {
   .link-arrow {
     display: inline-flex;
     align-items: center;
-    gap: 0.4375rem;
-    color: var(--color-blue-800);
+    gap: 0.4rem;
+    color: var(--color-blue-700);
     font-weight: 600;
     font-size: 0.9375rem;
     text-decoration: none;
-    border-bottom: 1px solid var(--color-blue-200);
-    padding-bottom: 2px;
-    transition: border-color var(--duration-fast) var(--ease-out-soft);
+    text-underline-offset: 4px;
+    transition: color var(--duration-fast) var(--ease-out-soft);
   }
   .link-arrow:hover {
-    border-color: var(--color-blue-700);
+    color: var(--color-blue-800);
+    text-decoration: underline;
+    text-decoration-color: var(--color-blue-200);
   }
   .link-arrow > .arrow {
     transition: transform var(--duration-fast) var(--ease-out-soft);
@@ -597,470 +467,11 @@ details[open] > summary > .disclosure-icon {
     transform: translateX(3px);
   }
 
-  /* --- Program rows (home) ---------------------------------------------- *
-   * Ruled rows on the paper: index, title and summary, a small photo, an
-   * arrow. The photo and arrow only join on wide screens; on a phone a row is
-   * index plus text. */
-  .program-rows {
-    border-top: 1px solid var(--color-line);
-  }
-  /* On a phone the index sits above the title and the summary is cut to three
-     lines: the row is a signpost to the programme page, not the page itself. */
-  .program-row {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.5rem 1.5rem;
-    align-items: start;
-    padding-block: 1.375rem;
-    border-bottom: 1px solid var(--color-line);
-    transition: background-color var(--duration-base) var(--ease-out-soft);
-  }
-  .program-row__index {
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--color-blue-700);
-  }
-  .program-row__title {
-    font-size: clamp(1.125rem, 0.85rem + 1.4vw, 2rem);
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-    transition: color var(--duration-fast) var(--ease-out-soft);
-  }
-  .program-row__summary {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    overflow: hidden;
-    margin-top: 0.5rem;
-    max-width: 58ch;
-    font-size: 0.9375rem;
-    line-height: 1.55;
-    color: var(--color-ink-400);
-  }
-  .program-row__media,
-  .program-row__arrow {
-    display: none;
-  }
-  @media (min-width: 48rem) {
-    .program-row {
-      grid-template-columns: 3.25rem minmax(0, 1fr);
-      gap: 0.75rem 1.5rem;
-      padding-block: 1.75rem;
-    }
-    .program-row__index {
-      padding-top: 0.35rem;
-    }
-    .program-row__summary {
-      -webkit-line-clamp: unset;
-      margin-top: 0.625rem;
-      line-height: 1.6;
-    }
-  }
-  @media (min-width: 64rem) {
-    /* A compact thumbnail sets every row's height; the summary is clamped so
-     * no program can stretch its row past it. */
-    .program-row {
-      grid-template-columns: 4.5rem minmax(0, 1fr) 16rem 2rem;
-      grid-template-rows: 12rem;
-      align-items: center;
-      gap: 0 2.5rem;
-      padding-block: 1.5rem;
-    }
-    .program-row__index {
-      align-self: start;
-      padding-top: 0.5rem;
-    }
-    .program-row__summary {
-      -webkit-line-clamp: 4;
-    }
-    .program-row__media.card-media {
-      display: block;
-      width: 100%;
-      height: 100%;
-      aspect-ratio: auto;
-      overflow: hidden;
-      border-radius: var(--radius-lg);
-    }
-    .program-row__arrow {
-      display: block;
-      font-size: 1.5rem;
-      color: var(--color-blue-700);
-      transition: translate 480ms var(--ease-reveal);
-    }
-  }
-  .program-row:has(a:focus-visible) {
-    background: var(--color-blue-50);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .program-row:hover {
-      background: var(--color-blue-50);
-    }
-    .program-row:hover .program-row__title {
-      color: var(--color-blue-800);
-    }
-    .program-row:hover .program-row__arrow {
-      translate: 6px 0;
-    }
-    .program-row:hover .card-media img {
-      transform: scale(1.05);
-    }
-  }
-
-  /* --- Activities, editorial (home) -------------------------------------- *
-   * Two columns with the right one dropped, so the latest reports read as a
-   * sequence rather than a product grid. One column on phones. */
-  .activity-editorial {
-    display: grid;
-    gap: 2rem;
-  }
-  @media (min-width: 48rem) {
-    .activity-editorial {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: clamp(1.5rem, 4vw, 4rem);
-      row-gap: 3rem;
-    }
-    .activity-editorial > :nth-child(even) {
-      margin-top: clamp(3rem, 8vw, 7.5rem);
-    }
-  }
-
-  /* --- About page body (SectionedBody) ---------------------------------- *
-   * Each "## " section of the CMS body gets a label column and a content
-   * column, divided by a hairline. The label sticks beside long prose so the
-   * visitor always knows which part they are reading. */
-  .about-lead {
-    font-size: var(--text-lead);
-    line-height: 1.7;
-    color: var(--color-ink-900);
-  }
-  .about-section {
-    padding-top: clamp(2.5rem, 2rem + 3vw, 5rem);
-  }
-  .about-section__grid {
-    display: grid;
-    gap: 1rem;
-    padding-top: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
-    border-top: 1px solid var(--color-line);
-  }
-  @media (min-width: 64rem) {
-    .about-section__grid {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 2.6fr);
-      gap: 3rem;
-    }
-    .about-section--prose .about-section__label {
-      position: sticky;
-      top: calc(var(--header-offset) + 1.5rem);
-      align-self: start;
-      transition: top 320ms var(--ease-out-soft);
-    }
-  }
-  .about-section__label {
-    padding-top: 0.4rem;
-  }
-
-  .prose.about-statement p {
-    max-width: 30ch;
-    font-size: var(--text-statement);
-    line-height: 1.3;
-    letter-spacing: -0.02em;
-    color: var(--color-ink-900);
-    text-align: start;
-    hyphens: manual;
-  }
-  .prose.about-statement:lang(km) p {
-    max-width: 36ch;
-    line-height: 1.6;
-    letter-spacing: normal;
-  }
-
-  .about-terms {
-    border-top: 1px solid var(--color-line);
-  }
-  .about-term {
-    display: grid;
-    grid-template-columns: 2.75rem minmax(0, 1fr);
-    gap: 0.25rem 1rem;
-    padding: 1.25rem 0.75rem;
-    border-bottom: 1px solid var(--color-line);
-    transition: background-color var(--duration-base) var(--ease-out-soft);
-  }
-  .about-term__index {
-    grid-row: span 2;
-    padding-top: 0.3rem;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--color-blue-700);
-  }
-  .about-term__name {
-    font-size: clamp(1.125rem, 0.95rem + 1vw, 1.625rem);
-    font-weight: 600;
-    line-height: 1.25;
-    letter-spacing: -0.015em;
-    color: var(--color-ink-900);
-  }
-  .about-term__text {
-    max-width: 60ch;
-    font-size: 0.9688rem;
-    line-height: 1.6;
-    color: var(--color-ink-600);
-  }
-  @media (min-width: 48rem) {
-    .about-term {
-      grid-template-columns: 3.5rem minmax(12rem, 1fr) minmax(0, 1.8fr);
-      align-items: baseline;
-      gap: 1.5rem;
-    }
-    .about-term__index {
-      grid-row: auto;
-    }
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .about-term:hover {
-      background: var(--color-blue-50);
-    }
-  }
-
-  .about-facts ul {
-    padding-left: 0;
-    list-style: none;
-    border-top: 1px solid var(--color-line);
-  }
-  .about-facts li {
-    margin: 0;
-    padding-block: 1.125rem;
-    border-bottom: 1px solid var(--color-line);
-    font-size: clamp(1rem, 0.85rem + 0.9vw, 1.5rem);
-    line-height: 1.4;
-    color: var(--color-ink-900);
-    text-align: start;
-  }
-  .prose.about-facts li + li {
-    margin-top: 0;
-  }
-
-  .about-prose--lead > p:first-child {
-    font-size: var(--text-lead);
-    line-height: 1.65;
-    color: var(--color-ink-900);
-  }
-
-  .statement-logos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 2rem;
-  }
-  .statement-logo {
-    display: grid;
-    place-items: center;
-    width: 10rem;
-    aspect-ratio: 5 / 3;
-    padding: 0.875rem;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-lg);
-    background: #fff;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1.3;
-    text-align: center;
-    color: var(--color-ink-600);
-  }
-  .statement-logo img {
-    max-height: 100%;
-  }
-
-  /* --- Programme detail ---------------------------------------------------- *
-   * Hero: text and photo side by side on wide screens, photo first under the
-   * text on phones. The photo is the morph target for the card that opened it. */
-  /* The photo runs to the top of the window, under the transparent header, and
-     fades into the page tint wherever text or the nav sits on it. On a phone it
-     sits above the text; from 64rem it fills the whole band behind it. */
-  .program-hero {
-    position: relative;
-    isolation: isolate;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: var(--color-surface-subtle);
-  }
-  .program-hero__media {
-    position: relative;
-    flex: none;
-    height: calc(var(--header-h) + 56vw);
-    max-height: 32rem;
-  }
-  .program-hero__media::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-      linear-gradient(
-        180deg,
-        rgb(245 247 253 / 0.95) 0,
-        rgb(245 247 253 / 0.85) calc(var(--header-h) * 0.9),
-        rgb(245 247 253 / 0) calc(var(--header-h) * 1.6)
-      ),
-      linear-gradient(0deg, var(--color-surface-subtle) 0, rgb(245 247 253 / 0) 30%);
-  }
-  .program-hero__inner {
-    flex: 1;
-    padding-block: 1rem 3rem;
-  }
-  @media (min-width: 64rem) {
-    .program-hero__media {
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      height: auto;
-      max-height: none;
-    }
-    .program-hero__media::after {
-      background:
-        linear-gradient(
-          180deg,
-          rgb(245 247 253 / 0.85) 0,
-          rgb(245 247 253 / 0) calc(var(--header-h) * 1.4)
-        ),
-        linear-gradient(
-          90deg,
-          var(--color-surface-subtle) 0,
-          rgb(245 247 253 / 0.94) 38%,
-          rgb(245 247 253 / 0.4) 62%,
-          rgb(245 247 253 / 0) 80%
-        );
-    }
-    .program-hero__inner {
-      display: flex;
-      align-items: center;
-      min-height: 36rem;
-      padding-block: calc(var(--header-h) + 3rem) 4rem;
-    }
-    .program-hero__text {
-      max-width: 34rem;
-    }
-  }
-
-  .program-stats {
-    display: grid;
-    gap: 1px;
-    overflow: hidden;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-lg);
-    background: var(--color-line);
-  }
-  .program-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 1.75rem 1.5rem;
-    background: #fff;
-    container-type: inline-size;
-  }
-  /* A long figure such as "33,910 kg" shrinks to its tile rather than clipping
-     at the tile's edge. --value-em is the figure's width in em, estimated by
-     ProgramStats from the glyph widths of the stat font. */
-  .program-stat__value {
-    font-size: min(var(--text-stat), calc(100cqi / var(--value-em, 1)));
-    line-height: 1;
-    font-weight: 700;
-    letter-spacing: var(--text-stat--letter-spacing);
-    color: var(--color-blue-700);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .program-stat__label {
-    margin-top: 0.5rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    line-height: 1.4;
-    color: var(--color-ink-900);
-  }
-  .program-stat__context {
-    font-size: 0.8125rem;
-    line-height: 1.5;
-    color: var(--color-ink-400);
-  }
-  @media (min-width: 40rem) {
-    .program-stats {
-      grid-template-columns: repeat(var(--sm-cols), minmax(0, 1fr));
-    }
-    .program-stats--featured > :first-child {
-      grid-column: span 2;
-    }
-  }
-  @media (min-width: 64rem) {
-    .program-stats {
-      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-    }
-    .program-stats--featured > :first-child {
-      grid-column: auto;
-      grid-row: span 2;
-      justify-content: flex-end;
-      padding: 2.25rem 2rem;
-      background: var(--color-blue-900);
-    }
-    .program-stats--featured > :first-child .program-stat__value {
-      font-size: min(calc(var(--text-stat) * 1.6), calc(100cqi / var(--value-em, 1)));
-      color: #fff;
-    }
-    .program-stats--featured > :first-child .program-stat__label {
-      font-size: 1.125rem;
-      color: #fff;
-    }
-    .program-stats--featured > :first-child .program-stat__context {
-      color: var(--color-sky-200);
-    }
-  }
-
-  /* --- Footer closing line --------------------------------------------- */
-  .footer-closing {
-    display: grid;
-    gap: 1.25rem;
-    padding-bottom: clamp(2.5rem, 5vw, 4.5rem);
-    margin-bottom: clamp(2.5rem, 5vw, 4rem);
-    border-bottom: 1px solid rgb(255 255 255 / 0.12);
-  }
-  .footer-closing__title {
-    font-family: var(--font-display);
-    font-size: clamp(1.625rem, 0.6rem + 4.9vw, 4.75rem);
-    font-weight: 600;
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-    color: #fff;
-  }
-  .footer-closing__title:lang(km) {
-    font-family: var(--font-khmer);
-    line-height: 1.35;
-    letter-spacing: normal;
-  }
-  .footer-closing__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 2.5rem;
-  }
-  .footer-closing__link {
-    font-size: clamp(1rem, 0.8rem + 1.05vw, 1.625rem);
-    font-weight: 500;
-    color: var(--color-sky-200);
-    text-decoration: none;
-  }
-  .footer-closing__link:hover {
-    color: #fff;
-  }
-
   /* --- Story band (home) -------------------------------------------------- *
-   * The page's one change of pace: navy, rounded at the top where it meets
-   * the paper, and static. */
+   * The page's one change of pace: navy, square-edged, and static. */
   .story-band {
     background: var(--color-blue-900);
     color: #fff;
-    border-radius: clamp(1.5rem, 4vw, 3.5rem) clamp(1.5rem, 4vw, 3.5rem) 0 0;
     padding-block: clamp(3.25rem, 2rem + 6vw, 9rem);
   }
   /* .prose paints ink on paper; on the navy band the story has to read in
@@ -1082,98 +493,6 @@ details[open] > summary > .disclosure-icon {
   /* Press feedback — a small scale-down so a tap feels physical. */
   .btn:active:not([aria-disabled='true']):not(:disabled) {
     transform: scale(0.98);
-  }
-
-  /*
-   * Navigation underline. A *reveal*: the rule grows from the left rather than
-   * the background swapping in, which is quieter and reads as a place marker
-   * rather than a button.
-   */
-  .nav-link {
-    position: relative;
-    border-radius: var(--radius-sm);
-    padding: 0.75rem 0.9375rem;
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1;
-    text-decoration: none;
-    color: var(--color-ink-700);
-    transition: color var(--duration-fast) var(--ease-out-soft);
-  }
-  .nav-link::after {
-    content: '';
-    position: absolute;
-    inset-inline: 0.9375rem;
-    bottom: 0.25rem;
-    height: 2px;
-    border-radius: 2px;
-    background: var(--color-blue-700);
-    transform: scaleX(0);
-    transform-origin: left center;
-    transition: transform var(--duration-base) var(--ease-out-soft);
-  }
-  .nav-link:hover {
-    color: var(--color-blue-800);
-  }
-  .nav-link:hover::after,
-  .nav-link[aria-current]::after {
-    transform: scaleX(1);
-  }
-  .nav-link[aria-current] {
-    color: var(--color-blue-800);
-  }
-
-  /* A label that rolls up to an identical copy on hover. The copy sits one
-     line plus a gap below, clipped; the extra block padding leaves room for
-     Khmer vowel marks above and below the line. `/ ""` keeps the copy out of
-     the accessibility tree so the label is announced once. */
-  .roll {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-    padding-block: 0.3em;
-    margin-block: -0.3em;
-  }
-  .roll__text {
-    position: relative;
-    display: inline-block;
-    transition: translate 480ms var(--ease-reveal);
-  }
-  .roll__text::after {
-    content: attr(data-text) / '';
-    position: absolute;
-    left: 0;
-    top: calc(100% + 0.6em);
-    white-space: nowrap;
-  }
-  :is(a, button):is(:hover, :focus-visible) .roll__text {
-    translate: 0 calc(-100% - 0.6em);
-  }
-
-  /* Contact: a rounded fill rises from below and flattens as it covers the
-     button. The blob sits under the content, which is lifted above it. */
-  .btn-fill {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-  }
-  .btn-fill > :not(.btn-fill__blob) {
-    position: relative;
-  }
-  .btn-fill__blob {
-    position: absolute;
-    inset: -1px;
-    z-index: -1;
-    background: var(--color-blue-900);
-    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-    translate: 0 101%;
-    transition:
-      translate 380ms cubic-bezier(0.4, 0, 0, 1),
-      border-radius 380ms cubic-bezier(0.4, 0, 0, 1);
-  }
-  .btn-fill:is(:hover, :focus-visible) .btn-fill__blob {
-    translate: 0 0;
-    border-radius: 0;
   }
 
   /* --- Surfaces ----------------------------------------------------------- */
@@ -1267,6 +586,11 @@ details[open] > summary > .disclosure-icon {
   .prose {
     max-width: var(--measure);
     color: var(--color-ink-600);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+  .prose:lang(km) {
+    line-height: 1.9;
   }
   .prose > * + * {
     margin-top: 1.0625rem;
@@ -1346,7 +670,18 @@ details[open] > summary > .disclosure-icon {
     font-weight: 600;
   }
 
-  /* --- Screen-reader-only -------------------------------------------------- */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
   .sr-only-focusable:not(:focus):not(:focus-within) {
     position: absolute;
     width: 1px;
@@ -1360,37 +695,23 @@ details[open] > summary > .disclosure-icon {
   }
 }
 
-/* ============================================================================
-   Placeholder media.
-   Holds the box wherever a CMS image has not been supplied yet, so the layout
-   does not shift when the real photograph lands. Silent by design: it carries
-   no text and is hidden from assistive tech. The old diagonal-stripe treatment
-   read as a broken asset to a visitor who had no idea the site was unfinished;
-   a quiet tinted panel simply looks like part of the page.
-   ========================================================================= */
 .media-placeholder {
   background: radial-gradient(
     120% 120% at 50% 0%,
     var(--color-surface-subtle) 0%,
     var(--color-surface-sunken) 100%
   );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-300, var(--color-ink-400));
+}
+.media-placeholder__icon {
+  width: min(28%, 4rem);
+  height: auto;
+  opacity: 0.5;
 }
 
-/*
- * Blur-up: the ~20px LQIP Sanity ships with every photo, blurred and scaled
- * past its own soft edge, holds the frame until the photo fades in over it.
- * Without an LQIP the frame shows the sunken paper instead. Both are dropped
- * once the fade is over, so nothing lingers behind a photo's transparent edges.
- *
- * Hidden only where scripting runs, because only script can say the photo has
- * loaded — a no-JS visitor gets the photo directly, never a stuck blur.
- *
- * The photo sharpens from its own blur as it fades in, over 800ms, so the
- * handover from placeholder to photo reads as one image coming into focus.
- * Layered so utilities passed to ResponsiveImage still win, and the image's
- * transition keeps the card zoom's transform, so the fade never cancels it.
- * A cached photo skips only the fade, via --blur-fade.
- */
 @layer components {
   .blur-up {
     position: relative;
@@ -1405,22 +726,22 @@ details[open] > summary > .disclosure-icon {
     position: absolute;
     inset: 0;
     background: var(--lqip, none) center / cover;
-    filter: blur(14px);
-    transform: scale(1.15);
+    filter: blur(8px);
+    transform: scale(1.08);
   }
   .blur-up[data-loaded] {
     background: transparent;
-    transition: background-color 0s 800ms;
+    transition: background-color 0s 280ms;
   }
   .blur-up[data-loaded]::before {
     opacity: 0;
-    transition: opacity 0s 800ms;
+    transition: opacity 0s 280ms;
   }
   .blur-up > img {
     position: relative;
     transition:
-      opacity var(--blur-fade, 800ms) var(--ease-reveal),
-      filter var(--blur-fade, 800ms) var(--ease-reveal),
+      opacity var(--blur-fade, 280ms) var(--ease-reveal),
+      filter var(--blur-fade, 280ms) var(--ease-reveal),
       transform var(--duration-slow) var(--ease-out-soft);
   }
   .blur-up[data-instant] {
@@ -1429,7 +750,7 @@ details[open] > summary > .disclosure-icon {
   @media (scripting: enabled) {
     .blur-up > img {
       opacity: 0;
-      filter: blur(12px);
+      filter: blur(6px);
     }
     .blur-up[data-loaded] > img {
       opacity: 1;
@@ -1476,141 +797,9 @@ details[open] > summary > .disclosure-icon {
   width: 40px;
   will-change: transform;
 }
-/* The butterfly that circles the pointer (ButterflyCursor). The outer box sits
-   on its flight point and rotates about it; the glyph is centred on its body
-   line so it banks around its own middle. */
-.butterfly-cursor {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 2147483647;
-  width: 34px;
-  pointer-events: none;
-  transform-origin: 0 0;
-  will-change: transform;
-  view-transition-name: butterfly-cursor;
-}
-.butterfly-cursor__glyph {
-  translate: -45% -50%;
-  transform-origin: 45% 50%;
-  filter: drop-shadow(0 1px 1.5px rgb(10 10 10 / 0.25));
-  transition:
-    opacity var(--duration-fast) var(--ease-out-soft),
-    scale 220ms var(--ease-out-soft);
-}
-.butterfly-cursor[data-state='link'] .butterfly-cursor__glyph {
-  scale: 1.3;
-}
-.butterfly-cursor[data-state='label'] .butterfly-cursor__glyph {
-  scale: 1.45;
-}
-/* The word beneath the butterfly over a card ("Read more"). The butterfly
-   perches above the pointer there, so the word hangs between the two and
-   never covers the pointer. */
-.butterfly-cursor__label {
-  position: absolute;
-  left: 0;
-  top: 18px;
-  translate: -50% 0;
-  padding: 0.3125rem 0.625rem;
-  border-radius: 999px;
-  background: var(--color-blue-900);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
-  opacity: 0;
-  scale: 0.6;
-  transform-origin: 50% 0;
-  transition:
-    opacity var(--duration-fast) var(--ease-out-soft),
-    scale 260ms var(--ease-reveal);
-}
-.butterfly-cursor[data-state='label'] .butterfly-cursor__label {
-  opacity: 1;
-  scale: 1;
-}
-.butterfly-cursor[data-pressed] .butterfly-cursor__glyph {
-  scale: 0.85;
-}
-.butterfly-cursor:is([data-state='hidden'], [data-state='text']) .butterfly-cursor__glyph {
-  opacity: 0;
-}
-html:not([data-butterfly-cursor]) .butterfly-cursor,
-html:has(:modal, :popover-open) .butterfly-cursor {
-  display: none;
-}
-
-/* --- Page loader ------------------------------------------------------------
-   PageLoader, the loading screen at the start of a visit, driven by its own
-   inline script. The butterfly holds still and only its wings beat; the bar
-   follows the page's real loading progress (--intro-progress, 0 to 1). It sits
-   below the skip link and the pointer butterfly, and the page underneath does
-   not scroll while it shows. */
-.page-loader {
-  --loader-size: clamp(9.5rem, 6rem + 14vw, 14rem);
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(1.75rem, 1.25rem + 2vw, 2.75rem);
-  padding: 1rem;
-  background: var(--color-canvas);
-  transition: opacity 480ms var(--ease-out-soft);
-}
-html[data-intro] .page-loader {
-  display: flex;
-}
-html[data-intro=''] {
-  overflow: hidden;
-}
-html[data-intro='done'] .page-loader {
-  opacity: 0;
-  pointer-events: none;
-}
-.page-loader__butterfly {
-  width: var(--loader-size);
-}
-.page-loader__butterfly .butterfly-wings {
-  animation: loader-flap 500ms cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
-}
-.page-loader__track {
-  width: calc(var(--loader-size) * 0.65);
-  height: 3px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--color-surface-sunken);
-}
-.page-loader__fill {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--color-sky-400);
-  transform-origin: left center;
-  scale: var(--intro-progress, 0) 1;
-  transition: scale 450ms var(--ease-out-soft);
-}
-.page-loader__label {
-  color: var(--color-ink-600);
-  font-family: var(--font-sans);
-  font-size: clamp(0.9375rem, 0.875rem + 0.2vw, 1.0625rem);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-@keyframes loader-flap {
-  to {
-    scale: 0.55 1;
-  }
-}
 
 @media print {
-  .butterfly-flock,
-  .butterfly-cursor,
-  .page-loader {
+  .butterfly-flock {
     display: none;
   }
 }

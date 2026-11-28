@@ -201,7 +201,7 @@ export async function runEdgeChecks(
   } else {
     record(false, "homepage references a /_astro/ asset");
   }
-  for (const file of ["/fonts/inter-latin.woff2", "/logo/sko-logo-full-colour.svg"]) {
+  for (const file of ["/fonts/noto-sans-latin.woff2", "/logo/sko-logo-full-colour.svg"]) {
     const res = await get(file, { method: "HEAD" });
     record(
       res.status === 200 && /max-age=2592000/.test(header(res, "cache-control")),

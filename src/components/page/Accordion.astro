@@ -1,0 +1,27 @@
+---
+import type { SkFaqItem } from '~/lib/skeleton-content';
+import { faqJsonLd } from '~/lib/skeleton-content';
+import { serializeJsonLd } from '~/lib/seo/json-ld';
+import InlineLinks from '~/components/content/InlineLinks.astro';
+
+interface Props {
+  items: SkFaqItem[];
+}
+
+const { items } = Astro.props;
+const jsonLd = faqJsonLd(items);
+---
+
+<div class="pg-acc">
+  {
+    items.map((item, index) => (
+      <details open={index === 0} id={item.id}>
+        <summary lang={item.questionLang}>{item.question}</summary>
+        <p class="inline-links" lang={item.answerLang}>
+          <InlineLinks text={item.answer} />
+        </p>
+      </details>
+    ))
+  }
+</div>
+{jsonLd && <script is:inline type="application/ld+json" set:html={serializeJsonLd(jsonLd)} />}

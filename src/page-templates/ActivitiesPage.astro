@@ -7,7 +7,7 @@ import PageHero from '~/components/content/PageHero.astro';
 import ActivityCard from '~/components/content/ActivityCard.astro';
 import EmptyState from '~/components/content/EmptyState.astro';
 import Pagination from '~/components/content/Pagination.astro';
-import { cardGridCols, cardImageSizes } from '~/lib/grid';
+import { cardGridCols } from '~/lib/grid';
 import { stripInlineLinks } from '~/lib/inline-links';
 import { canonicalUrl, collectionPageJsonLd } from '~/lib/seo/page-schema';
 
@@ -38,7 +38,6 @@ const collection = collectionPageJsonLd({
 ---
 
 <BaseLayout
-  headerOverlay
   lang={lang}
   title={title}
   description={description}
@@ -60,11 +59,7 @@ const collection = collectionPageJsonLd({
         ) : (
           <div class={cardGridCols(activities.length)}>
             {activities.map((activity) => (
-              <ActivityCard
-                lang={lang}
-                activity={activity}
-                sizes={cardImageSizes(activities.length)}
-              />
+              <ActivityCard lang={lang} activity={activity} />
             ))}
           </div>
         )
